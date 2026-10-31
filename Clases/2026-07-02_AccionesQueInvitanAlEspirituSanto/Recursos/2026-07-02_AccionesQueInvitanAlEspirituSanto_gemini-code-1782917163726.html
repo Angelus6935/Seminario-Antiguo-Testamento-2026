@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acciones que invitan al Espíritu Santo</title>
+    <!-- Google Fonts: Montserrat para títulos impactantes e Inter para el cuerpo del texto -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Font Awesome para iconos vectoriales limpios -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Tailwind CSS para el estilado rápido y responsive -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        title: ['Montserrat', 'sans-serif'],
+                    },
+                    colors: {
+                        darkBg: '#090a0f',
+                        slideBg: '#11131e',
+                        electricCyan: '#06b6d4',
+                        royalPurple: '#8b5cf6',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* STREAMING_CHUNK: Configurando animaciones y estilos globales... */
+        body {
+            background-color: #090a0f;
+            color: #f3f4f6;
+            overflow-x: hidden;
+        }
+
+        /* Resplandores radiales cinemáticos de fondo */
+        .ambient-glow {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(6, 182, 212, 0.12) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .ambient-glow-purple {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Contenedor de la diapositiva con aspecto 16:9 y bordes premium */
+        .slide-deck-container {
+            aspect-ratio: 16 / 9;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        /* Transiciones suaves entre diapositivas */
+        .slide-card {
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .slide-hidden {
+            opacity: 0;
+            transform: scale(0.98);
+            pointer-events: none;
+            display: none !important;
+        }
+
+        .slide-active {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+            display: flex !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-4 md:p-8 relative overflow-hidden select-none">
+
+    <!-- STREAMING_CHUNK: Creando el fondo ambiental místico... -->
+    <!-- Efectos de brillo de fondo para realzar la atmósfera cinematográfica -->
+    <div class="ambient-glow top-10 left-10"></div>
+    <div class="ambient-glow-purple bottom-10 right-10"></div>
+    <div class="ambient-glow top-1/3 right-1/4"></div>
+
+    <!-- Header de la Aplicación de Diapositivas -->
+    <header class="w-full max-w-6xl mx-auto flex justify-between items-center z-10 border-b border-white/5 pb-4 mb-4">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-electricCyan to-royalPurple flex items-center justify-center text-white">
+                <i class="fa-solid fa-book-open-reader text-sm"></i>
+            </div>
+            <div>
+                <span class="text-xs uppercase tracking-widest text-electricCyan font-bold font-title">Técnicas de Estudio de Escrituras</span>
+                <h1 class="text-sm font-semibold text-white/80">Acciones que invitan al Espíritu</h1>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-400 bg-white/5 px-2.5 py-1 rounded-full border border-white/10">Manual de 2026</span>
+        </div>
+    </header>
+
+    <!-- STREAMING_CHUNK: Construyendo el visor interactivo de diapositivas... -->
+    <!-- Contenedor Principal de la Diapositiva -->
+    <main class="flex-grow flex items-center justify-center w-full z-10 my-4">
+        <div class="slide-deck-container bg-slideBg/90 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl shadow-black/80 flex flex-col justify-between overflow-hidden relative">
+            
+            <!-- DIAPOSITIVA 1: Portada – Alineación Intencional -->
+            <!-- STREAMING_CHUNK: Renderizando Diapositiva 1 (Portada)... -->
+            <div id="slide-1" class="slide-card slide-active w-full h-full flex flex-col justify-between p-8 md:p-12">
+                <div class="flex justify-between items-start">
+                    <span class="text-xs font-bold uppercase tracking-wider text-electricCyan/80 bg-electricCyan/10 px-3 py-1 rounded-full"><i class="fa-solid fa-bolt mr-2"></i>Alineación Intencional</span>
+                    <span class="text-sm text-slate-500 font-bold">01 / 05</span>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center my-auto">
+                    <div class="md:col-span-7 space-y-4">
+                        <h2 class="text-3xl md:text-5xl font-extrabold font-title tracking-tight leading-none text-white">
+                            Acciones que <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-electricCyan to-white">invitan al Espíritu</span>
+                        </h2>
+                        <p class="text-slate-300 text-sm md:text-base leading-relaxed">
+                            El estudio de las escrituras no es una lectura pasiva ni una obligación rutinaria. Es una conexión que requiere que nos sintonicemos activamente con la frecuencia divina.
+                        </p>
+                    </div>
+                    <div class="md:col-span-5 bg-white/5 border border-white/10 rounded-xl p-5 space-y-3 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-24 h-24 bg-electricCyan/10 rounded-full blur-xl pointer-events-none"></div>
+                        <h3 class="text-sm font-bold font-title text-electricCyan uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-wifi"></i> Analogía: Carga Inalámbrica
+                        </h3>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Si apoyas tu teléfono en una base de carga inalámbrica, pero está un centímetro corrido o tiene una funda demasiado gruesa, la energía no pasa. Aunque la base esté enchufada, la falta de alineación bloquea el flujo de poder.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="border border-dashed border-electricCyan/40 bg-electricCyan/5 rounded-xl p-4 md:p-5 mt-auto">
+                    <h4 class="text-xs font-bold font-title text-electricCyan uppercase tracking-widest flex items-center gap-2 mb-1">
+                        <i class="fa-regular fa-comments"></i> 💬 Dinámica de Apertura
+                    </h4>
+                    <p class="text-xs md:text-sm text-slate-200">
+                        ¿Qué actividades, ruidos o distracciones diarias sienten que funcionan como esa "funda gruesa" que bloquea la carga de su energía espiritual?
+                    </p>
+                </div>
+            </div>
+
+            <!-- DIAPOSITIVA 2: La Barrera de la Pasividad -->
+            <!-- STREAMING_CHUNK: Renderizando Diapositiva 2 (Pasividad)... -->
+            <div id="slide-2" class="slide-card slide-hidden w-full h-full flex flex-col justify-between p-8 md:p-12">
+                <div class="flex justify-between items-start">
+                    <span class="text-xs font-bold uppercase tracking-wider text-rose-400 bg-rose-400/10 px-3 py-1 rounded-full"><i class="fa-solid fa-triangle-exclamation mr-2"></i>La Barrera de la Pasividad</span>
+                    <span class="text-sm text-slate-500 font-bold">02 / 05</span>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center my-auto">
+                    <div class="md:col-span-7 space-y-4">
+                        <h2 class="text-3xl md:text-4.5xl font-extrabold font-title tracking-tight leading-tight text-white">
+                            Salir de la <span class="text-rose-400">Inercia Estática</span>
+                        </h2>
+                        <p class="text-slate-300 text-sm md:text-base leading-relaxed">
+                            Muchos estudiantes leen las escrituras "como una piedra", esperando inmóviles que caiga revelación del cielo. Pero el Espíritu Santo no enseña a elementos inertes; requiere que nos movamos, preguntemos y busquemos de verdad.
+                        </p>
+                    </div>
+                    <div class="md:col-span-5 bg-black/30 border border-white/5 rounded-xl p-5 space-y-3">
+                        <div class="flex items-center gap-3 text-rose-400">
+                            <i class="fa-solid fa-music text-2xl"></i>
+                            <div>
+                                <h4 class="text-xs font-bold font-title uppercase tracking-wider">Conexión de Rock</h4>
+                                <p class="text-[10px] text-slate-400">Audioslave — "Like a Stone"</p>
+                            </div>
+                        </div>
+                        <blockquote class="text-xs italic text-slate-300 border-l-2 border-rose-400/50 pl-3">
+                            "I'll wait for you there, like a stone... alone" <br>
+                            <span class="text-[10px] text-slate-500">(Te esperaré allí como una piedra... solo)</span>
+                        </blockquote>
+                        <p class="text-[11px] text-slate-400 leading-snug">
+                            Rompe la inercia. No leas por inercia o compromiso estéril. ¡Despierta!
+                        </p>
+                    </div>
+                </div>
+
+                <div class="border border-dashed border-rose-400/40 bg-rose-400/5 rounded-xl p-4 md:p-5 mt-auto">
+                    <h4 class="text-xs font-bold font-title text-rose-400 uppercase tracking-widest flex items-center gap-2 mb-1">
+                        <i class="fa-solid fa-brain"></i> 🧠 Reflexión Silenciosa
+                    </h4>
+                    <p class="text-xs md:text-sm text-slate-200">
+                        ¿Has sentido alguna vez que lees las escrituras solo por cumplir, como una "piedra", sin esperar que pase nada real? ¿Cómo podemos romper esa inercia hoy?
+                    </p>
+                </div>
+            </div>
+
+            <!-- DIAPOSITIVA 3: El Método Activo -->
+            <!-- STREAMING_CHUNK: Renderizando Diapositiva 3 (Método Activo)... -->
+            <div id="slide-3" class="slide-card slide-hidden w-full h-full flex flex-col justify-between p-8 md:p-12">
+                <div class="flex justify-between items-start">
+                    <span class="text-xs font-bold uppercase tracking-wider text-amber-400 bg-amber-400/10 px-3 py-1 rounded-full"><i class="fa-solid fa-compass mr-2"></i>El Método Activo</span>
+                    <span class="text-sm text-slate-500 font-bold">03 / 05</span>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center my-auto">
+                    <div class="md:col-span-7 space-y-3">
+                        <h2 class="text-2xl md:text-3.5xl font-extrabold font-title tracking-tight text-white leading-tight">
+                            El Origen de tus Pensamientos
+                        </h2>
+                        <div class="bg-amber-400/5 border-l-4 border-amber-400 p-3 rounded-r-lg">
+                            <p class="text-xs md:text-sm italic text-slate-200">
+                                "Porque el que busca diligentemente, hallará; y los misterios de Dios le serán revelados por el poder del Espíritu Santo..."
+                            </p>
+                            <span class="text-[11px] text-amber-400 font-bold mt-1 block">1 Nefi 10:19</span>
+                        </div>
+                        <p class="text-slate-300 text-xs md:text-sm leading-relaxed">
+                            El Espíritu implanta verdades de forma sutil en tu mente. En la película <em>Inception (El Origen)</em>, usan un "tótem" físico para discernir si están en la realidad. Necesitamos un tótem espiritual para mantenernos despiertos y discernir Su voz en medio del ruido del mundo.
+                        </p>
+                    </div>
+                    <div class="md:col-span-5 bg-white/5 border border-white/10 rounded-xl p-4 space-y-2">
+                        <h4 class="text-xs font-bold font-title text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-shield-halved"></i> "Tótems" de Estudio
+                        </h4>
+                        <ul class="text-xs text-slate-300 space-y-1.5 list-disc list-inside">
+                            <li><strong>Anotar dudas</strong> en el margen.</li>
+                            <li><strong>Resaltar con colores</strong> intencionales.</li>
+                            <li><strong>Pausar 10 segundos</strong> tras un versículo.</li>
+                            <li><strong>Hacer preguntas escritas</strong> al texto.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="border border-dashed border-amber-400/40 bg-amber-400/5 rounded-xl p-4 md:p-5 mt-auto">
+                    <h4 class="text-xs font-bold font-title text-amber-400 uppercase tracking-widest flex items-center gap-2 mb-1">
+                        <i class="fa-regular fa-comments"></i> 💬 Dinámica de Grupo
+                    </h4>
+                    <p class="text-xs md:text-sm text-slate-200">
+                        ¿Qué "tótem" o acción física les ayuda a ustedes a mantener la mente despierta y enfocada mientras estudian?
+                    </p>
+                </div>
+            </div>
+
+            <!-- DIAPOSITIVA 4: Cita del Líder – El Maestro Activo -->
+            <!-- STREAMING_CHUNK: Renderizando Diapositiva 4 (Cita de Bednar)... -->
+            <div id="slide-4" class="slide-card slide-hidden w-full h-full flex flex-col justify-between p-8 md:p-12">
+                <div class="flex justify-between items-start">
+                    <span class="text-xs font-bold uppercase tracking-wider text-purple-400 bg-purple-400/10 px-3 py-1 rounded-full"><i class="fa-solid fa-quote-left mr-2"></i>Cita del Líder</span>
+                    <span class="text-sm text-slate-500 font-bold">04 / 05</span>
+                </div>
+                
+                <div class="flex flex-col justify-center my-auto space-y-4 max-w-4xl mx-auto">
+                    <blockquote class="text-base md:text-xl font-medium text-white italic leading-relaxed text-center relative px-6 md:px-12">
+                        <span class="absolute top-[-20px] left-0 text-5xl text-purple-400/20 font-serif">“</span>
+                        Para aprender por la fe, debemos actuar y ser hacedores, y no meramente oyentes que reciben la influencia de forma pasiva. El Espíritu Santo no es un sabelotodo celestial que nos da respuestas si solo nos sentamos y no hacemos nada; es un maestro activo que requiere nuestro esfuerzo.
+                        <span class="absolute bottom-[-30px] right-0 text-5xl text-purple-400/20 font-serif">”</span>
+                    </blockquote>
+                    <div class="text-center">
+                        <cite class="text-sm font-bold text-purple-400 not-italic block font-title">Élder David A. Bednar</cite>
+                        <span class="text-xs text-slate-400 italic">Del Cuórum de los Doce Apóstoles — "Aprender por la fe"</span>
+                    </div>
+                </div>
+
+                <div class="border border-dashed border-purple-400/40 bg-purple-400/5 rounded-xl p-4 md:p-5 mt-auto">
+                    <h4 class="text-xs font-bold font-title text-purple-400 uppercase tracking-widest flex items-center gap-2 mb-1">
+                        <i class="fa-regular fa-comments"></i> 💬 Dinámica de Grupo
+                    </h4>
+                    <p class="text-xs md:text-sm text-slate-200">
+                        ¿Cuál es la diferencia real entre ser un "oyente pasivo" de las escrituras y ser un "hacedor activo" cuando abrimos el texto sagrado?
+                    </p>
+                </div>
+            </div>
+
+            <!-- DIAPOSITIVA 5: Desafío Final – Descifra tu Código -->
+            <!-- STREAMING_CHUNK: Renderizando Diapositiva 5 (Desafío Final)... -->
+            <div id="slide-5" class="slide-card slide-hidden w-full h-full flex flex-col justify-between p-8 md:p-12">
+                <div class="flex justify-between items-start">
+                    <span class="text-xs font-bold uppercase tracking-wider text-emerald-400 bg-emerald-400/10 px-3 py-1 rounded-full"><i class="fa-solid fa-circle-check mr-2"></i>Desafío Final</span>
+                    <span class="text-sm text-slate-500 font-bold">05 / 05</span>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center my-auto">
+                    <div class="md:col-span-7 space-y-4">
+                        <h2 class="text-2xl md:text-3.5xl font-extrabold font-title tracking-tight text-white leading-tight">
+                            El Secreto de la Piedra Rosetta
+                        </h2>
+                        <p class="text-slate-300 text-xs md:text-sm leading-relaxed">
+                            Los jeroglíficos egipcios fueron mudos durante siglos. En 1799, Champollion usó la Piedra de Rosetta para comparar activamente el texto palabra por palabra usando el griego como puente. 
+                        </p>
+                        <p class="text-slate-300 text-xs md:text-sm leading-relaxed">
+                            A veces las escrituras te parecen un jeroglífico mudo. Pero al aplicar herramientas activas, descifras el código y el Espíritu te habla hoy.
+                        </p>
+                    </div>
+                    <div class="md:col-span-5 bg-white/5 border border-white/10 rounded-xl p-4 space-y-2">
+                        <h4 class="text-xs font-bold font-title text-emerald-400 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-key"></i> Herramientas de "Descifrado"
+                        </h4>
+                        <ul class="text-xs text-slate-300 space-y-1">
+                            <li>🔑 Buscar definiciones de palabras.</li>
+                            <li>🔑 Cruzar referencias con el pie de página.</li>
+                            <li>🔑 Conectar el versículo con una prueba actual.</li>
+                            <li>🔑 Reemplazar un nombre por el tuyo.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="border border-dashed border-emerald-400/40 bg-emerald-400/5 rounded-xl p-4 md:p-5 mt-auto">
+                    <h4 class="text-xs font-bold font-title text-emerald-400 uppercase tracking-widest flex items-center gap-2 mb-1">
+                        <i class="fa-regular fa-pen-to-square"></i> 📝 Desafío de Escritura Activa
+                    </h4>
+                    <p class="text-xs md:text-sm text-slate-200">
+                        Abre tu diario de estudio. Escribe una sola técnica activa que vas a probar hoy (ej: buscar el significado de una palabra difícil o conectar una prueba de tu vida con un versículo) para que tus escrituras dejen de estar en silencio.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- STREAMING_CHUNK: Creando el panel de navegación de diapositivas... -->
+    <!-- Controles de Navegación del Slider -->
+    <footer class="w-full max-w-2xl mx-auto flex items-center justify-between gap-4 z-10 bg-white/5 border border-white/10 p-3 rounded-2xl backdrop-blur-sm">
+        <button id="btn-prev" onclick="changeSlide(-1)" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 text-white flex items-center justify-center transition border border-white/5 disabled:opacity-30 disabled:pointer-events-none">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+
+        <!-- Indicadores de progreso (Puntos de control) -->
+        <div class="flex items-center gap-2.5" id="slide-dots">
+            <button onclick="goToSlide(1)" class="w-3 h-3 rounded-full bg-electricCyan transition-all duration-300 ring-2 ring-electricCyan/50"></button>
+            <button onclick="goToSlide(2)" class="w-2.5 h-2.5 rounded-full bg-white/20 hover:bg-white/35 transition-all duration-300"></button>
+            <button onclick="goToSlide(3)" class="w-2.5 h-2.5 rounded-full bg-white/20 hover:bg-white/35 transition-all duration-300"></button>
+            <button onclick="goToSlide(4)" class="w-2.5 h-2.5 rounded-full bg-white/20 hover:bg-white/35 transition-all duration-300"></button>
+            <button onclick="goToSlide(5)" class="w-2.5 h-2.5 rounded-full bg-white/20 hover:bg-white/35 transition-all duration-300"></button>
+        </div>
+
+        <button id="btn-next" onclick="changeSlide(1)" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 text-white flex items-center justify-center transition border border-white/5 disabled:opacity-30 disabled:pointer-events-none">
+            <i class="fa-solid fa-chevron-right"></i>
+        </button>
+    </footer>
+
+    <!-- STREAMING_CHUNK: Inicializando script de interactividad... -->
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 5;
+
+        // Función para cambiar de diapositiva de forma relativa (+1 o -1)
+        function changeSlide(direction) {
+            let next = currentSlide + direction;
+            if (next >= 1 && next <= totalSlides) {
+                goToSlide(next);
+            }
+        }
+
+        // Función para ir a una diapositiva específica
+        function goToSlide(slideNum) {
+            // Desactivar diapositiva actual
+            document.getElementById(`slide-${currentSlide}`).classList.remove('slide-active');
+            document.getElementById(`slide-${currentSlide}`).classList.add('slide-hidden');
+
+            // Activar nueva diapositiva
+            document.getElementById(`slide-${slideNum}`).classList.remove('slide-hidden');
+            document.getElementById(`slide-${slideNum}`).classList.add('slide-active');
+
+            currentSlide = slideNum;
+            updateControls();
+        }
+
+        // Función para actualizar estados de los botones e indicadores
+        function updateControls() {
+            // Actualizar botones de Anterior / Siguiente
+            document.getElementById('btn-prev').disabled = (currentSlide === 1);
+            document.getElementById('btn-next').disabled = (currentSlide === totalSlides);
+
+            // Actualizar estado visual de los círculos (dots)
+            const dotsContainer = document.getElementById('slide-dots');
+            const dots = dotsContainer.getElementsByTagName('button');
+
+            for (let i = 0; i < dots.length; i++) {
+                if (i + 1 === currentSlide) {
+                    dots[i].className = "w-3.5 h-3.5 rounded-full bg-electricCyan transition-all duration-300 ring-4 ring-electricCyan/30";
+                } else {
+                    dots[i].className = "w-2.5 h-2.5 rounded-full bg-white/20 hover:bg-white/35 transition-all duration-300";
+                }
+            }
+        }
+
+        // STREAMING_CHUNK: Agregando soporte para teclado y gestos...
+        // Controladores de eventos del teclado (Flechas Izquierda / Derecha)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                changeSlide(-1);
+            } else if (e.key === 'ArrowRight') {
+                changeSlide(1);
+            }
+        });
+
+        // Soporte de gestos táctiles sencillos para pantallas de dispositivos móviles
+        let touchStartX = 0;
+        let touchEndX = 0;
+        const slideContainer = document.querySelector('.slide-deck-container');
+
+        slideContainer.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, false);
+
+        slideContainer.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleGesture();
+        }, false);
+
+        function handleGesture() {
+            // Deslizamiento hacia la izquierda (Siguiente)
+            if (touchStartX - touchEndX > 50) {
+                changeSlide(1);
+            }
+            // Deslizamiento hacia la derecha (Anterior)
+            if (touchEndX - touchStartX > 50) {
+                changeSlide(-1);
+            }
+        }
+
+        // Inicializar controles en la carga de la página
+        window.onload = function() {
+            updateControls();
+        };
+    </script>
+</body>
+</html>
+```eof
+
+***
+
+### Resumen de la Presentación Generada:
+1. **Navegación Interactiva Fluida:** Puedes navegar por la presentación mediante las flechas de tu teclado (izquierda/derecha), deslizando los dedos en tu móvil o tableta, o haciendo clic en el panel de navegación de la barra inferior.
+2. **Atmósfera Cinematográfica:** El fondo cuenta con resplandores en neón cian que evocan la concentración y la paz mental idóneas para invitar al Espíritu.
+3. **Secciones de Debate Activo:** Cada diapositiva contiene una pregunta adaptada a la psicología del aprendizaje en adolescentes, evitando monólogos extensos y facilitando la participación en el aula.

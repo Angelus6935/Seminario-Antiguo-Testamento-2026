@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kaju Games: El Escáner de Verdades</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2 family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        title: ['Montserrat', 'sans-serif'],
+                    },
+                    colors: {
+                        darkBg: '#04050a',
+                        panelBg: '#090b14',
+                        cyanNeon: '#06b6d4',
+                        accentGold: '#fbbf24',
+                        accentRose: '#f43f5e',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Estilos personalizados para el slider de rango transparente */
+        .slider-overlay {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: ew-resize;
+        }
+        .slider-overlay::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 4px;
+            height: var(--thumb-height, 260px);
+            background: #06b6d4;
+            box-shadow: 0 0 10px #06b6d4, 0 0 20px #06b6d4;
+        }
+        .slider-overlay::-moz-range-thumb {
+            width: 4px;
+            height: var(--thumb-height, 260px);
+            background: #06b6d4;
+            box-shadow: 0 0 10px #06b6d4, 0 0 20px #06b6d4;
+            border: none;
+        }
+        /* Evita que el navegador intente hacer scroll vertical de la página
+           mientras el joven desliza el dedo horizontalmente sobre el escáner */
+        #drag-slider { touch-action: pan-x; }
+    </style>
+</head>
+<body class="bg-darkBg text-white min-h-screen flex flex-col justify-between font-sans relative overflow-x-hidden overflow-y-auto select-none">
+
+    <!-- Efecto ambiental de fondo -->
+    <div class="absolute -top-40 -left-40 w-96 h-96 bg-cyanNeon/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-rose-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+    <!-- AUDIO SYNTH (Sintetizador local para sonidos interactivos) -->
+    <script>
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function playSound(type) {
+            if (!audioCtx) audioCtx = new AudioCtx();
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'slide') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+                gain.gain.setValueAtTime(0.02, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                osc.start(now);
+                osc.stop(now + 0.12);
+            } else if (type === 'success') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.16); // G5
+                osc.frequency.setValueAtTime(1046.50, now + 0.24); // C6
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                osc.start(now);
+                osc.stop(now + 0.5);
+            } else if (type === 'error') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.linearRampToValueAtTime(80, now + 0.3);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'tap') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, now);
+                gain.gain.setValueAtTime(0.05, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            }
+        }
+    </script>
+
+    <!-- HEADER -->
+    <header class="w-full bg-black/40 border-b border-white/10 p-4 flex justify-between items-center z-10 backdrop-blur-md">
+        <div class="flex items-center gap-2">
+            <span class="bg-gradient-to-tr from-cyanNeon to-purple-600 text-white font-black px-3.5 py-1 rounded-xl font-title text-base tracking-wider">
+                KAJU!
+            </span>
+            <span class="text-xs uppercase tracking-widest text-slate-400 font-bold font-title hidden md:inline">El Escáner de Verdades</span>
+        </div>
+        <div class="text-xs font-semibold text-cyanNeon bg-cyanNeon/10 border border-cyanNeon/20 px-3 py-1 rounded-full">
+            <i class="fa-solid fa-expand mr-1"></i> Desliza y Compara
+        </div>
+    </header>
+
+    <!-- MAIN INTERACTIVE CONTAINER -->
+    <main class="flex-grow flex flex-col justify-center items-center p-4 w-full max-w-lg mx-auto z-10">
+        
+        <!-- PANTALLA 1: INICIO -->
+        <div id="screen-start" class="w-full bg-panelBg/80 border border-white/10 p-6 rounded-3xl text-center backdrop-blur-md shadow-2xl space-y-6">
+            <div class="w-16 h-16 mx-auto bg-gradient-to-tr from-cyanNeon to-purple-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg shadow-cyanNeon/20 animate-pulse">
+                <i class="fa-solid fa-mobile-screen-button"></i>
+            </div>
+            
+            <div class="space-y-2">
+                <h2 class="text-2xl md:text-3xl font-black font-title tracking-tight leading-tight">
+                    El Escáner <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-cyanNeon to-accentGold">Espiritual</span>
+                </h2>
+                <p class="text-xs md:text-sm text-slate-400 leading-relaxed">
+                    Las ideas del mundo se parecen un 99% a las verdades del Evangelio. Desliza la "Lupa del Espíritu" sobre los mensajes y descubre el sutil engaño.
+                </p>
+            </div>
+
+            <button onclick="startGame()" class="w-full bg-gradient-to-r from-cyanNeon to-purple-600 hover:from-cyanNeon/90 hover:to-purple-600/90 py-4 px-6 rounded-xl font-black font-title uppercase tracking-wider text-sm transition">
+                ¡Iniciar Escáner!
+            </button>
+        </div>
+
+        <!-- PANTALLA 2: JUEGO ACTIVO -->
+        <div id="screen-scanner" class="hidden w-full flex flex-col justify-between">
+            
+            <!-- Barra de Progreso e Instrucción -->
+            <div class="flex justify-between items-center mb-3">
+                <span class="text-[11px] font-black font-title text-cyanNeon uppercase tracking-widest" id="level-indicator">Escáner 1 de 3</span>
+                <span class="text-xs text-slate-400 font-bold">Desliza de izquierda a derecha</span>
+            </div>
+
+            <!-- CONTENEDOR DEL ESCÁNER DE DOBLE CAPA (Ancho Fijo 100% Responsivo) -->
+            <div class="relative w-full rounded-3xl overflow-hidden border border-white/10 shadow-2xl bg-black" style="height: clamp(220px, 40vh, 300px);" id="scanner-box">
+                
+                <!-- CAPA TRASERA: La Filosofía del Mundo (Tono Carmesí de Advertencia) -->
+                <div class="absolute inset-0 bg-gradient-to-br from-rose-950/30 to-[#0c0d14] p-5 flex flex-col justify-between">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-full bg-rose-500/20 flex items-center justify-center text-rose-400 text-xs font-bold">
+                                <i class="fa-solid fa-earth-americas"></i>
+                            </div>
+                            <span class="text-xs font-black font-title text-rose-400 uppercase tracking-wider">El Ojo del Mundo</span>
+                        </div>
+                        <span class="text-[11px] text-rose-400/50 font-bold uppercase tracking-widest bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/20">Filtro Inactivo</span>
+                    </div>
+
+                    <p id="text-world" class="text-sm md:text-base text-slate-200 leading-relaxed font-medium py-4">
+                        Cargando...
+                    </p>
+
+                    <div class="text-[11px] text-slate-500 font-bold uppercase tracking-wider border-t border-white/5 pt-2">
+                        <i class="fa-solid fa-triangle-exclamation text-rose-400 mr-1 animate-pulse"></i> Sutil imitación mundana
+                    </div>
+                </div>
+
+                <!-- CAPA DELANTERA: El Escáner de las Escrituras (Tono Cian del Espíritu) -->
+                <div id="scanner-mask" class="absolute inset-y-0 left-0 bg-gradient-to-br from-cyan-950/40 to-[#07090f] border-r-[3px] border-cyanNeon p-5 flex flex-col justify-between overflow-hidden" style="width: 50%;">
+                    
+                    <!-- Para evitar que el texto se deforme/encoja al deslizar, forzamos al hijo interno a tener el ancho completo de la caja padre -->
+                    <div id="scanner-inner-content" class="h-full flex flex-col justify-between" style="width: 100%;">
+                        
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-full bg-cyanNeon/20 flex items-center justify-center text-cyanNeon text-xs font-bold">
+                                    <i class="fa-solid fa-book-open"></i>
+                                </div>
+                                <span class="text-xs font-black font-title text-cyanNeon uppercase tracking-wider">La Lupa del Espíritu</span>
+                            </div>
+                            <span class="text-[11px] text-cyanNeon font-bold uppercase tracking-widest bg-cyanNeon/10 px-2 py-0.5 rounded-full border border-cyanNeon/20">Filtro Activo</span>
+                        </div>
+
+                        <p id="text-spirit" class="text-sm md:text-base text-white leading-relaxed font-bold py-4">
+                            Cargando...
+                        </p>
+
+                        <div class="text-[11px] text-cyanNeon font-bold uppercase tracking-wider border-t border-cyanNeon/20 pt-2 flex justify-between">
+                            <span><i class="fa-solid fa-check-double mr-1"></i> Verdad Revelada</span>
+                            <span id="scripture-ref" class="text-accentGold">Moisés 4:1-2</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SLIDER TRANSPARENTE SOBREPUESTO (Control táctil exacto) -->
+                <input type="range" min="0" max="100" value="50" id="drag-slider" class="absolute inset-0 w-full h-full opacity-100 slider-overlay z-30">
+            </div>
+
+            <!-- Pregunta de Validación (Para consolidar el aprendizaje activo) -->
+            <div class="bg-panelBg/80 border border-white/10 rounded-3xl p-5 mt-4 space-y-3">
+                <h4 class="text-xs font-black font-title text-accentGold uppercase tracking-widest flex items-center gap-1.5">
+                    <i class="fa-solid fa-circle-question"></i> ¿Cuál es la diferencia clave?
+                </h4>
+                <p id="level-question" class="text-xs md:text-sm text-slate-300 leading-snug">Cargando...</p>
+
+                <!-- Opciones de Respuesta -->
+                <div id="options-container" class="space-y-2 pt-2">
+                    <!-- Inyectado dinámicamente -->
+                </div>
+            </div>
+        </div>
+
+        <!-- PANTALLA 3: FELICITACIÓN FINAL -->
+        <div id="screen-win" class="hidden w-full bg-panelBg/80 border border-white/10 p-6 rounded-3xl text-center space-y-6">
+            <div class="w-20 h-20 mx-auto bg-accentGold/10 border-2 border-accentGold rounded-full flex items-center justify-center text-5xl text-accentGold shadow-xl shadow-accentGold/15 animate-bounce">
+                🏆
+            </div>
+
+            <div class="space-y-2">
+                <h2 class="text-2xl font-black font-title uppercase tracking-wider text-accentGold">¡Discernimiento Activado!</h2>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    Has escaneado con éxito todas las mentiras y revelado las verdades de las escrituras. Tu "ojo clínico" está listo para el lunes.
+                </p>
+            </div>
+
+            <div class="border border-dashed border-cyanNeon/30 bg-cyanNeon/5 rounded-2xl p-4 text-left">
+                <h4 class="text-xs font-bold font-title text-cyanNeon uppercase tracking-wider mb-1 flex items-center gap-1">
+                    <i class="fa-solid fa-lightbulb"></i> Lección del Profe:
+                </h4>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                    Las verdades más valiosas se descubren únicamente cuando decidimos <strong>no leer de forma pasiva</strong>. Al comparar línea por línea, el Espíritu Santo te guiará y te librará del engaño del mundo.
+                </p>
+            </div>
+
+            <button onclick="resetGame()" class="w-full bg-white text-black py-4 rounded-xl font-black font-title uppercase text-xs tracking-wider">
+                <i class="fa-solid fa-rotate-left mr-1"></i> Reiniciar Escáner
+            </button>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="w-full text-center p-4 bg-black/20 border-t border-white/5 text-[11px] text-slate-500">
+        Kaju Games &copy; 2026 - Herramientas Metodológicas de Seminario
+    </footer>
+
+    <!-- LÓGICA DE CONTROL DEL JUEGO -->
+    <script>
+        let currentLevel = 0;
+
+        // Banco de datos interactivo
+        const dataLevels = [
+            {
+                world: "El secreto del éxito consiste en enfocarte 100% en ti mismo. Busca tu propia gloria, controla tu entorno y elimina a cualquiera de tu vida que no te ayude a alcanzar tu cima personal.",
+                spirit: "Hágase tu voluntad, oh Padre, y sea tuya la gloria para siempre. Yo iré y enviaré a todos mis hijos con albedrío para que puedan elegir el amor y regresar a tu presencia.",
+                ref: "Moisés 4:1-2",
+                question: "¿Cuál es el contraste fundamental entre el mensaje del mundo y el plan del Salvador según Moisés 4?",
+                options: [
+                    { text: "Que el mundo nos invita a descansar y el Salvador a trabajar duro.", correct: false },
+                    { text: "El mundo busca la gloria propia y el control; el Salvador busca la gloria del Padre y respeta el albedrío.", correct: true },
+                    { text: "Que el plan del Salvador no requería ningún tipo de esfuerzo de nuestra parte.", correct: false }
+                ]
+            },
+            {
+                world: "Hay demasiadas dificultades y murallas inmensas en el camino hoy. Es mucho mejor quedarse en tu zona de confort, no arriesgarse ante gigantes escolares y esperar que las cosas pasen solas.",
+                spirit: "Subamos luego, y tomemos posesión de ella; porque más podremos nosotros que ellos. El Señor está con nosotros, no los temáis.",
+                ref: "Números 13:30",
+                question: "¿Qué diferencia crítica revela el reporte de Caleb frente a la opinión temerosa de los diez espías?",
+                options: [
+                    { text: "La fe proactiva que empuja a actuar hoy frente al miedo inerte que paraliza.", correct: true },
+                    { text: "Que Caleb poseía mejores armas físicas para combatir que los demás espías.", correct: false },
+                    { text: "Que las murallas de la Tierra Prometida eran de material muy débil.", correct: false }
+                ]
+            },
+            {
+                world: "Para sobrevivir en el futuro debes presumir tus logros, tener todas las respuestas lógicas en tu celular de inmediato y nunca mostrar vulnerabilidad o debilidad ante los demás.",
+                spirit: "Yo soy apenas un niño pequeño, y no sé cómo salir ni entrar. Concede, pues, a tu siervo un corazón que escuche para discernir entre lo bueno y lo malo.",
+                ref: "1 Reyes 3:7-9",
+                question: "¿Qué virtud de Salomón contrasta con el orgullo e individualismo que promueve el mundo hoy?",
+                options: [
+                    { text: "Que Salomón no tenía ningún tipo de estudios ni preparación real.", correct: false },
+                    { text: "La humilde vulnerabilidad al reconocer que necesitaba de Dios y pedir un corazón que escuche.", correct: true },
+                    { text: "Pedir un ejército sumamente poderoso para aplastar a todas las naciones vecinas.", correct: false }
+                ]
+            }
+        ];
+
+        function showScreen(id) {
+            const screens = ['screen-start', 'screen-scanner', 'screen-win'];
+            screens.forEach(s => {
+                const el = document.getElementById(s);
+                if (s === id) el.classList.remove('hidden');
+                else el.classList.add('hidden');
+            });
+        }
+
+        function startGame() {
+            playSound('success');
+            currentLevel = 0;
+            loadLevel();
+            showScreen('screen-scanner');
+            adjustInnerWidth();
+        }
+
+        // Función clave para forzar que el ancho del contenido interno del escáner coincida exactamente con el contenedor padre
+        // y que el "thumb" del slider siempre tenga el mismo alto que la caja, sin importar el tamaño del celular
+        function adjustInnerWidth() {
+            const box = document.getElementById('scanner-box');
+            const inner = document.getElementById('scanner-inner-content');
+            const slider = document.getElementById('drag-slider');
+            if (box && inner) {
+                inner.style.width = `${box.clientWidth}px`;
+            }
+            if (box && slider) {
+                slider.style.setProperty('--thumb-height', `${box.clientHeight}px`);
+            }
+        }
+
+        // Ajustar ancho en cambios de orientación de pantalla de celulares
+        window.addEventListener('resize', adjustInnerWidth);
+
+        function loadLevel() {
+            const lvl = dataLevels[currentLevel];
+            
+            document.getElementById('level-indicator').textContent = `Escáner ${currentLevel + 1} de ${dataLevels.length}`;
+            document.getElementById('text-world').textContent = lvl.world;
+            document.getElementById('text-spirit').textContent = lvl.spirit;
+            document.getElementById('scripture-ref').textContent = lvl.ref;
+            document.getElementById('level-question').textContent = lvl.question;
+
+            // Restablecer slider al centro (50%)
+            const slider = document.getElementById('drag-slider');
+            const mask = document.getElementById('scanner-mask');
+            slider.value = 50;
+            mask.style.width = "50%";
+
+            // Sincronizar el movimiento del deslizador de la máscara
+            slider.oninput = function() {
+                mask.style.width = `${this.value}%`;
+                if (this.value % 5 === 0) {
+                    playSound('slide'); // Emitir ruidos suaves de escaneo al arrastrar
+                }
+            };
+
+            // Renderizar las opciones
+            const optContainer = document.getElementById('options-container');
+            optContainer.innerHTML = '';
+
+            lvl.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 p-3 rounded-2xl text-xs font-semibold leading-relaxed transition flex items-start gap-3";
+                
+                // Prefijo visual de letras
+                const letters = ['A', 'B', 'C'];
+                btn.innerHTML = `
+                    <span class="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-[11px] font-black text-slate-400 flex-shrink-0">${letters[idx]}</span>
+                    <span>${opt.text}</span>
+                `;
+
+                btn.onclick = () => submitAnswer(btn, opt.correct);
+                optContainer.appendChild(btn);
+            });
+
+            adjustInnerWidth();
+        }
+
+        function submitAnswer(buttonElement, isCorrect) {
+            // Deshabilitar todas las opciones
+            const buttons = document.getElementById('options-container').getElementsByTagName('button');
+            for (let btn of buttons) {
+                btn.disabled = true;
+            }
+
+            if (isCorrect) {
+                playSound('success');
+                buttonElement.className = "w-full text-left bg-emerald-500/10 border border-emerald-500/40 p-3 rounded-2xl text-xs font-semibold leading-relaxed transition flex items-start gap-3 text-emerald-400";
+                
+                setTimeout(() => {
+                    nextLevel();
+                }, 2000);
+            } else {
+                playSound('error');
+                buttonElement.className = "w-full text-left bg-rose-500/10 border border-rose-500/40 p-3 rounded-2xl text-xs font-semibold leading-relaxed transition flex items-start gap-3 text-rose-400";
+                
+                // Permitir volver a intentar tras un segundo
+                setTimeout(() => {
+                    for (let btn of buttons) {
+                        btn.disabled = false;
+                    }
+                    buttonElement.className = "w-full text-left bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 p-3 rounded-2xl text-xs font-semibold leading-relaxed transition flex items-start gap-3";
+                }, 1200);
+            }
+        }
+
+        function nextLevel() {
+            if (currentLevel < dataLevels.length - 1) {
+                currentLevel++;
+                loadLevel();
+            } else {
+                showScreen('screen-win');
+                playSound('success');
+            }
+        }
+
+        function resetGame() {
+            playSound('tap');
+            showScreen('screen-start');
+        }
+    </script>
+
+</body>
+</html>

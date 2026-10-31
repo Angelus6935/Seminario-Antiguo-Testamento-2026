@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Para Esta Hora — El Tablero de Ester</title>
+<style>
+  :root{
+    --bg-deep:#0b1120;
+    --bg-panel:#131a2b;
+    --bg-panel-2:#1a2338;
+    --gold:#e3b341;
+    --gold-dim:#8a6d2c;
+    --cyan:#38e6e0;
+    --crimson:#c6474d;
+    --text:#edeef2;
+    --muted:#8892a6;
+    --radius:18px;
+    --serif: Georgia, "Times New Roman", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none;}
+  html,body{margin:0; padding:0; height:100%;}
+  body{
+    background:
+      radial-gradient(circle at 50% -10%, #1c2745 0%, var(--bg-deep) 55%),
+      var(--bg-deep);
+    color:var(--text);
+    font-family:var(--sans);
+    min-height:100vh;
+    min-height:100dvh;
+    display:flex;
+    justify-content:center;
+    padding: max(14px, env(safe-area-inset-top)) 14px max(20px, env(safe-area-inset-bottom));
+  }
+  #app{ width:100%; max-width:480px; display:flex; flex-direction:column; gap:16px; }
+
+  header{ text-align:center; padding-top:4px; }
+  .eyebrow{ font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--cyan); font-weight:600; }
+  h1.title{ font-family:var(--serif); font-size:26px; margin:4px 0 2px; letter-spacing:.01em; }
+  .subtitle{ color:var(--muted); font-size:13px; margin:0; }
+
+  .trail{ display:flex; gap:5px; justify-content:center; margin-top:14px; flex-wrap:wrap; }
+  .sq{
+    width:33px; height:33px; border-radius:9px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:15px; background:var(--bg-panel); border:1px solid #232d47;
+    color:var(--muted); transition:all .35s ease;
+  }
+  .sq.done{ background:linear-gradient(160deg, var(--gold), #b5842a); color:#1a1206; border-color:var(--gold); box-shadow:0 0 14px rgba(227,179,65,.45); }
+  .sq.active{ border-color:var(--cyan); color:var(--cyan); box-shadow:0 0 0 3px rgba(56,230,224,.15); }
+
+  .panel{ background:var(--bg-panel); border:1px solid #212b45; border-radius:var(--radius); padding:20px 18px; animation:rise .35s ease; }
+  @keyframes rise{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+  .kicker{ font-size:12px; color:var(--gold); font-weight:700; letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px; display:flex; align-items:center; gap:6px; }
+  h2.h{ font-family:var(--serif); font-size:20px; line-height:1.35; margin:0 0 10px; }
+  p.body-text{ color:#cfd4e2; font-size:15px; line-height:1.55; margin:0 0 14px; }
+  .quote-block{ border-left:3px solid var(--gold); padding:10px 14px; background:rgba(227,179,65,.06); border-radius:0 10px 10px 0; font-size:14px; font-style:italic; color:#e9dcb8; margin:12px 0; line-height:1.5; }
+  .quote-block cite{ display:block; font-style:normal; font-size:12px; color:var(--gold-dim); margin-top:6px; }
+  .verse-ref{ display:inline-block; background:rgba(56,230,224,.1); color:var(--cyan); border:1px solid rgba(56,230,224,.35); padding:2px 9px; border-radius:20px; font-size:12.5px; font-weight:600; margin:2px 4px 2px 0; }
+
+  .opt{ display:block; width:100%; text-align:left; background:var(--bg-panel-2); border:1px solid #2a3552; color:var(--text); padding:13px 14px; border-radius:12px; font-size:14.5px; margin-bottom:9px; cursor:pointer; font-family:var(--sans); transition:.15s ease; }
+  .opt:active{ transform:scale(.98); }
+  .opt.correct{ background:rgba(56,230,224,.14); border-color:var(--cyan); color:#d8fbfa; }
+  .opt.wrong{ background:rgba(198,71,77,.18); border-color:var(--crimson); color:#ffd8d9; }
+  .opt:disabled{ cursor:default; }
+
+  .feedback{ font-size:13.5px; line-height:1.5; padding:11px 13px; border-radius:10px; margin-top:6px; animation:rise .25s ease; }
+  .feedback.ok{ background:rgba(56,230,224,.1); color:#c7f7f5; border:1px solid rgba(56,230,224,.3);}
+  .feedback.no{ background:rgba(198,71,77,.12); color:#ffd9da; border:1px solid rgba(198,71,77,.3);}
+
+  .btn-primary{ width:100%; background:linear-gradient(160deg, var(--gold), #b5842a); color:#1a1206; border:none; padding:15px; border-radius:12px; font-size:15.5px; font-weight:700; cursor:pointer; font-family:var(--sans); box-shadow:0 4px 16px rgba(227,179,65,.25); }
+  .btn-primary:disabled{ opacity:.4; box-shadow:none; cursor:not-allowed; }
+  .btn-primary:active:not(:disabled){ transform:scale(.98); }
+  .btn-ghost{ width:100%; background:transparent; color:var(--cyan); border:1px solid rgba(56,230,224,.4); padding:13px; border-radius:12px; font-size:14px; font-weight:600; cursor:pointer; font-family:var(--sans); margin-top:8px; }
+
+  textarea{ width:100%; min-height:110px; background:var(--bg-panel-2); border:1px solid #2a3552; border-radius:12px; color:var(--text); font-family:var(--sans); font-size:14.5px; padding:12px; resize:vertical; }
+  textarea::placeholder{ color:#5b6580; }
+  input[type=text]{ width:100%; background:var(--bg-panel-2); border:1px solid #2a3552; border-radius:12px; color:var(--text); font-family:var(--sans); font-size:15px; padding:13px; }
+  .charcount{ font-size:12px; color:var(--muted); text-align:right; margin-top:4px;}
+
+  .score-pill{ display:inline-flex; align-items:center; gap:6px; background:rgba(227,179,65,.1); border:1px solid rgba(227,179,65,.35); color:var(--gold); font-weight:700; font-size:13px; padding:4px 12px; border-radius:20px; }
+  .top-row{ display:flex; justify-content:space-between; align-items:center; margin-bottom:2px; }
+
+  .crown{ font-size:46px; text-align:center; margin-bottom:4px; filter:drop-shadow(0 0 18px rgba(227,179,65,.5)); }
+  .final-score{ text-align:center; font-family:var(--serif); font-size:46px; color:var(--gold); margin:6px 0 0; }
+  .final-score span{ font-size:20px; color:var(--muted); font-family:var(--sans); }
+  .final-tier{ text-align:center; color:var(--cyan); font-size:15px; font-weight:600; margin-top:2px; }
+  .ss-box{ background:var(--bg-panel-2); border:1px dashed rgba(227,179,65,.4); border-radius:14px; padding:14px; font-size:13.5px; color:#cfd4e2; line-height:1.55; margin-top:14px; }
+  .ss-box b{ color:var(--gold); }
+  footer.hint{ text-align:center; color:var(--muted); font-size:11.5px; margin-top:2px; padding-bottom:6px; }
+  #confetti-canvas{ position:fixed; inset:0; pointer-events:none; z-index:5; }
+  .match-grid{ display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+  @media (max-width:360px){ .match-grid{ grid-template-columns:1fr; } }
+
+  /* ---------- MINIGAME SHARED UI ---------- */
+  .hud-row{ display:flex; justify-content:space-between; align-items:center; width:100%; font-size:13px; color:var(--muted); margin-bottom:6px; }
+  .hearts{ color:var(--crimson); font-size:14px; letter-spacing:2px; }
+  .hud-score{ color:var(--gold); font-weight:700; }
+  .timerbar-outer{ width:100%; height:6px; background:#1a2338; border-radius:4px; overflow:hidden; margin-bottom:10px; }
+  .timerbar-inner{ height:100%; background:linear-gradient(90deg,var(--cyan),var(--gold)); }
+  canvas.game-canvas{ background:#0d1428; border-radius:14px; border:1px solid #232d47; touch-action:none; display:block; margin:0 auto; max-width:100%; }
+  .dpad-row{ display:flex; gap:12px; justify-content:center; margin-top:10px; }
+  .dpad-btn{ width:60px; height:52px; border-radius:14px; background:var(--bg-panel-2); border:1px solid #2a3552; color:var(--text); font-size:20px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .dpad-btn:active{ background:#243052; }
+  .dpad-cross{ display:grid; grid-template-columns:repeat(3,52px); grid-template-rows:repeat(3,48px); gap:6px; justify-content:center; margin-top:10px; }
+  .dpad-cross .dpad-btn{ width:52px; height:48px; }
+  .game-instructions{ font-size:13px; color:var(--muted); text-align:center; margin-top:8px; line-height:1.4; }
+
+  .ms-grid{ display:grid; gap:5px; justify-content:center; margin:0 auto; max-width:300px; }
+  .ms-cell{ width:100%; aspect-ratio:1; border-radius:7px; background:var(--bg-panel-2); border:1px solid #2a3552; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:var(--text); cursor:pointer; }
+  .ms-cell.revealed{ background:#0d1428; border-color:#232d47; cursor:default; }
+  .ms-cell.mine{ background:rgba(198,71,77,.35); border-color:var(--crimson); }
+  .ms-cell.flag{ color:var(--gold); }
+  .ms-toolbar{ display:flex; justify-content:center; margin-bottom:10px; }
+</style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+<div id="app"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* =========================================================
+     CONFIG — editable por el maestro
+  ========================================================= */
+  const TEACHER_NAME = "el maestro José Ángel";
+  const TEACHER_WHATSAPP = ""; // poné tu número con código de país, ej "5491122334455", para activar el botón directo
+
+  /* =========================================================
+     AUDIO — Web Audio API, sin archivos externos
+  ========================================================= */
+  let actx;
+  function ac(){ if(!actx){ actx = new (window.AudioContext||window.webkitAudioContext)(); } return actx; }
+  function tone(freq, dur, type, vol, delay){
+    try{
+      const ctx = ac();
+      const t0 = ctx.currentTime + (delay||0);
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type||"sine";
+      osc.frequency.setValueAtTime(freq, t0);
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(vol||0.12, t0+0.015);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0+dur);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(t0); osc.stop(t0+dur+0.02);
+    }catch(e){}
+  }
+  const sfx = {
+    correct(){ tone(660,0.12,"sine",0.14,0); tone(880,0.16,"sine",0.12,0.08); },
+    wrong(){ tone(180,0.22,"sawtooth",0.10,0); },
+    tap(){ tone(420,0.05,"square",0.05,0); },
+    hit(){ tone(140,0.18,"square",0.12,0); },
+    levelup(){ [523,659,784,1046].forEach((f,i)=>tone(f,0.14,"triangle",0.11,i*0.09)); },
+    victory(){ [392,523,659,784,988].forEach((f,i)=>tone(f,0.22,"triangle",0.13,i*0.11)); }
+  };
+
+  /* =========================================================
+     ESCRITURAS INTEGRADAS (paráfrasis del manual + citas cortas verificadas)
+  ========================================================= */
+  const SCRIPTURES = {
+    escalera: {
+      eyebrow: "🪜 Etapa 1 · La subida de Ester",
+      title: "De huérfana a la casa del rey",
+      ref: "Ester 2:5–11, 15–17",
+      body: "Mardoqueo, primo de Ester, la había criado como su propia hija luego de que ella quedara huérfana. Cuando el rey Asuero destituyó a la reina Vasti y buscó una nueva reina, Ester fue llevada a la casa real junto con muchas otras jóvenes — sin haberlo planeado ni buscado.",
+      quote: null,
+      instructions: "Esquivá los obstáculos mientras 'subís' hacia el palacio. Cada obstáculo esquivado es un paso más en un camino que Ester no eligió, pero que Dios estaba preparando."
+    },
+    mina: {
+      eyebrow: "💣 Etapa 2 · El decreto oculto",
+      title: "Amán trama la destrucción de los judíos",
+      ref: "Ester 3:1–13",
+      body: "Amán, un alto funcionario del rey, se llenó de furia porque Mardoqueo no se inclinaba ante él. En su orgullo herido, tramó un decreto para destruir a todos los judíos del imperio — sin que Ester supiera todavía lo que se venía.",
+      quote: null,
+      instructions: "Revelá las casillas seguras sin activar el decreto oculto (💣). Cada casilla segura destapa una pieza más de la trama de Amán."
+    },
+    palacio: {
+      eyebrow: "🏯 Etapa 3 · Luto en la ciudad",
+      title: "Mardoqueo pide ayuda a Ester",
+      ref: "Ester 4:1–9",
+      body: "Al enterarse del decreto, Mardoqueo se vistió de cilicio y ceniza y se lamentó públicamente. Ester, angustiada, envió a su sirviente Hatac para saber qué pasaba — y Mardoqueo le hizo llegar una copia del decreto.",
+      quote: null,
+      instructions: "Recorré el palacio y juntá cada mensaje (los puntos dorados) mientras evitás a los guardias del decreto (👻). Cada mensaje es parte de lo que Mardoqueo necesita que Ester sepa."
+    },
+    carrera: {
+      eyebrow: "🏎️ Etapa 4 · La decisión",
+      title: "Para esta hora",
+      ref: "Ester 4:10–14",
+      body: "Mardoqueo le advirtió a Ester que ni siquiera ella escaparía del decreto quedándose callada en el palacio — y le hizo una pregunta que cambiaría todo.",
+      quote: { text: "¿Y quién sabe si para esta hora tú has llegado al reino?", cite: "Ester 4:14" },
+      instructions: "Corré hacia el trono esquivando obstáculos y juntando coraje (⭐) antes de que se acabe el tiempo."
+    }
+  };
+
+  /* =========================================================
+     ESTADO GLOBAL
+  ========================================================= */
+  const state = {
+    stage: "intro",
+    name: "",
+    score: 0,
+    maxScore: 200,
+    journal: "",
+    trailStages: ["escalera","mina","palacio","carrera","conexiones","reflexion","decision"],
+    sub: {},        // sub-fase de cada minijuego: 'intro' | 'play' | 'result'
+    mounted: {},    // evita re-montar un juego ya activo
+    results: {},    // resultado de cada minijuego
+    answered: {},
+    contextoIdx: 0,
+    conexIdx: 0,
+    decisionIdx: 0
+  };
+
+  function addScore(n){ state.score += n; }
+  function trailIndex(){ return state.trailStages.indexOf(state.stage); }
+
+  const app = document.getElementById("app");
+
+  function header(){
+    const idx = trailIndex();
+    let trailHtml = "";
+    if(idx > -1){
+      const icons = {escalera:"🪜",mina:"💣",palacio:"🏯",carrera:"🏎️",conexiones:"⚔️",reflexion:"🕊️",decision:"⚖️"};
+      trailHtml = `<div class="trail">` + state.trailStages.map((s,i)=>{
+        let cls = "sq";
+        if(i < idx) cls += " done";
+        else if(i === idx) cls += " active";
+        return `<div class="${cls}">${icons[s]}</div>`;
+      }).join("") + `</div>`;
+    }
+    return `
+      <header>
+        <div class="eyebrow">Ester · Para Esta Hora</div>
+        <h1 class="title">El Tablero de Ester</h1>
+        <p class="subtitle">Una misión arcade de Escrituras — Lección 94</p>
+        ${trailHtml}
+      </header>`;
+  }
+
+  function scoreRow(){
+    return `<div class="top-row"><span class="score-pill">👑 ${state.score} pts</span></div>`;
+  }
+
+  function render(){
+    app.innerHTML = renderers[state.stage]();
+    bind();
+    window.scrollTo(0,0);
+  }
+
+  /* =========================================================
+     STAGE: INTRO
+  ========================================================= */
+  function introHtml(){
+    return `
+      ${header()}
+      <div class="panel">
+        <div class="kicker">♟️ Antes de empezar</div>
+        <h2 class="h">El Padre Celestial mueve las piezas</h2>
+        <p class="body-text">
+          El Élder Ronald A. Rasband enseñó que nuestra vida es como un tablero de ajedrez,
+          y que el Señor nos mueve de un lugar a otro cuando somos receptivos al Espíritu.
+          Ester, una huérfana judía exiliada en Persia, no eligió las circunstancias que la
+          pusieron cerca del rey — pero esas circunstancias la colocaron "para esta hora".
+        </p>
+        <p class="body-text">
+          Vas a jugar 4 desafíos arcade distintos. Cada uno trae su propia Escritura — no
+          necesitás buscar nada, va apareciendo solo. Al final vas a ver tu puntaje total.
+        </p>
+        <p class="body-text" style="margin-bottom:6px;">¿Cómo te llamas?</p>
+        <input type="text" id="nameInput" placeholder="Tu nombre" maxlength="24">
+        <button class="btn-primary" id="startBtn" style="margin-top:12px;">Comenzar la misión</button>
+      </div>
+      <footer class="hint">Funciona sin conexión. Usá los botones en pantalla o las flechas del teclado.</footer>
+    `;
+  }
+
+  /* =========================================================
+     SCRIPTURE INTRO / RESULT PANELS (compartidos por los 4 minijuegos)
+  ========================================================= */
+  function scriptureIntroHtml(stageKey, playLabel){
+    const s = SCRIPTURES[stageKey];
+    return `
+      ${header()}
+      ${scoreRow()}
+      <div class="panel">
+        <div class="kicker">${s.eyebrow}</div>
+        <h2 class="h">${s.title}</h2>
+        <p class="body-text"><span class="verse-ref">${s.ref}</span></p>
+        <p class="body-text">${s.body}</p>
+        <p class="body-text" style="color:var(--cyan); font-size:13.5px;">🕹️ ${s.instructions}</p>
+        <button class="btn-primary" id="playBtn">${playLabel||"Jugar"}</button>
+      </div>
+    `;
+  }
+
+  function scriptureResultHtml(stageKey, nextLabel){
+    const s = SCRIPTURES[stageKey];
+    const r = state.results[stageKey] || {};
+    let outcomeMsg = "¡Buen trabajo!";
+    if(r.reason === "lose") outcomeMsg = "No lo lograste del todo, pero sumaste puntos igual — la historia sigue.";
+    if(r.reason === "timeout") outcomeMsg = "Se acabó el tiempo, pero avanzaste bastante.";
+    if(r.reason === "win") outcomeMsg = "¡Completaste el desafío!";
+    return `
+      ${header()}
+      ${scoreRow()}
+      <div class="panel">
+        <div class="kicker">${s.eyebrow}</div>
+        <h2 class="h">+${r.pts||0} puntos</h2>
+        <p class="body-text">${outcomeMsg}</p>
+        ${s.quote ? `
+          <div class="quote-block">
+            "${s.quote.text}"
+            <cite>${s.quote.cite}</cite>
+          </div>
+        ` : ""}
+        <button class="btn-primary" id="nextStageBtn">${nextLabel||"Continuar"}</button>
+      </div>
+    `;
+  }
+
+  /* =========================================================
+     LANE GAME (motor reutilizado para "Escalera" y "Carrera")
+  ========================================================= */
+  function runLaneGame(container, opts, onEnd){
+    container.innerHTML = `
+      <div class="hud-row">
+        <span class="hearts" id="lgLives">❤️❤️❤️</span>
+        <span class="hud-score" id="lgScore">0 pts</span>
+        <span id="lgTime">${Math.ceil(opts.duration/1000)}s</span>
+      </div>
+      <div class="timerbar-outer"><div class="timerbar-inner" id="lgTimerBar" style="width:100%"></div></div>
+      <canvas id="lgCanvas" class="game-canvas" width="280" height="360"></canvas>
+      <div class="dpad-row">
+        <button class="dpad-btn" id="lgLeft">◀</button>
+        <button class="dpad-btn" id="lgRight">▶</button>
+      </div>
+      <p class="game-instructions">Tocá ◀ ▶, deslizá sobre el tablero, o usá las flechas del teclado.</p>
+    `;
+    const canvas = document.getElementById("lgCanvas");
+    const ctx = canvas.getContext("2d");
+    const lanes = opts.lanes;
+    const laneW = canvas.width / lanes;
+    let playerLane = Math.floor(lanes/2);
+    const playerY = canvas.height - 46;
+    let lives = 3, collected = 0, running = true;
+    let entities = [];
+    let spawnTimer = 0;
+    const startTime = performance.now();
+    let rafId;
+
+    function laneX(l){ return l*laneW + laneW/2; }
+
+    function spawn(){
+      const lane = Math.floor(Math.random()*lanes);
+      const isObstacle = Math.random() < 0.68;
+      entities.push({ lane, y: -20, type: isObstacle?"obstacle":"collect" });
+    }
+
+    function currentSpeed(elapsedRatio){
+      return opts.speedStart + (opts.speedMax - opts.speedStart) * elapsedRatio;
+    }
+    function currentSpawnInterval(elapsedRatio){
+      return opts.spawnStart - (opts.spawnStart - opts.spawnMin) * elapsedRatio;
+    }
+
+    function setLane(delta){
+      playerLane = Math.max(0, Math.min(lanes-1, playerLane+delta));
+      sfx.tap();
+    }
+    document.getElementById("lgLeft").onclick = ()=> setLane(-1);
+    document.getElementById("lgRight").onclick = ()=> setLane(1);
+
+    function keyHandler(e){
+      if(e.key === "ArrowLeft") setLane(-1);
+      if(e.key === "ArrowRight") setLane(1);
+    }
+    window.addEventListener("keydown", keyHandler);
+
+    let touchX = null;
+    canvas.addEventListener("touchstart", (e)=>{ touchX = e.touches[0].clientX; });
+    canvas.addEventListener("touchend", (e)=>{
+      if(touchX===null) return;
+      const dx = e.changedTouches[0].clientX - touchX;
+      if(dx < -25) setLane(-1);
+      else if(dx > 25) setLane(1);
+      touchX = null;
+    });
+
+    let lastTs = performance.now();
+    function loop(ts){
+      if(!running) return;
+      const dt = ts - lastTs; lastTs = ts;
+      const elapsed = ts - startTime;
+      const remaining = Math.max(0, opts.duration - elapsed);
+      const ratio = Math.min(1, elapsed/opts.duration);
+
+      spawnTimer -= dt;
+      if(spawnTimer <= 0){ spawn(); spawnTimer = currentSpawnInterval(ratio); }
+
+      const spd = currentSpeed(ratio) * (dt/16.67);
+      entities.forEach(en=>{ en.y += spd; });
+
+      entities = entities.filter(en=>{
+        if(en.y > playerY-22 && en.y < playerY+22 && en.lane === playerLane && !en.resolved){
+          en.resolved = true;
+          if(en.type === "obstacle"){ lives--; sfx.hit(); }
+          else { collected++; sfx.correct(); }
+          return false;
+        }
+        return en.y < canvas.height + 25;
+      });
+
+      draw(ratio);
+
+      document.getElementById("lgLives").textContent = "❤️".repeat(Math.max(0,lives)) + "🖤".repeat(3-Math.max(0,lives));
+      document.getElementById("lgScore").textContent = (collected*4) + " pts";
+      document.getElementById("lgTime").textContent = Math.ceil(remaining/1000) + "s";
+      document.getElementById("lgTimerBar").style.width = (remaining/opts.duration*100) + "%";
+
+      if(lives <= 0){ return end("lose"); }
+      if(remaining <= 0){ return end("win"); }
+      rafId = requestAnimationFrame(loop);
+    }
+
+    function draw(ratio){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      const grad = ctx.createLinearGradient(0,0,0,canvas.height);
+      grad.addColorStop(0, opts.bgTop); grad.addColorStop(1, opts.bgBottom);
+      ctx.fillStyle = grad; ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.strokeStyle = "rgba(255,255,255,0.06)";
+      for(let i=1;i<lanes;i++){
+        ctx.beginPath(); ctx.moveTo(i*laneW,0); ctx.lineTo(i*laneW,canvas.height); ctx.stroke();
+      }
+      ctx.font = "26px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
+      entities.forEach(en=>{
+        ctx.fillText(en.type==="obstacle"?opts.obstacleEmoji:opts.collectEmoji, laneX(en.lane), en.y);
+      });
+      ctx.font = "30px sans-serif";
+      ctx.fillText(opts.playerEmoji, laneX(playerLane), playerY);
+    }
+
+    function end(reason){
+      running = false;
+      cancelAnimationFrame(rafId);
+      window.removeEventListener("keydown", keyHandler);
+      const pts = Math.max(0, Math.min(30, Math.round(collected*4 + Math.max(0,lives)*3)));
+      onEnd(pts, {reason, collected, lives});
+    }
+
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function mountEscalera(container, onEnd){
+    runLaneGame(container, {
+      lanes:3, duration:20000,
+      speedStart:2.0, speedMax:4.6,
+      spawnStart:900, spawnMin:420,
+      playerEmoji:"🧗", obstacleEmoji:"⛔", collectEmoji:"✨",
+      bgTop:"#0d1428", bgBottom:"#1a2748"
+    }, onEnd);
+  }
+
+  function mountCarrera(container, onEnd){
+    runLaneGame(container, {
+      lanes:4, duration:22000,
+      speedStart:2.6, speedMax:5.4,
+      spawnStart:800, spawnMin:360,
+      playerEmoji:"🏎️", obstacleEmoji:"🚧", collectEmoji:"⭐",
+      bgTop:"#141018", bgBottom:"#241a26"
+    }, onEnd);
+  }
+
+  /* =========================================================
+     BUSCAMINAS ("El decreto oculto")
+  ========================================================= */
+  function mountMinesweeper(container, onEnd){
+    const rows=5, cols=6, mineCount=6, timeLimit=45;
+    const total = rows*cols;
+    const mines = new Array(total).fill(false);
+    let placed=0;
+    while(placed < mineCount){
+      const idx = Math.floor(Math.random()*total);
+      if(!mines[idx]){ mines[idx]=true; placed++; }
+    }
+    function neighbors(idx){
+      const r = Math.floor(idx/cols), c = idx%cols, out=[];
+      for(let dr=-1; dr<=1; dr++) for(let dc=-1; dc<=1; dc++){
+        if(dr===0 && dc===0) continue;
+        const nr=r+dr, nc=c+dc;
+        if(nr>=0 && nr<rows && nc>=0 && nc<cols) out.push(nr*cols+nc);
+      }
+      return out;
+    }
+    const counts = mines.map((m,idx)=> m ? -1 : neighbors(idx).filter(n=>mines[n]).length);
+    const revealed = new Array(total).fill(false);
+    const flagged = new Array(total).fill(false);
+    const totalSafe = total - mineCount;
+    let revealedSafe = 0;
+    let revealMode = true;
+    let timeLeft = timeLimit;
+    let ended = false;
+
+    container.innerHTML = `
+      <div class="hud-row">
+        <span id="msSafe">${revealedSafe}/${totalSafe} seguras</span>
+        <span id="msTime">${timeLeft}s</span>
+      </div>
+      <div class="timerbar-outer"><div class="timerbar-inner" id="msTimerBar" style="width:100%"></div></div>
+      <div class="ms-toolbar"><button class="btn-ghost" id="msToggle" style="max-width:220px;">Modo: Revelar 🔍 (tocá para marcar 🚩)</button></div>
+      <div class="ms-grid" id="msGrid" style="grid-template-columns:repeat(${cols},1fr);"></div>
+      <p class="game-instructions">Revelá casillas seguras sin tocar un decreto oculto (💣).</p>
+    `;
+    const grid = document.getElementById("msGrid");
+    const cellEls = [];
+    for(let i=0;i<total;i++){
+      const btn = document.createElement("button");
+      btn.className = "ms-cell";
+      btn.onclick = ()=> handleTap(i);
+      grid.appendChild(btn);
+      cellEls.push(btn);
+    }
+    document.getElementById("msToggle").onclick = ()=>{
+      revealMode = !revealMode;
+      document.getElementById("msToggle").textContent = revealMode ? "Modo: Revelar 🔍 (tocá para marcar 🚩)" : "Modo: Marcar 🚩 (tocá para revelar 🔍)";
+      sfx.tap();
+    };
+
+    function floodReveal(start){
+      const stack=[start];
+      while(stack.length){
+        const idx = stack.pop();
+        if(revealed[idx] || flagged[idx]) continue;
+        revealed[idx] = true;
+        if(!mines[idx]) revealedSafe++;
+        if(counts[idx] === 0 && !mines[idx]){
+          neighbors(idx).forEach(n=>{ if(!revealed[n]) stack.push(n); });
+        }
+      }
+    }
+
+    function paint(){
+      for(let i=0;i<total;i++){
+        const el = cellEls[i];
+        el.className = "ms-cell";
+        el.textContent = "";
+        if(flagged[i] && !revealed[i]){ el.classList.add("flag"); el.textContent="🚩"; }
+        else if(revealed[i]){
+          el.classList.add("revealed");
+          if(mines[i]){ el.classList.add("mine"); el.textContent="💣"; }
+          else if(counts[i] > 0){ el.textContent = counts[i]; }
+        }
+      }
+      document.getElementById("msSafe").textContent = `${revealedSafe}/${totalSafe} seguras`;
+    }
+
+    function handleTap(i){
+      if(ended || revealed[i]) return;
+      if(!revealMode){
+        flagged[i] = !flagged[i];
+        sfx.tap();
+        paint();
+        return;
+      }
+      if(flagged[i]) return;
+      if(mines[i]){
+        revealed[i] = true;
+        mines.forEach((m,idx)=>{ if(m) revealed[idx]=true; });
+        sfx.hit();
+        paint();
+        return finish("lose");
+      }
+      floodReveal(i);
+      sfx.correct();
+      paint();
+      if(revealedSafe >= totalSafe) return finish("win");
+    }
+
+    const timer = setInterval(()=>{
+      if(ended) return;
+      timeLeft--;
+      document.getElementById("msTime").textContent = timeLeft+"s";
+      document.getElementById("msTimerBar").style.width = (timeLeft/timeLimit*100)+"%";
+      if(timeLeft<=0) finish("timeout");
+    }, 1000);
+
+    function finish(reason){
+      if(ended) return;
+      ended = true;
+      clearInterval(timer);
+      let pts;
+      if(reason==="win") pts = 30;
+      else if(reason==="lose") pts = Math.round(30*(revealedSafe/totalSafe)*0.6);
+      else pts = Math.round(30*(revealedSafe/totalSafe));
+      onEnd(Math.max(0,Math.min(30,pts)), {reason, revealedSafe, totalSafe});
+    }
+  }
+
+  /* =========================================================
+     PALACIO ("Pac-Man" — recolectar mensajes, esquivar guardias)
+  ========================================================= */
+  function mountPalacio(container, onEnd){
+    const MAZE = [
+      "###########",
+      "#.........#",
+      "#.##.#.##.#",
+      "#.........#",
+      "#.#.###.#.#",
+      "#.........#",
+      "#.##.#.##.#",
+      "#.........#",
+      "###########"
+    ];
+    const rows = MAZE.length, cols = MAZE[0].length, cell = 25;
+    const pellets = [];
+    for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) if(MAZE[r][c]===".") pellets.push({r,c,got:false});
+    const totalPellets = pellets.length;
+    let collected = 0;
+    const player = { r:1, c:1 };
+    const ghosts = [ { r:1, c:9, dir:{dr:0,dc:-1} }, { r:7, c:9, dir:{dr:0,dc:-1} } ];
+    let lives = 3, ended = false, timeLeft = 75;
+
+    function eatAt(r,c){
+      const p = pellets.find(p=>p.r===r && p.c===c && !p.got);
+      if(p){ p.got = true; collected++; sfx.correct(); }
+    }
+    eatAt(player.r, player.c);
+
+    container.innerHTML = `
+      <div class="hud-row">
+        <span class="hearts" id="pzLives">❤️❤️❤️</span>
+        <span class="hud-score" id="pzScore">${collected}/${totalPellets} 📜</span>
+        <span id="pzTime">${timeLeft}s</span>
+      </div>
+      <div class="timerbar-outer"><div class="timerbar-inner" id="pzTimerBar" style="width:100%"></div></div>
+      <canvas id="pzCanvas" class="game-canvas" width="${cols*cell}" height="${rows*cell}"></canvas>
+      <div class="dpad-cross">
+        <div></div><button class="dpad-btn" id="pzUp">▲</button><div></div>
+        <button class="dpad-btn" id="pzLeft">◀</button><div></div><button class="dpad-btn" id="pzRight">▶</button>
+        <div></div><button class="dpad-btn" id="pzDown">▼</button><div></div>
+      </div>
+    `;
+    const canvas = document.getElementById("pzCanvas");
+    const ctx = canvas.getContext("2d");
+
+    function isWall(r,c){ return MAZE[r][c] === "#"; }
+
+    function validGhostDirs(g){
+      const dirs = [{dr:-1,dc:0},{dr:1,dc:0},{dr:0,dc:-1},{dr:0,dc:1}];
+      return dirs.filter(d=> !isWall(g.r+d.dr, g.c+d.dc));
+    }
+
+    function moveGhosts(){
+      ghosts.forEach(g=>{
+        const opts = validGhostDirs(g);
+        const notReverse = opts.filter(d=> !(d.dr===-g.dir.dr && d.dc===-g.dir.dc));
+        const pool = notReverse.length ? notReverse : opts;
+        const pick = pool[Math.floor(Math.random()*pool.length)] || g.dir;
+        g.dir = pick;
+        g.r += pick.dr; g.c += pick.dc;
+      });
+    }
+
+    function checkCollision(){
+      return ghosts.some(g=> g.r===player.r && g.c===player.c);
+    }
+
+    function resetPositions(){
+      player.r=1; player.c=1;
+      ghosts[0].r=1; ghosts[0].c=9;
+      ghosts[1].r=7; ghosts[1].c=9;
+    }
+
+    function tryMove(dr,dc){
+      if(ended) return;
+      const nr = player.r+dr, nc = player.c+dc;
+      if(isWall(nr,nc)) return;
+      player.r = nr; player.c = nc;
+      eatAt(nr,nc);
+      moveGhosts();
+      if(checkCollision()){
+        lives--; sfx.hit();
+        if(lives<=0){ draw(); return finish("lose"); }
+        resetPositions();
+      }
+      draw();
+      document.getElementById("pzScore").textContent = `${collected}/${totalPellets} 📜`;
+      document.getElementById("pzLives").textContent = "❤️".repeat(Math.max(0,lives)) + "🖤".repeat(3-Math.max(0,lives));
+      if(collected >= totalPellets) return finish("win");
+    }
+
+    document.getElementById("pzUp").onclick = ()=> tryMove(-1,0);
+    document.getElementById("pzDown").onclick = ()=> tryMove(1,0);
+    document.getElementById("pzLeft").onclick = ()=> tryMove(0,-1);
+    document.getElementById("pzRight").onclick = ()=> tryMove(0,1);
+    function keyHandler(e){
+      if(e.key==="ArrowUp") tryMove(-1,0);
+      if(e.key==="ArrowDown") tryMove(1,0);
+      if(e.key==="ArrowLeft") tryMove(0,-1);
+      if(e.key==="ArrowRight") tryMove(0,1);
+    }
+    window.addEventListener("keydown", keyHandler);
+
+    function draw(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle = "#0d1428"; ctx.fillRect(0,0,canvas.width,canvas.height);
+      for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+        if(MAZE[r][c]==="#"){
+          ctx.fillStyle = "#1a2338";
+          ctx.fillRect(c*cell, r*cell, cell, cell);
+        }
+      }
+      ctx.fillStyle = "#e3b341";
+      pellets.forEach(p=>{
+        if(!p.got){
+          ctx.beginPath();
+          ctx.arc(p.c*cell+cell/2, p.r*cell+cell/2, 3.2, 0, Math.PI*2);
+          ctx.fill();
+        }
+      });
+      ctx.font = (cell-4)+"px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
+      ghosts.forEach(g=> ctx.fillText("👻", g.c*cell+cell/2, g.r*cell+cell/2));
+      ctx.fillText("😊", player.c*cell+cell/2, player.r*cell+cell/2);
+    }
+    draw();
+
+    const timer = setInterval(()=>{
+      if(ended) return;
+      timeLeft--;
+      document.getElementById("pzTime").textContent = timeLeft+"s";
+      document.getElementById("pzTimerBar").style.width = (timeLeft/75*100)+"%";
+      if(timeLeft<=0) finish("timeout");
+    }, 1000);
+
+    function finish(reason){
+      if(ended) return;
+      ended = true;
+      clearInterval(timer);
+      window.removeEventListener("keydown", keyHandler);
+      let pts;
+      if(reason==="win") pts = 30;
+      else if(reason==="lose") pts = Math.round(30*(collected/totalPellets)*0.6);
+      else pts = Math.round(30*(collected/totalPellets));
+      onEnd(Math.max(0,Math.min(30,pts)), {reason, collected, totalPellets});
+    }
+  }
+
+  /* =========================================================
+     RENDER: minijuego wrapper (intro / play / result)
+  ========================================================= */
+  function minigameHtml(stageKey){
+    const sub = state.sub[stageKey] || "intro";
+    if(sub === "intro") return scriptureIntroHtml(stageKey, "Jugar");
+    if(sub === "result") return scriptureResultHtml(stageKey, nextLabelFor(stageKey));
+    return `${header()}${scoreRow()}<div class="panel"><div class="kicker">${SCRIPTURES[stageKey].eyebrow}</div><div id="gameMount"></div></div>`;
+  }
+  function nextLabelFor(stageKey){
+    const map = { escalera:"Ir al decreto oculto", mina:"Ir al palacio en luto", palacio:"Ir a la carrera final", carrera:"Ir a las conexiones" };
+    return map[stageKey] || "Continuar";
+  }
+  function nextStageFor(stageKey){
+    const order = ["escalera","mina","palacio","carrera","conexiones"];
+    const i = order.indexOf(stageKey);
+    return order[i+1];
+  }
+
+  /* =========================================================
+     STAGE: CONEXIONES (match rounds)
+  ========================================================= */
+  const conexRounds = [
+    {
+      principle: "Un estratega que analiza cada jugada del destino varios pasos por adelantado — como la metáfora del ajedrez del Élder Rasband sobre la mano de Dios en nuestra vida.",
+      opts: ["Shikamaru Nara (Naruto)","Naruto Uzumaki","Rock Lee","Sasuke Uchiha"],
+      correct: 0,
+      exp: "Shikamaru es reconocido como el estratega que 've el tablero completo' — igual que la idea de que Dios mueve piezas con anticipación en nuestra vida."
+    },
+    {
+      principle: "Un joven que hereda un poder enorme que no pidió, y pasa gran parte de su historia dudando si de verdad es digno de ese rol — lo que hoy llamaríamos 'síndrome del impostor'.",
+      opts: ["Katsuki Bakugo","Izuku Midoriya (My Hero Academia)","Tenya Iida","Shoto Todoroki"],
+      correct: 1,
+      exp: "Izuku duda constantemente de merecer One For All — un paralelo directo con la primera reacción de Ester: 'yo no puedo hacer esto'."
+    },
+    {
+      principle: "Un joven que no eligió su misión (fue elegido por un accidente que no buscó), y sin embargo decide cargar con esa responsabilidad para proteger a otros.",
+      opts: ["Zenitsu Agatsuma","Nezuko Kamado","Itadori Yuji (Jujutsu Kaisen)","Kyojuro Rengoku"],
+      correct: 2,
+      exp: "Itadori no eligió tragar el dedo de Sukuna, pero elige usar esa carga para proteger a otros — igual que Ester acepta su 'para esta hora' sin haberlo buscado."
+    }
+  ];
+
+  function conexionesHtml(){
+    const i = state.conexIdx||0;
+    const item = conexRounds[i];
+    const answered = state.answered["conex"+i];
+    return `
+      ${header()}
+      ${scoreRow()}
+      <div class="panel">
+        <div class="kicker">⚔️ Etapa 5 · Conexiones (${i+1}/${conexRounds.length})</div>
+        <h2 class="h" style="font-size:16.5px;">${item.principle}</h2>
+        <p class="body-text" style="margin-bottom:8px; color:var(--muted); font-size:13px;">¿A quién describe mejor este principio?</p>
+        <div class="match-grid" id="optsWrap">
+          ${item.opts.map((o,idx)=>`<button class="opt" data-idx="${idx}" ${answered?"disabled":""}>${o}</button>`).join("")}
+        </div>
+        <div id="fbWrap"></div>
+        <button class="btn-primary" id="nextBtn" style="margin-top:10px; display:${answered?"block":"none"};">
+          ${i < conexRounds.length-1 ? "Siguiente conexión" : "Continuar a la reflexión"}
+        </button>
+      </div>
+    `;
+  }
+
+  /* =========================================================
+     STAGE: REFLEXION (journal)
+  ========================================================= */
+  function reflexionHtml(){
+    const len = (state.journal||"").length;
+    const canContinue = len >= 25;
+    return `
+      ${header()}
+      ${scoreRow()}
+      <div class="panel">
+        <div class="kicker">🕊️ Etapa 6 · Tu diario</div>
+        <h2 class="h">¿Quién está en tu vida "para esta hora"?</h2>
+        <p class="body-text">
+          Pensá en alguien de tu familia, tu colegio o tu barrio. Escribí su nombre y una
+          evidencia de que el Padre Celestial pudo haberlo puesto en tu vida en este momento
+          — o de que Él te puso a vos cerca de esa persona por una razón.
+        </p>
+        <textarea id="journalInput" placeholder="Escribí acá tu reflexión (mínimo unas líneas)...">${state.journal||""}</textarea>
+        <div class="charcount">${len} caracteres</div>
+        <button class="btn-primary" id="journalBtn" ${canContinue?"":"disabled"}>Guardar y continuar</button>
+      </div>
+      <footer class="hint">Esto queda solo en tu celular — nadie más lo lee salvo que vos lo compartas.</footer>
+    `;
+  }
+
+  /* =========================================================
+     STAGE: DECISION (scenarios)
+  ========================================================= */
+  const decisionScenarios = [
+    {
+      s: "Te das cuenta de que un compañero está siendo molestado por otros en el recreo, y nadie más parece notarlo o animarse a actuar.",
+      opts: [
+        "No es asunto mío. Además, no soy nadie importante en el curso.",
+        "Aunque me dé nervios, quizás estoy 'para esta hora' — le aviso a un adulto o me acerco a acompañarlo."
+      ],
+      correct: 1,
+      exp: "Como Mardoqueo le recordó a Ester, no hace falta sentirse 'importante' para ser el instrumento correcto en el momento correcto."
+    },
+    {
+      s: "En tu casa te piden ayudar con algo que no te gusta nada (cuidar a un hermano menor, una tarea familiar) justo cuando tenías otros planes.",
+      opts: [
+        "Me escapo del compromiso — seguro alguien más lo resuelve.",
+        "Puede que Dios me esté poniendo ahí en este momento por una razón, aunque no sea lo que planeaba."
+      ],
+      correct: 1,
+      exp: "Ester tampoco eligió sus circunstancias, pero decidió actuar en el lugar donde fue puesta — sin esperar el momento 'ideal'."
+    }
+  ];
+
+  function decisionHtml(){
+    const i = state.decisionIdx||0;
+    const item = decisionScenarios[i];
+    const answered = state.answered["dec"+i];
+    return `
+      ${header()}
+      ${scoreRow()}
+      <div class="panel">
+        <div class="kicker">⚖️ Etapa 7 · Decisión (${i+1}/${decisionScenarios.length})</div>
+        <h2 class="h" style="font-size:16.5px;">${item.s}</h2>
+        <div id="optsWrap">
+          ${item.opts.map((o,idx)=>`<button class="opt" data-idx="${idx}" ${answered?"disabled":""}>${o}</button>`).join("")}
+        </div>
+        <div id="fbWrap"></div>
+        <button class="btn-primary" id="nextBtn" style="margin-top:10px; display:${answered?"block":"none"};">
+          ${i < decisionScenarios.length-1 ? "Siguiente escena" : "Ver mi resultado final"}
+        </button>
+      </div>
+    `;
+  }
+
+  /* =========================================================
+     STAGE: FINAL
+  ========================================================= */
+  function tierMessage(pct){
+    if(pct >= 85) return "Como Ester frente al rey: estás dispuesto/a a actuar aunque el momento dé miedo. 👑";
+    if(pct >= 60) return "Vas reconociendo tu 'para esta hora' — seguí prestando atención a las señales del Espíritu.";
+    return "Toda misión empieza con dudas. Ester también dudó al principio — lo importante es seguir intentando.";
+  }
+
+  function finalHtml(){
+    const pct = Math.round((state.score/state.maxScore)*100);
+    const nameShown = state.name ? state.name : "Alumno/a";
+    const waMsg = encodeURIComponent(`Hola ${TEACHER_NAME}, completé la actividad "Para Esta Hora" de Ester. Mi puntaje: ${state.score}/${state.maxScore} (${pct}%). — ${nameShown}`);
+    const waLink = TEACHER_WHATSAPP ? `https://wa.me/${TEACHER_WHATSAPP}?text=${waMsg}` : "";
+    return `
+      ${header()}
+      <div class="panel" id="finalPanel">
+        <div class="crown">👑</div>
+        <p class="final-tier" style="color:var(--muted); text-transform:uppercase; letter-spacing:.08em; font-size:12px;">${nameShown} · Misión completa</p>
+        <p class="final-score">${state.score}<span>/${state.maxScore} pts</span></p>
+        <p class="final-tier">${tierMessage(pct)}</p>
+
+        <div class="quote-block" style="margin-top:16px;">
+          "El Padre Celestial puede colocarnos en situaciones con cierta intención específica en mente."
+          <cite>Élder Ronald A. Rasband, "Por designio divino", Liahona, nov. 2017</cite>
+        </div>
+
+        <p class="body-text" style="margin-top:14px; text-align:center; font-size:14px; color:#d8dce8;">
+          El Señor tiene planes para nosotros y debemos trabajar para descubrirlos. No tengamos miedo
+          de ser elegidos ni de creer en nuestra capacidad de lograr el éxito, porque el Señor nos ha
+          preparado para este momento. Confiemos en la confianza que Él tiene en nosotros y busquemos
+          siempre entender qué podemos aprender de estas experiencias para estar en sintonía con Él y
+          alcanzar el éxito.
+        </p>
+
+        <div class="ss-box">
+          📸 <b>Último paso:</b> tomá una <b>captura de pantalla</b> de esta misma pantalla
+          (con tu nombre y tu puntaje visibles) y enviásela por WhatsApp a ${TEACHER_NAME}
+          para confirmar que completaste la actividad.
+        </div>
+
+        ${waLink ? `<a href="${waLink}" target="_blank" style="text-decoration:none;"><button class="btn-primary" style="margin-top:14px;">Abrir WhatsApp con mi resultado</button></a>` : ""}
+        <button class="btn-ghost" id="restartBtn">Volver a intentarlo</button>
+      </div>
+      <footer class="hint">Ester 4:14 — "¿Y quién sabe si para esta hora tú has llegado al reino?"</footer>
+    `;
+  }
+
+  /* =========================================================
+     RENDERER MAP
+  ========================================================= */
+  const renderers = {
+    intro: introHtml,
+    escalera: ()=> minigameHtml("escalera"),
+    mina: ()=> minigameHtml("mina"),
+    palacio: ()=> minigameHtml("palacio"),
+    carrera: ()=> minigameHtml("carrera"),
+    conexiones: conexionesHtml,
+    reflexion: reflexionHtml,
+    decision: decisionHtml,
+    final: finalHtml
+  };
+
+  const MOUNTERS = { escalera: mountEscalera, mina: mountMinesweeper, palacio: mountPalacio, carrera: mountCarrera };
+
+  /* =========================================================
+     BIND EVENTS
+  ========================================================= */
+  function bind(){
+    if(state.stage === "intro"){
+      document.getElementById("startBtn").onclick = ()=>{
+        const v = document.getElementById("nameInput").value.trim();
+        state.name = v;
+        sfx.tap();
+        state.stage = "escalera";
+        state.sub.escalera = "intro";
+        render();
+      };
+      return;
+    }
+
+    if(MOUNTERS[state.stage]){
+      const sub = state.sub[state.stage] || "intro";
+      if(sub === "intro"){
+        document.getElementById("playBtn").onclick = ()=>{
+          sfx.tap();
+          state.sub[state.stage] = "play";
+          render();
+        };
+      } else if(sub === "play"){
+        const mountEl = document.getElementById("gameMount");
+        if(!state.mounted[state.stage]){
+          state.mounted[state.stage] = true;
+          MOUNTERS[state.stage](mountEl, (pts, info)=>{
+            addScore(pts);
+            state.results[state.stage] = Object.assign({pts}, info);
+            state.sub[state.stage] = "result";
+            state.mounted[state.stage] = false;
+            if(pts >= 20) sfx.levelup(); else sfx.wrong();
+            render();
+          });
+        }
+      } else if(sub === "result"){
+        document.getElementById("nextStageBtn").onclick = ()=>{
+          const next = nextStageFor(state.stage);
+          sfx.levelup();
+          if(next === "conexiones"){
+            state.stage = "conexiones";
+            state.conexIdx = 0;
+          } else {
+            state.stage = next;
+            state.sub[next] = "intro";
+          }
+          render();
+        };
+      }
+      return;
+    }
+
+    if(state.stage === "conexiones"){
+      const i = state.conexIdx||0;
+      const item = conexRounds[i];
+      const key = "conex"+i;
+      const optsWrap = document.getElementById("optsWrap");
+      if(optsWrap && !state.answered[key]){
+        Array.from(optsWrap.children).forEach(btn=>{
+          btn.onclick = ()=> handleAnswer(btn, optsWrap, parseInt(btn.dataset.idx), item.correct, 10, item.exp, key);
+        });
+      }
+      const nextBtn = document.getElementById("nextBtn");
+      if(nextBtn){
+        nextBtn.onclick = ()=>{
+          if(state.conexIdx < conexRounds.length-1){
+            state.conexIdx++;
+          } else {
+            sfx.levelup();
+            state.stage = "reflexion";
+          }
+          render();
+        };
+      }
+    }
+
+    if(state.stage === "reflexion"){
+      const ta = document.getElementById("journalInput");
+      const btn = document.getElementById("journalBtn");
+      ta.oninput = ()=>{
+        state.journal = ta.value;
+        btn.disabled = ta.value.trim().length < 25;
+      };
+      btn.onclick = ()=>{
+        addScore(20);
+        sfx.levelup();
+        state.stage = "decision";
+        state.decisionIdx = 0;
+        render();
+      };
+    }
+
+    if(state.stage === "decision"){
+      const i = state.decisionIdx||0;
+      const item = decisionScenarios[i];
+      const key = "dec"+i;
+      const optsWrap = document.getElementById("optsWrap");
+      if(optsWrap && !state.answered[key]){
+        Array.from(optsWrap.children).forEach(btn=>{
+          btn.onclick = ()=> handleAnswer(btn, optsWrap, parseInt(btn.dataset.idx), item.correct, 15, item.exp, key);
+        });
+      }
+      const nextBtn = document.getElementById("nextBtn");
+      if(nextBtn){
+        nextBtn.onclick = ()=>{
+          if(state.decisionIdx < decisionScenarios.length-1){
+            state.decisionIdx++;
+            sfx.tap();
+            render();
+          } else {
+            sfx.victory();
+            state.stage = "final";
+            render();
+            launchConfetti();
+          }
+        };
+      }
+    }
+
+    if(state.stage === "final"){
+      document.getElementById("restartBtn").onclick = ()=>{
+        Object.assign(state, {
+          stage:"intro", score:0, journal:"", answered:{}, sub:{}, mounted:{}, results:{},
+          conexIdx:0, decisionIdx:0
+        });
+        render();
+      };
+    }
+  }
+
+  function handleAnswer(btn, wrap, idx, correctIdx, pts, exp, key){
+    if(state.answered[key]) return;
+    state.answered[key] = true;
+    const isCorrect = idx === correctIdx;
+    Array.from(wrap.children).forEach((b,bi)=>{
+      b.disabled = true;
+      if(bi === correctIdx) b.classList.add("correct");
+      else if(bi === idx && !isCorrect) b.classList.add("wrong");
+    });
+    if(isCorrect){ addScore(pts); sfx.correct(); } else { sfx.wrong(); }
+    const fb = document.createElement("div");
+    fb.className = "feedback " + (isCorrect?"ok":"no");
+    fb.textContent = (isCorrect ? "✅ " : "➤ ") + exp;
+    document.getElementById("fbWrap").appendChild(fb);
+    const nextBtn = document.getElementById("nextBtn");
+    if(nextBtn) nextBtn.style.display = "block";
+    const pill = document.querySelector(".score-pill");
+    if(pill) pill.textContent = "👑 " + state.score + " pts";
+  }
+
+  /* =========================================================
+     CONFETTI
+  ========================================================= */
+  function launchConfetti(){
+    const canvas = document.getElementById("confetti-canvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const colors = ["#e3b341","#38e6e0","#edeef2","#c6474d"];
+    const pieces = Array.from({length:70}).map(()=>({
+      x: Math.random()*canvas.width,
+      y: -20 - Math.random()*canvas.height*0.5,
+      r: 4+Math.random()*5,
+      c: colors[Math.floor(Math.random()*colors.length)],
+      vy: 2+Math.random()*3,
+      vx: -1.5+Math.random()*3,
+      rot: Math.random()*360,
+      vr: -6+Math.random()*12
+    }));
+    let frame = 0;
+    function step(){
+      frame++;
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      pieces.forEach(p=>{
+        p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+        ctx.save();
+        ctx.translate(p.x,p.y);
+        ctx.rotate(p.rot*Math.PI/180);
+        ctx.fillStyle = p.c;
+        ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r*0.6);
+        ctx.restore();
+      });
+      if(frame < 130) requestAnimationFrame(step);
+      else ctx.clearRect(0,0,canvas.width,canvas.height);
+    }
+    step();
+    window.onresize = ()=>{ canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+  }
+
+  /* =========================================================
+     INIT
+  ========================================================= */
+  render();
+})();
+</script>
+</body>
+</html>

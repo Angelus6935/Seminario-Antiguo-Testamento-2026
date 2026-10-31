@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Valor Para Esta Hora</title>
+<style>
+:root{
+  --bg-deep:#05060c;
+  --bg-panel:#0d1424;
+  --bg-panel-2:#131b31;
+  --cyan:#22d3ee;
+  --cyan-dim:#0e7490;
+  --amber:#f5a524;
+  --gold:#ffd166;
+  --text:#e9f3ff;
+  --text-dim:#9fb3d1;
+  --danger:#ef4757;
+  --success:#3ee08a;
+  --border-glow: 0 0 18px rgba(34,211,238,.35);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--text);
+  font-family:'Segoe UI',Roboto,Arial,sans-serif; overflow-x:hidden;}
+body{
+  background:
+    radial-gradient(1200px 600px at 50% -10%, rgba(34,211,238,.10), transparent 60%),
+    radial-gradient(900px 500px at 90% 110%, rgba(245,165,36,.10), transparent 60%),
+    var(--bg-deep);
+  min-height:100vh;
+}
+#app{max-width:520px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; padding:14px 14px 34px;}
+.screen{display:none; flex-direction:column; gap:14px; animation:fadeIn .4s ease;}
+.screen.active{display:flex;}
+@keyframes fadeIn{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+
+h1,h2,h3{font-family:Georgia,'Times New Roman',serif; margin:0; letter-spacing:.3px;}
+h1{font-size:1.7rem; text-align:center; color:var(--gold); text-shadow:0 0 20px rgba(255,209,102,.35);}
+h2{font-size:1.2rem; color:var(--cyan);}
+p{line-height:1.5; margin:0;}
+.dim{color:var(--text-dim); font-size:.85rem;}
+
+.eyebrow{
+  text-transform:uppercase; letter-spacing:2px; font-size:.7rem; color:var(--amber);
+  font-weight:600; text-align:center;
+}
+
+.panel{
+  background:linear-gradient(160deg, var(--bg-panel), var(--bg-panel-2));
+  border:1px solid rgba(34,211,238,.25);
+  border-radius:16px; padding:16px; box-shadow:var(--border-glow);
+}
+
+.btn{
+  display:block; width:100%; padding:14px 16px; border-radius:12px; border:none;
+  font-size:1rem; font-weight:700; cursor:pointer; text-align:center;
+  background:linear-gradient(135deg, var(--cyan), var(--cyan-dim)); color:#01131a;
+  box-shadow:0 4px 18px rgba(34,211,238,.35); transition:transform .12s ease;
+}
+.btn:active{transform:scale(.97);}
+.btn.amber{background:linear-gradient(135deg, var(--gold), var(--amber)); color:#2a1500; box-shadow:0 4px 18px rgba(245,165,36,.4);}
+.btn.ghost{background:transparent; border:1px solid rgba(255,255,255,.25); color:var(--text); box-shadow:none;}
+.btn:disabled{opacity:.4; cursor:not-allowed;}
+.btn-row{display:flex; gap:10px;}
+.btn-row .btn{flex:1;}
+
+input[type=text], textarea{
+  width:100%; background:#070c16; border:1px solid rgba(255,255,255,.15); border-radius:10px;
+  color:var(--text); padding:12px; font-size:.95rem; font-family:inherit; resize:vertical;
+}
+textarea{min-height:70px;}
+input[type=text]:focus, textarea:focus{outline:none; border-color:var(--cyan);}
+
+.scripture{
+  font-family:Georgia,serif; font-style:italic; font-size:1.05rem; color:var(--text);
+  border-left:3px solid var(--gold); padding:8px 0 8px 14px; background:rgba(255,209,102,.05);
+  border-radius:0 8px 8px 0;
+}
+.scripture .ref{display:block; margin-top:6px; font-style:normal; font-size:.8rem; color:var(--amber); font-weight:600;}
+
+.opt{
+  display:block; width:100%; text-align:left; padding:12px 14px; margin-bottom:8px;
+  border-radius:10px; border:1px solid rgba(255,255,255,.18); background:#0a0f1c; color:var(--text);
+  font-size:.95rem; cursor:pointer;
+}
+.opt:active{transform:scale(.99);}
+.opt.correct{background:rgba(62,224,138,.18); border-color:var(--success); color:var(--success);}
+.opt.wrong{background:rgba(239,71,87,.18); border-color:var(--danger); color:var(--danger);}
+.opt[disabled]{cursor:default;}
+
+canvas{width:100%; display:block; border-radius:14px; background:#050a14;}
+.canvas-wrap{border:1px solid rgba(255,255,255,.12); border-radius:14px; overflow:hidden; box-shadow:inset 0 0 30px rgba(0,0,0,.5);}
+
+.badge{
+  display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:999px;
+  background:rgba(255,209,102,.12); border:1px solid var(--gold); color:var(--gold); font-size:.8rem; font-weight:700;
+}
+.progress{height:6px; border-radius:4px; background:rgba(255,255,255,.1); overflow:hidden;}
+.progress-bar{height:100%; background:linear-gradient(90deg,var(--cyan),var(--gold)); width:0%; transition:width .4s ease;}
+
+.feedback{font-size:.9rem; font-weight:700; min-height:22px;}
+.feedback.ok{color:var(--success);}
+.feedback.bad{color:var(--danger);}
+
+.stepper{display:flex; justify-content:center; gap:6px; margin-bottom:2px;}
+.dot{width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.15);}
+.dot.active{background:var(--cyan); box-shadow:0 0 8px var(--cyan);}
+.dot.done{background:var(--gold);}
+
+#scoreFloat{
+  position:fixed; top:10px; right:10px; z-index:50; background:rgba(5,10,20,.85);
+  border:1px solid var(--gold); border-radius:999px; padding:6px 14px; font-weight:800;
+  color:var(--gold); font-size:.85rem; box-shadow:0 0 14px rgba(255,209,102,.3); display:none;
+}
+.controls-row{display:flex; gap:8px; justify-content:center; margin-top:8px;}
+.ctrl-btn{
+  width:56px; height:56px; border-radius:12px; border:1px solid rgba(34,211,238,.4);
+  background:#0a0f1c; color:var(--cyan); font-size:1.4rem; display:flex; align-items:center; justify-content:center;
+}
+.ctrl-btn:active{background:rgba(34,211,238,.25);}
+
+.pulse{animation:pulseAnim 1.4s ease-in-out infinite;}
+@keyframes pulseAnim{0%,100%{box-shadow:0 0 0 rgba(255,209,102,.4);}50%{box-shadow:0 0 26px rgba(255,209,102,.55);}}
+
+.finalcard-wrap{display:flex; justify-content:center;}
+#finalCanvas{max-width:100%; border-radius:16px; box-shadow:0 0 30px rgba(255,209,102,.3);}
+
+.small{font-size:.78rem; color:var(--text-dim);}
+.center{text-align:center;}
+hr.sep{border:none; border-top:1px solid rgba(255,255,255,.1); margin:6px 0;}
+</style>
+</head>
+<body>
+<div id="scoreFloat">✦ 0 pts</div>
+<div id="app">
+
+  <!-- SCREEN 0: PORTADA -->
+  <div class="screen active" id="screen-portada">
+    <div class="eyebrow">Antiguo Testamento · Ester 2</div>
+    <h1>VALOR PARA ESTA HORA</h1>
+    <div class="panel center">
+      <p class="dim">Basado en la historia de Ester y el valor silencioso que Dios pide de cada joven.</p>
+      <br>
+      <p style="font-size:2.4rem;">👑✨</p>
+      <p class="scripture">“¿Y quién sabe si para esta hora has llegado al reino?”<span class="ref">— Mardoqueo, Ester 4:14</span></p>
+    </div>
+    <div class="panel">
+      <h2>¿Cómo te llamás?</h2>
+      <input type="text" id="playerName" placeholder="Escribí tu nombre" maxlength="18">
+    </div>
+    <button class="btn amber" id="btnStart">Comenzar el viaje ⚔️</button>
+    <p class="small center">7 niveles · Escrituras · Desafíos · Reflexión personal</p>
+  </div>
+
+  <!-- SCREEN 1: MAPA / NIVELES -->
+  <div class="screen" id="screen-map">
+    <h2 class="center" id="mapGreeting">Bienvenido/a</h2>
+    <div class="panel">
+      <p class="dim">Cada nivel tiene una escritura, una pregunta, un desafío jugable y un poder espiritual para desbloquear.</p>
+    </div>
+    <div id="levelList"></div>
+  </div>
+
+  <!-- SCREEN 2: NIVEL EN CURSO (motor genérico) -->
+  <div class="screen" id="screen-level">
+    <div class="stepper" id="levelStepper"></div>
+    <div class="eyebrow" id="levelEyebrow">Nivel</div>
+    <h2 id="levelTitle">Título</h2>
+
+    <!-- FASE: ESCRITURA -->
+    <div id="phase-scripture" class="panel" style="display:none;">
+      <p class="scripture" id="scriptureText"></p>
+      <br>
+      <button class="btn" id="btnAfterScripture">Continuar</button>
+    </div>
+
+    <!-- FASE: JUEGO / CANVAS -->
+    <div id="phase-game" style="display:none;">
+      <div class="panel">
+        <p class="dim" id="gameInstructions"></p>
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="gameCanvas" width="600" height="360"></canvas>
+      </div>
+      <div class="controls-row" id="gameControls"></div>
+    </div>
+
+    <!-- FASE: PREGUNTA OPCION MULTIPLE -->
+    <div id="phase-mc" class="panel" style="display:none;">
+      <h2 id="mcQuestion" style="font-size:1rem;"></h2>
+      <div id="mcOptions" style="margin-top:10px;"></div>
+      <div class="feedback" id="mcFeedback"></div>
+    </div>
+
+    <!-- FASE: ANALISIS -->
+    <div id="phase-analysis" class="panel" style="display:none;">
+      <h2 style="font-size:1rem;" id="analysisQ"></h2>
+      <br>
+      <textarea id="analysisInput" placeholder="Escribí tu respuesta..."></textarea>
+      <br><br>
+      <button class="btn" id="btnAnalysisNext" disabled>Continuar</button>
+    </div>
+
+    <!-- FASE: REFLEXION -->
+    <div id="phase-reflection" class="panel" style="display:none;">
+      <h2 style="font-size:1rem;" id="reflectionQ"></h2>
+      <br>
+      <textarea id="reflectionInput" placeholder="Escribí tu reflexión personal..."></textarea>
+      <br><br>
+      <button class="btn" id="btnReflectionNext" disabled>Continuar</button>
+    </div>
+
+    <!-- FASE: PODER -->
+    <div id="phase-power" class="panel pulse" style="display:none; text-align:center;">
+      <p style="font-size:2.6rem;" id="powerIcon">⚡</p>
+      <h2 id="powerName">Poder</h2>
+      <p class="dim">¡Poder espiritual desbloqueado!</p>
+      <div class="badge" id="powerPointsBadge">+100 pts</div>
+      <br><br>
+      <button class="btn amber" id="btnNextLevel">Siguiente nivel →</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: FINAL -->
+  <div class="screen" id="screen-final">
+    <div class="eyebrow">Fin del viaje</div>
+    <h1>Tu Score Final</h1>
+    <div class="panel center">
+      <p style="font-size:2.4rem; font-weight:800; color:var(--gold);" id="finalTotal">0</p>
+      <p class="dim">puntos totales</p>
+    </div>
+    <div class="panel" id="finalBreakdown"></div>
+    <div class="panel finalcard-wrap">
+      <canvas id="finalCanvas" width="640" height="800"></canvas>
+    </div>
+    <button class="btn amber" id="btnDownloadCard">📥 Descargar mi Score</button>
+    <button class="btn" id="btnShareCard">📲 Compartir por WhatsApp</button>
+    <p class="small center">Tomá una captura de tu tarjeta de puntaje o compartí el PNG por WhatsApp.</p>
+    <button class="btn ghost" id="btnRestart">Jugar de nuevo</button>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   AUDIO SINTETIZADO
+============================================================ */
+let actx=null;
+function ensureAudio(){ if(!actx){ try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){} } }
+function beep(freq=440,dur=.15,type='sine',vol=.18,delay=0){
+  ensureAudio(); if(!actx) return;
+  const t0=actx.currentTime+delay;
+  const osc=actx.createOscillator(); const gain=actx.createGain();
+  osc.type=type; osc.frequency.setValueAtTime(freq,t0);
+  gain.gain.setValueAtTime(vol,t0);
+  gain.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+  osc.connect(gain); gain.connect(actx.destination);
+  osc.start(t0); osc.stop(t0+dur+.02);
+}
+function sfxClick(){beep(600,.06,'square',.12);}
+function sfxCorrect(){beep(523,.12,'triangle',.2); beep(784,.16,'triangle',.2,.1);}
+function sfxWrong(){beep(180,.25,'sawtooth',.15);}
+function sfxPower(){beep(392,.1,'sine',.2); beep(523,.1,'sine',.2,.09); beep(659,.14,'sine',.2,.18); beep(880,.22,'sine',.22,.27);}
+
+/* ============================================================
+   ESTADO DEL JUEGO
+============================================================ */
+const GAME = {
+  name:'',
+  totalPts:0,
+  correct:0, totalQ:0,
+  reflections:0,
+  speedBonus:0,
+  powers:[],
+  levelResults:[] // {title, correct, points}
+};
+
+function addPts(n){ GAME.totalPts+=n; updateScoreFloat(); }
+function updateScoreFloat(){
+  const el=document.getElementById('scoreFloat');
+  el.style.display='block';
+  el.textContent='✦ '+GAME.totalPts+' pts';
+}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+/* ============================================================
+   DEFINICION DE NIVELES
+============================================================ */
+const LEVELS = [
+  {
+    id:'monson', title:'El Valor Silencioso', icon:'⚓', scene:'monson',
+    scripture:'“Cada uno de nosotros necesita el tipo de valor que le permitió a ese joven marinero decir no —y con firmeza— a algo que él sabía que estaba mal.”',
+    ref:'— Presidente Thomas S. Monson',
+    instructions:'Un joven marinero de 18 años fue tentado a beber con sus compañeros. Tocá la pantalla para ver cómo el valor silencioso lo sostuvo.',
+    mc:{
+      q:'¿Qué tipo de valor mostró el joven marinero?',
+      opts:['Un valor ruidoso y agresivo para ganar una pelea','Un valor silencioso: decir no con firmeza sin necesitar aplausos','Ningún valor, solo evitó el problema','Valor para impresionar a sus compañeros'],
+      correct:1
+    },
+    analysis:'¿Por qué el valor silencioso es a veces más difícil que el valor "visible"?',
+    reflection:'Yo puedo mostrar valor silencioso cuando...',
+    power:'Valor Silencioso', powerIcon:'⚓'
+  },
+  {
+    id:'riesgo', title:'El Riesgo de Ester', icon:'👑', scene:'garden', // reuse simple ambient scene
+    scripture:'“Cualquier hombre o mujer que entra en el patio interior para ver al rey sin ser llamado, una sola ley hay, la de matarle, salvo aquel a quien el rey extendiere el cetro de oro.”',
+    ref:'— Ester 4:10–11',
+    instructions:'Ester enfrentaba una ley que podía costarle la vida. Observá la escena y respondé.',
+    mc:{
+      q:'¿Qué arriesgaba Ester al presentarse ante el rey sin ser llamada?',
+      opts:['Perder popularidad','Su propia vida','Un castigo leve','Nada, era una costumbre común'],
+      correct:1
+    },
+    analysis:'¿Qué "leyes" o presiones de tu entorno hacen que hacer lo correcto parezca riesgoso hoy?',
+    reflection:'Un riesgo que estoy dispuesto/a a tomar por obedecer a Dios es...',
+    power:'Coraje Real', powerIcon:'👑'
+  },
+  {
+    id:'tetris', title:'Tetris Espiritual', icon:'🧱', scene:'tetris',
+    scripture:'“Confía en Jehová con todo tu corazón, y no te apoyes en tu propia prudencia.”',
+    ref:'— Proverbios 3:5',
+    instructions:'Las piezas caen sin control. Respondé bien para activar el "Orden Divino" y encajarlas en su lugar.',
+    mc:{
+      q:'¿Qué significa confiar en Jehová con todo el corazón?',
+      opts:['Hacer lo que siento sin pensar','Depender solo de mi propia fuerza','Confiar en Dios incluso cuando tengo miedo','No pedir ayuda a nadie'],
+      correct:2
+    },
+    analysis:'¿Por qué a veces cuesta confiar en Dios en lugar de en uno mismo?',
+    reflection:'Yo puedo confiar en Jehová cuando...',
+    power:'Orden Divino', powerIcon:'🧱'
+  },
+  {
+    id:'gorillas', title:'Gorillas Espiritual', icon:'🍌', scene:'gorillas',
+    scripture:'“¿Y quién sabe si para esta hora has llegado al reino?”',
+    ref:'— Mardoqueo, Ester 4:14',
+    instructions:'Ester y Mardoqueo lanzan luz en lugar de bananas. Respondé bien para trazar la parábola perfecta.',
+    mc:{
+      q:'¿Qué quería decir Mardoqueo a Ester?',
+      opts:['Que debía huir del palacio','Que estaba en peligro y nada más','Que Dios la había puesto allí con un propósito','Que debía esperar sin actuar'],
+      correct:2
+    },
+    analysis:'¿Qué significa "para esta hora" aplicado a tu vida hoy?',
+    reflection:'Yo creo que Dios me ha puesto "para esta hora" en...',
+    power:'Parábola Perfecta', powerIcon:'🍌'
+  },
+  {
+    id:'obstaculos', title:'Carrera de Obstáculos', icon:'🏃', scene:'obstaculos',
+    scripture:'“El Señor es mi luz y mi salvación; ¿de quién temeré?”',
+    ref:'— David, Salmos 27:1',
+    instructions:'Ester corre por un camino de dudas, miedo y presión social. Tocá SALTAR en el momento justo.',
+    mc:{
+      q:'¿Qué significa que el Señor sea tu luz?',
+      opts:['Que te ilumina el camino','Que te da miedo','Que te deja solo','Que te obliga a actuar'],
+      correct:0
+    },
+    analysis:'¿Cuándo sentís que Dios te guía en tu vida?',
+    reflection:'Cuando tengo miedo, el Señor me ayuda a...',
+    power:'Salto de Fe', powerIcon:'🏃'
+  },
+  {
+    id:'snake', title:'Snake Espiritual', icon:'🐍', scene:'snake',
+    scripture:'“Todo lo puedo en Cristo que me fortalece.”',
+    ref:'— Pablo, Filipenses 4:13',
+    instructions:'Guiá a la víbora para tocar los puntos de luz y crecer en fortaleza.',
+    mc:{
+      q:'¿Qué significa que Cristo te fortalece?',
+      opts:['Que no necesito a nadie más','Que Cristo me da poder para seguir adelante','Que nunca tendré problemas','Que no debo orar'],
+      correct:1
+    },
+    analysis:'¿Cómo te fortalece Cristo en tu vida diaria?',
+    reflection:'Cristo me fortalece cuando...',
+    power:'Crecimiento Espiritual', powerIcon:'🐍'
+  },
+  {
+    id:'pop', title:'Prince of Persia Espiritual', icon:'🗡️', scene:'pop',
+    scripture:'“Y si perezco, que perezca.”',
+    ref:'— Ester, Ester 4:16',
+    instructions:'Ester corre, salta y esquiva trampas. Repetí la secuencia de toques en orden.',
+    mc:{
+      q:'¿Qué muestra esta frase de Ester?',
+      opts:['Que tenía miedo y se detuvo','Que no quería ayudar a su pueblo','Que estaba dispuesta a arriesgarse por su pueblo','Que quería huir del palacio'],
+      correct:2
+    },
+    analysis:'¿Qué riesgo estás dispuesto/a a tomar por hacer lo correcto?',
+    reflection:'Yo puedo mostrar valor cuando...',
+    power:'Movimiento Divino', powerIcon:'🗡️'
+  },
+  {
+    id:'getsemani', title:'El Valor Perfecto', icon:'🕊️', scene:'garden2',
+    scripture:'“Padre, si quieres, pasa de mí esta copa; pero no se haga mi voluntad, sino la tuya.”',
+    ref:'— Jesucristo, Lucas 22:42',
+    instructions:'En Getsemaní, el Salvador mostró el valor perfecto. Observá la escena en oración.',
+    mc:{
+      q:'¿Qué hizo posible que Jesucristo tuviera valor perfecto en Getsemaní?',
+      opts:['Su total sumisión a la voluntad del Padre','Que no sintió dolor ni temor','Que actuó solo por obligación','Que evitó la prueba'],
+      correct:0
+    },
+    analysis:'¿Cómo el ejemplo de Cristo en Getsemaní cambia tu manera de enfrentar tus propias pruebas?',
+    reflection:'El valor de Cristo me ayuda a...',
+    power:'Valor Perfecto', powerIcon:'🕊️'
+  }
+];
+
+let currentLevelIndex=0;
+let mcAnsweredCorrect=false;
+let levelQuestionStartTime=0;
+
+/* ============================================================
+   NAVEGACION: PORTADA -> MAPA
+============================================================ */
+document.getElementById('btnStart').addEventListener('click', ()=>{
+  ensureAudio(); sfxClick();
+  const nm=document.getElementById('playerName').value.trim();
+  GAME.name = nm || 'Joven Valiente';
+  document.getElementById('mapGreeting').textContent = 'Bienvenido/a, '+GAME.name;
+  renderMap();
+  showScreen('screen-map');
+});
+
+function renderMap(){
+  const list=document.getElementById('levelList');
+  list.innerHTML='';
+  LEVELS.forEach((lv,i)=>{
+    const done = GAME.levelResults.find(r=>r.id===lv.id);
+    const div=document.createElement('div');
+    div.className='panel';
+    div.style.marginBottom='10px';
+    div.innerHTML = `<div style="display:flex; align-items:center; gap:12px;">
+      <div style="font-size:1.8rem;">${lv.icon}</div>
+      <div style="flex:1;">
+        <div style="font-weight:700;">${i+1}. ${lv.title}</div>
+        <div class="small">${done? '✅ Completado — '+done.points+' pts' : 'Pendiente'}</div>
+      </div>
+    </div>`;
+    list.appendChild(div);
+  });
+  const btn=document.createElement('button');
+  btn.className='btn amber';
+  btn.style.marginTop='6px';
+  const nextIdx = GAME.levelResults.length;
+  if(nextIdx>=LEVELS.length){
+    btn.textContent='Ver mi Score Final 🏆';
+    btn.onclick=()=>{ sfxClick(); renderFinal(); showScreen('screen-final'); };
+  } else {
+    btn.textContent = nextIdx===0? 'Comenzar Nivel 1' : 'Continuar Nivel '+(nextIdx+1);
+    btn.onclick=()=>{ sfxClick(); startLevel(nextIdx); };
+  }
+  list.appendChild(btn);
+}
+
+/* ============================================================
+   MOTOR GENERICO DE NIVEL
+============================================================ */
+function renderStepper(idx){
+  const wrap=document.getElementById('levelStepper');
+  wrap.innerHTML='';
+  LEVELS.forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.className='dot'+(i===idx?' active':(i<idx?' done':''));
+    wrap.appendChild(d);
+  });
+}
+
+function startLevel(idx){
+  currentLevelIndex=idx;
+  mcAnsweredCorrect=false;
+  const lv=LEVELS[idx];
+  renderStepper(idx);
+  document.getElementById('levelEyebrow').textContent='Nivel '+(idx+1)+' de '+LEVELS.length;
+  document.getElementById('levelTitle').textContent=lv.icon+' '+lv.title;
+
+  ['phase-scripture','phase-game','phase-mc','phase-analysis','phase-reflection','phase-power'].forEach(id=>{
+    document.getElementById(id).style.display='none';
+  });
+
+  document.getElementById('scriptureText').innerHTML = lv.scripture+'<span class="ref">'+lv.ref+'</span>';
+  document.getElementById('phase-scripture').style.display='block';
+
+  document.getElementById('btnAfterScripture').onclick=()=>{
+    sfxClick();
+    document.getElementById('phase-scripture').style.display='none';
+    startGamePhase(lv);
+  };
+
+  showScreen('screen-level');
+}
+
+function startGamePhase(lv){
+  document.getElementById('gameInstructions').textContent = lv.instructions;
+  document.getElementById('phase-game').style.display='block';
+  const canvas=document.getElementById('gameCanvas');
+  fitCanvas(canvas);
+  levelQuestionStartTime = Date.now();
+  setupScene(lv.scene, canvas, ()=>{
+    // callback fired when scene signals "ready for question"
+    document.getElementById('phase-game').style.display='none';
+    startMC(lv);
+  });
+}
+
+function fitCanvas(canvas){
+  const w = canvas.parentElement.clientWidth;
+  canvas.style.width='100%';
+  canvas.width = 600; canvas.height = 360;
+}
+
+function startMC(lv){
+  const box=document.getElementById('phase-mc');
+  box.style.display='block';
+  document.getElementById('mcQuestion').textContent = lv.mc.q;
+  document.getElementById('mcFeedback').textContent='';
+  document.getElementById('mcFeedback').className='feedback';
+  const optWrap=document.getElementById('mcOptions');
+  optWrap.innerHTML='';
+  lv.mc.opts.forEach((optText,i)=>{
+    const b=document.createElement('button');
+    b.className='opt'; b.textContent=optText;
+    b.onclick=()=>{
+      if(b.disabled) return;
+      Array.from(optWrap.children).forEach(c=>c.disabled=true);
+      GAME.totalQ++;
+      const elapsed=(Date.now()-levelQuestionStartTime)/1000;
+      if(i===lv.mc.correct){
+        b.classList.add('correct');
+        sfxCorrect();
+        mcAnsweredCorrect=true;
+        GAME.correct++;
+        let pts=100;
+        if(elapsed<12){ pts+=20; GAME.speedBonus+=20; }
+        addPts(pts);
+        document.getElementById('mcFeedback').textContent='¡Correcto! +'+pts+' pts';
+        document.getElementById('mcFeedback').className='feedback ok';
+        playSceneSuccess(lv.scene);
+      } else {
+        b.classList.add('wrong');
+        optWrap.children[lv.mc.correct].classList.add('correct');
+        sfxWrong();
+        mcAnsweredCorrect=false;
+        document.getElementById('mcFeedback').textContent='La respuesta correcta era la opción resaltada.';
+        document.getElementById('mcFeedback').className='feedback bad';
+      }
+      setTimeout(()=>{
+        box.style.display='none';
+        startAnalysis(lv);
+      },1400);
+    };
+    optWrap.appendChild(b);
+  });
+}
+
+function startAnalysis(lv){
+  const box=document.getElementById('phase-analysis');
+  box.style.display='block';
+  document.getElementById('analysisQ').textContent=lv.analysis;
+  const input=document.getElementById('analysisInput');
+  input.value='';
+  const nextBtn=document.getElementById('btnAnalysisNext');
+  nextBtn.disabled=true;
+  input.oninput=()=>{ nextBtn.disabled = input.value.trim().length<6; };
+  nextBtn.onclick=()=>{
+    sfxClick();
+    box.style.display='none';
+    startReflection(lv);
+  };
+}
+
+function startReflection(lv){
+  const box=document.getElementById('phase-reflection');
+  box.style.display='block';
+  document.getElementById('reflectionQ').textContent=lv.reflection;
+  const input=document.getElementById('reflectionInput');
+  input.value='';
+  const nextBtn=document.getElementById('btnReflectionNext');
+  nextBtn.disabled=true;
+  input.oninput=()=>{ nextBtn.disabled = input.value.trim().length<6; };
+  nextBtn.onclick=()=>{
+    sfxClick();
+    GAME.reflections++;
+    addPts(50);
+    box.style.display='none';
+    startPower(lv);
+  };
+}
+
+function startPower(lv){
+  const box=document.getElementById('phase-power');
+  box.style.display='block';
+  document.getElementById('powerIcon').textContent=lv.powerIcon;
+  document.getElementById('powerName').textContent = mcAnsweredCorrect? '¡Poder desbloqueado: '+lv.power+'!' : 'Poder no desbloqueado esta vez';
+  let bonus = mcAnsweredCorrect? 100 : 0;
+  document.getElementById('powerPointsBadge').textContent = '+'+bonus+' pts';
+  if(mcAnsweredCorrect){
+    addPts(bonus);
+    sfxPower();
+    GAME.powers.push({name:lv.power, icon:lv.powerIcon});
+  }
+  const levelTotal = 100*(mcAnsweredCorrect?1:0) + (mcAnsweredCorrect? (GAME.speedBonus?20:0):0) + 50 + bonus;
+  GAME.levelResults.push({id:lv.id, title:lv.title, correct:mcAnsweredCorrect, points: (mcAnsweredCorrect?100:0)+50+bonus});
+
+  document.getElementById('btnNextLevel').onclick=()=>{
+    sfxClick();
+    box.style.display='none';
+    renderMap();
+    if(currentLevelIndex+1>=LEVELS.length){
+      renderFinal();
+      showScreen('screen-final');
+    } else {
+      showScreen('screen-map');
+    }
+  };
+}
+
+/* ============================================================
+   ESCENAS DE CANVAS (ANIMACIONES + MINIJUEGOS)
+============================================================ */
+let sceneLoops={}; // guarda requestAnimationFrame ids por canvas para poder cancelar
+
+function stopLoop(canvas){
+  if(sceneLoops[canvas.id]) cancelAnimationFrame(sceneLoops[canvas.id]);
+}
+
+function setupScene(scene, canvas, onReady){
+  stopLoop(canvas);
+  const ctx=canvas.getContext('2d');
+  const controls=document.getElementById('gameControls');
+  controls.innerHTML='';
+  switch(scene){
+    case 'monson': return sceneMonson(ctx,canvas,onReady);
+    case 'garden': return sceneGardenAmbient(ctx,canvas,onReady,'#1a2140','#0d1424','👑');
+    case 'garden2': return sceneGardenAmbient(ctx,canvas,onReady,'#1a1030','#0d0a1f','🕊️');
+    case 'tetris': return sceneTetris(ctx,canvas,onReady,controls);
+    case 'gorillas': return sceneGorillas(ctx,canvas,onReady,controls);
+    case 'obstaculos': return sceneObstaculos(ctx,canvas,onReady,controls);
+    case 'snake': return sceneSnake(ctx,canvas,onReady,controls);
+    case 'pop': return scenePoP(ctx,canvas,onReady,controls);
+  }
+}
+
+function playSceneSuccess(scene){
+  // Se llama cuando responde bien la pregunta; algunas escenas ya reaccionan solas.
+  // Placeholder de gancho para futuras mejoras.
+}
+
+/* --- Escena ambiental genérica (Monson-narrativa / Getsemaní / riesgo) --- */
+function sceneGardenAmbient(ctx,canvas,onReady,c1,c2,emoji){
+  let t=0; let clicked=false;
+  const btn=document.createElement('button');
+  btn.className='btn amber'; btn.textContent='Toca para continuar la escena ✨';
+  btn.style.marginTop='10px';
+  document.getElementById('gameControls').appendChild(btn);
+  btn.onclick=()=>{ sfxClick(); if(!clicked){clicked=true; setTimeout(onReady,600);} };
+
+  function loop(){
+    t+=0.02;
+    const w=canvas.width,h=canvas.height;
+    const grad=ctx.createLinearGradient(0,0,0,h);
+    grad.addColorStop(0,c1); grad.addColorStop(1,c2);
+    ctx.fillStyle=grad; ctx.fillRect(0,0,w,h);
+    // estrellas
+    for(let i=0;i<40;i++){
+      const x=(i*57)%w; const y=(i*97)%h;
+      const tw=Math.sin(t*2+i)*.5+.5;
+      ctx.fillStyle='rgba(255,255,255,'+ (0.15+tw*0.4) +')';
+      ctx.fillRect(x,y,2,2);
+    }
+    // luz central
+    const glow=ctx.createRadialGradient(w/2,h/2,10,w/2,h/2,180+Math.sin(t)*10);
+    glow.addColorStop(0,'rgba(255,209,102,.35)');
+    glow.addColorStop(1,'rgba(255,209,102,0)');
+    ctx.fillStyle=glow; ctx.fillRect(0,0,w,h);
+    ctx.font='90px serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.save();
+    ctx.translate(w/2,h/2+Math.sin(t*1.5)*8);
+    ctx.fillText(emoji,0,0);
+    ctx.restore();
+    sceneLoops[canvas.id]=requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+/* --- NIVEL EXTRA 1: TETRIS ESPIRITUAL --- */
+function sceneTetris(ctx,canvas,onReady,controls){
+  const cols=6, rows=9, cell=60;
+  let grid=Array.from({length:rows},()=>Array(cols).fill(0));
+  let piece={x:2,y:0,color:'#22d3ee'};
+  let t=0; let locked=false;
+  const btn=document.createElement('button');
+  btn.className='btn amber'; btn.textContent='⬇️ Soltar pieza';
+  controls.appendChild(btn);
+  btn.onclick=()=>{
+    sfxClick();
+    if(locked) return;
+    locked=true;
+    dropPiece();
+  };
+  function dropPiece(){
+    let fallInterval=setInterval(()=>{
+      if(piece.y< rows-1 && grid[piece.y+1][piece.x]===0){
+        piece.y++;
+      } else {
+        grid[piece.y][piece.x]=1;
+        clearInterval(fallInterval);
+        sfxCorrect();
+        setTimeout(()=>{ onReady(); }, 500);
+      }
+    },90);
+  }
+  function loop(){
+    t+=0.05;
+    const w=canvas.width,h=canvas.height;
+    ctx.fillStyle='#050a14'; ctx.fillRect(0,0,w,h);
+    const offX=(w-cols*cell)/2, offY=10;
+    // grid bg
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<cols;c++){
+        ctx.strokeStyle='rgba(255,255,255,.06)';
+        ctx.strokeRect(offX+c*cell, offY+r*cell, cell, cell);
+        if(grid[r][c]){
+          ctx.fillStyle='rgba(255,209,102,.85)';
+          ctx.shadowColor='#ffd166'; ctx.shadowBlur=14;
+          ctx.fillRect(offX+c*cell+3, offY+r*cell+3, cell-6, cell-6);
+          ctx.shadowBlur=0;
+        }
+      }
+    }
+    // pieza activa
+    const glow = locked ? 1 : (0.6+Math.sin(t*3)*0.3);
+    ctx.fillStyle='rgba(34,211,238,'+glow+')';
+    ctx.shadowColor='#22d3ee'; ctx.shadowBlur=18;
+    ctx.fillRect(offX+piece.x*cell+3, offY+piece.y*cell+3, cell-6, cell-6);
+    ctx.shadowBlur=0;
+    ctx.fillStyle='#9fb3d1'; ctx.font='13px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(locked?'Cayendo...':'Toca "Soltar pieza" para activar el Orden Divino', w/2, h-14);
+    sceneLoops[canvas.id]=requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+/* --- NIVEL EXTRA 2: GORILLAS ESPIRITUAL --- */
+function sceneGorillas(ctx,canvas,onReady,controls){
+  let t=0; let thrown=false; let progress=0;
+  const btn=document.createElement('button');
+  btn.className='btn amber'; btn.textContent='🍌 Lanzar luz';
+  controls.appendChild(btn);
+  btn.onclick=()=>{
+    sfxClick();
+    if(thrown) return;
+    thrown=true;
+    sfxCorrect();
+  };
+  function loop(){
+    t+=0.03;
+    const w=canvas.width,h=canvas.height;
+    const grad=ctx.createLinearGradient(0,0,0,h);
+    grad.addColorStop(0,'#0b1330'); grad.addColorStop(1,'#050a14');
+    ctx.fillStyle=grad; ctx.fillRect(0,0,w,h);
+    // edificios
+    ctx.fillStyle='#101a33';
+    for(let i=0;i<6;i++){
+      const bw=70, bh=60+((i*47)%150);
+      ctx.fillRect(i*100+20, h-bh, bw, bh);
+    }
+    // torres personajes
+    ctx.font='46px serif'; ctx.textAlign='center';
+    ctx.fillText('👸', 70, h-170);
+    ctx.fillText('🧔', w-70, h-190);
+
+    if(thrown){
+      progress=Math.min(1,progress+0.02);
+      const x = 70 + (w-140)*progress;
+      const arc = Math.sin(progress*Math.PI);
+      const y = (h-170) - arc*160;
+      ctx.font='30px serif';
+      ctx.fillText('✨',x,y);
+      if(progress>=1 && !loop.done){
+        loop.done=true;
+        // particulas
+        for(let i=0;i<20;i++){
+          ctx.fillStyle='rgba(255,209,102,'+Math.random()+')';
+          ctx.beginPath();
+          ctx.arc(w-70,h-190,Math.random()*30,0,Math.PI*2);
+          ctx.fill();
+        }
+        setTimeout(onReady,700);
+      }
+    } else {
+      ctx.fillStyle='#9fb3d1'; ctx.font='13px sans-serif';
+      ctx.fillText('Toca "Lanzar luz" para trazar la parábola perfecta', w/2, h-14);
+    }
+    sceneLoops[canvas.id]=requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+/* --- NIVEL EXTRA 3: CARRERA DE OBSTACULOS --- */
+function sceneObstaculos(ctx,canvas,onReady,controls){
+  let t=0; let runnerY=0; let jumping=false; let jumpT=0;
+  let obstacleX=650; let passed=false; let result=null;
+  const btn=document.createElement('button');
+  btn.className='btn amber'; btn.textContent='⬆️ SALTAR';
+  controls.appendChild(btn);
+  btn.onclick=()=>{
+    if(result) return;
+    sfxClick();
+    if(!jumping){ jumping=true; jumpT=0; }
+  };
+  function loop(){
+    t+=1;
+    const w=canvas.width,h=canvas.height;
+    ctx.fillStyle='#050a14'; ctx.fillRect(0,0,w,h);
+    const groundY=h-70;
+    ctx.strokeStyle='rgba(255,255,255,.15)';
+    ctx.beginPath(); ctx.moveTo(0,groundY); ctx.lineTo(w,groundY); ctx.stroke();
+
+    if(!result){
+      obstacleX-=4;
+      if(obstacleX< -30) obstacleX=650+Math.random()*100;
+    }
+    // obstaculo
+    ctx.fillStyle='#ef4757';
+    ctx.fillRect(obstacleX, groundY-30, 26, 30);
+
+    // runner
+    let ry=0;
+    if(jumping){
+      jumpT+=1;
+      ry = -Math.sin(Math.min(jumpT/18,1)*Math.PI)*90;
+      if(jumpT>=18 && !result){ jumping=false; }
+    }
+    const runnerX=90;
+    ctx.font='40px serif'; ctx.textAlign='center';
+    ctx.fillText('👸', runnerX, groundY+ry);
+
+    // colision check
+    if(!result && Math.abs(obstacleX-runnerX)<26){
+      if(ry< -40){
+        result='ok';
+        sfxCorrect();
+        setTimeout(onReady,700);
+      } else {
+        result='hit';
+        sfxWrong();
+        setTimeout(onReady,700);
+      }
+    }
+    ctx.fillStyle='#9fb3d1'; ctx.font='13px sans-serif';
+    ctx.fillText(result? (result==='ok'?'¡Salto de fe logrado!':'Casi... ¡pero avanzamos igual!') : 'Toca SALTAR cuando el obstáculo se acerque', w/2, 24);
+    sceneLoops[canvas.id]=requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+/* --- NIVEL EXTRA 4: SNAKE ESPIRITUAL --- */
+function sceneSnake(ctx,canvas,onReady,controls){
+  const cell=30, cols=20, rows=12;
+  let snake=[{x:5,y:6},{x:4,y:6},{x:3,y:6}];
+  let dir={x:1,y:0}; let nextDir=dir;
+  let food=randFood();
+  let eaten=0; const targetEaten=3;
+  let tickTimer=null;
+  function randFood(){ return {x:Math.floor(Math.random()*cols), y:Math.floor(Math.random()*rows)}; }
+
+  const dirs=[['⬆️',{x:0,y:-1}],['⬅️',{x:-1,y:0}],['⬇️',{x:0,y:1}],['➡️',{x:1,y:0}]];
+  dirs.forEach(([label,vec])=>{
+    const b=document.createElement('button');
+    b.className='ctrl-btn'; b.textContent=label;
+    b.onclick=()=>{ sfxClick(); if(vec.x!==-dir.x||vec.y!==-dir.y) nextDir=vec; };
+    controls.appendChild(b);
+  });
+
+  tickTimer=setInterval(()=>{
+    dir=nextDir;
+    const head={x:snake[0].x+dir.x, y:snake[0].y+dir.y};
+    head.x=(head.x+cols)%cols; head.y=(head.y+rows)%rows;
+    snake.unshift(head);
+    if(head.x===food.x && head.y===food.y){
+      eaten++;
+      sfxCorrect();
+      food=randFood();
+      if(eaten>=targetEaten){
+        clearInterval(tickTimer);
+        setTimeout(onReady,500);
+      }
+    } else {
+      snake.pop();
+    }
+  },260);
+
+  function loop(){
+    const w=canvas.width,h=canvas.height;
+    ctx.fillStyle='#050a14'; ctx.fillRect(0,0,w,h);
+    const offX=(w-cols*cell)/2, offY=(h-rows*cell)/2;
+    ctx.strokeStyle='rgba(255,255,255,.05)';
+    for(let c=0;c<=cols;c++){ ctx.beginPath(); ctx.moveTo(offX+c*cell,offY); ctx.lineTo(offX+c*cell,offY+rows*cell); ctx.stroke(); }
+    for(let r=0;r<=rows;r++){ ctx.beginPath(); ctx.moveTo(offX,offY+r*cell); ctx.lineTo(offX+cols*cell,offY+r*cell); ctx.stroke(); }
+    // food
+    ctx.fillStyle='#ffd166'; ctx.shadowColor='#ffd166'; ctx.shadowBlur=16;
+    ctx.beginPath(); ctx.arc(offX+food.x*cell+cell/2, offY+food.y*cell+cell/2, 9,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+    // snake
+    snake.forEach((s,i)=>{
+      ctx.fillStyle= i===0? '#3ee08a':'rgba(62,224,138,.6)';
+      ctx.fillRect(offX+s.x*cell+2, offY+s.y*cell+2, cell-4, cell-4);
+    });
+    ctx.fillStyle='#9fb3d1'; ctx.font='13px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('Puntos de fortaleza: '+eaten+' / '+targetEaten, w/2, 20);
+    sceneLoops[canvas.id]=requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+/* --- NIVEL EXTRA 5: PRINCE OF PERSIA ESPIRITUAL (QTE) --- */
+function scenePoP(ctx,canvas,onReady,controls){
+  const seqIcons=['⬆️','⬅️','⬇️','➡️'];
+  let sequence=[]; for(let i=0;i<4;i++) sequence.push(Math.floor(Math.random()*4));
+  let showing=true; let showIdx=0; let userIdx=0; let t=0; let result=null;
+  const btnsWrap=document.createElement('div');
+  btnsWrap.style.display='flex'; btnsWrap.style.gap='8px';
+  seqIcons.forEach((ic,i)=>{
+    const b=document.createElement('button');
+    b.className='ctrl-btn'; b.textContent=ic; b.disabled=true;
+    b.onclick=()=>{
+      if(result) return;
+      sfxClick();
+      if(i===sequence[userIdx]){
+        userIdx++;
+        if(userIdx>=sequence.length){ result='ok'; sfxCorrect(); setTimeout(onReady,700); }
+      } else {
+        result='fail'; sfxWrong(); setTimeout(onReady,700);
+      }
+    };
+    controls.appendChild(b);
+    btnsWrap._btns=btnsWrap._btns||[]; btnsWrap._btns.push(b);
+  });
+
+  setTimeout(()=>{
+    showing=false;
+    controls.querySelectorAll('.ctrl-btn').forEach(b=>b.disabled=false);
+  }, sequence.length*700+800);
+
+  function loop(){
+    t+=1;
+    const w=canvas.width,h=canvas.height;
+    ctx.fillStyle='#0a0714'; ctx.fillRect(0,0,w,h);
+    // plataformas
+    ctx.fillStyle='#1a1030';
+    for(let i=0;i<5;i++) ctx.fillRect(i*130, h-40-((i%2)*40), 100, 20);
+    ctx.font='40px serif'; ctx.textAlign='center';
+    ctx.fillText('👸', w/2, h-70);
+
+    if(showing){
+      const idx=Math.floor(t/42)%sequence.length;
+      ctx.font='60px sans-serif';
+      ctx.fillStyle='rgba(255,209,102,.9)';
+      ctx.fillText(seqIcons[sequence[idx]], w/2, h/2-40);
+      ctx.font='13px sans-serif'; ctx.fillStyle='#9fb3d1';
+      ctx.fillText('Memorizá la secuencia de esquivar trampas...', w/2, 24);
+    } else if(!result){
+      ctx.font='13px sans-serif'; ctx.fillStyle='#9fb3d1';
+      ctx.fillText('Repetí la secuencia tocando los botones en orden ('+userIdx+'/'+sequence.length+')', w/2, 24);
+    } else {
+      ctx.font='16px sans-serif'; ctx.fillStyle= result==='ok'? '#3ee08a':'#ef4757';
+      ctx.fillText(result==='ok'? '¡Movimiento Divino logrado!':'¡Casi esquivás la trampa!', w/2, 24);
+    }
+    sceneLoops[canvas.id]=requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+/* --- Escena narrativa Monson (barco simple) --- */
+function sceneMonson(ctx,canvas,onReady){
+  let t=0;
+  const controls=document.getElementById('gameControls');
+  const btn=document.createElement('button');
+  btn.className='btn amber'; btn.textContent='Continuar la historia ⚓';
+  controls.appendChild(btn);
+  let clicked=false;
+  btn.onclick=()=>{ sfxClick(); if(!clicked){clicked=true; setTimeout(onReady,500);} };
+  function loop(){
+    t+=0.02;
+    const w=canvas.width,h=canvas.height;
+    const grad=ctx.createLinearGradient(0,0,0,h);
+    grad.addColorStop(0,'#0b1330'); grad.addColorStop(.55,'#0e2a3d'); grad.addColorStop(1,'#031017');
+    ctx.fillStyle=grad; ctx.fillRect(0,0,w,h);
+    // olas
+    ctx.strokeStyle='rgba(255,255,255,.15)';
+    for(let i=0;i<5;i++){
+      ctx.beginPath();
+      for(let x=0;x<=w;x+=10){
+        const y=h*0.62+i*14+Math.sin(x*0.03+t*2+i)*6;
+        if(x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+    }
+    // barco
+    ctx.font='48px serif'; ctx.textAlign='center';
+    ctx.fillText('🚢', w/2+Math.sin(t)*10, h*0.55);
+    // luna
+    ctx.beginPath(); ctx.fillStyle='rgba(255,255,255,.85)';
+    ctx.arc(w-70,60,26,0,Math.PI*2); ctx.fill();
+    sceneLoops[canvas.id]=requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+/* ============================================================
+   PANTALLA FINAL + TARJETA PNG
+============================================================ */
+function renderFinal(){
+  document.getElementById('finalTotal').textContent=GAME.totalPts;
+  const bd=document.getElementById('finalBreakdown');
+  bd.innerHTML = '<h2 style="margin-bottom:8px;">Resumen por nivel</h2>';
+  GAME.levelResults.forEach(r=>{
+    bd.innerHTML += `<div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(255,255,255,.08);">
+      <span>${r.correct? '✅':'➖'} ${r.title}</span><span style="color:var(--gold); font-weight:700;">${r.points} pts</span>
+    </div>`;
+  });
+  bd.innerHTML += `<hr class="sep"><div class="small">Respuestas correctas: ${GAME.correct}/${GAME.totalQ} · Reflexiones: ${GAME.reflections} · Bonus rapidez: ${GAME.speedBonus} pts</div>`;
+
+  drawFinalCard();
+}
+
+function drawFinalCard(){
+  const canvas=document.getElementById('finalCanvas');
+  const ctx=canvas.getContext('2d');
+  const w=canvas.width,h=canvas.height;
+
+  // fondo texturizado
+  const bg=ctx.createLinearGradient(0,0,0,h);
+  bg.addColorStop(0,'#0d1424'); bg.addColorStop(.5,'#141b2e'); bg.addColorStop(1,'#08101c');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,w,h);
+  for(let i=0;i<160;i++){
+    ctx.fillStyle='rgba(255,255,255,'+(Math.random()*0.06)+')';
+    ctx.fillRect(Math.random()*w, Math.random()*h, 2,2);
+  }
+  // resplandor
+  const glow=ctx.createRadialGradient(w/2,120,20,w/2,120,320);
+  glow.addColorStop(0,'rgba(255,209,102,.35)'); glow.addColorStop(1,'rgba(255,209,102,0)');
+  ctx.fillStyle=glow; ctx.fillRect(0,0,w,h);
+
+  // borde dorado
+  ctx.strokeStyle='#ffd166'; ctx.lineWidth=8;
+  ctx.strokeRect(14,14,w-28,h-28);
+  ctx.strokeStyle='rgba(255,209,102,.4)'; ctx.lineWidth=2;
+  ctx.strokeRect(26,26,w-52,h-52);
+
+  ctx.textAlign='center';
+  ctx.fillStyle='#ffd166';
+  ctx.font='bold 30px Georgia, serif';
+  ctx.fillText('👑 VALOR PARA ESTA HORA 👑', w/2, 80);
+
+  ctx.fillStyle='#e9f3ff';
+  ctx.font='22px Georgia, serif';
+  ctx.fillText(GAME.name, w/2, 130);
+
+  ctx.font='bold 64px Georgia, serif';
+  ctx.fillStyle='#22d3ee';
+  ctx.shadowColor='#22d3ee'; ctx.shadowBlur=20;
+  ctx.fillText(GAME.totalPts+' pts', w/2, 210);
+  ctx.shadowBlur=0;
+
+  ctx.font='16px sans-serif'; ctx.fillStyle='#9fb3d1';
+  ctx.fillText('SCORE TOTAL', w/2, 235);
+
+  // poderes
+  ctx.font='bold 20px Georgia, serif'; ctx.fillStyle='#ffd166';
+  ctx.fillText('Poderes espirituales activados', w/2, 285);
+
+  const cols=2; const cardW=(w-100)/cols; let py=320;
+  GAME.powers.forEach((p,i)=>{
+    const col=i%cols; const row=Math.floor(i/cols);
+    const x=50+col*cardW; const y=py+row*70;
+    ctx.fillStyle='rgba(255,255,255,.05)';
+    ctx.strokeStyle='rgba(255,209,102,.4)'; ctx.lineWidth=1.5;
+    roundRect(ctx,x,y,cardW-16,56,10,true,true);
+    ctx.font='26px serif'; ctx.textAlign='left'; ctx.fillStyle='#fff';
+    ctx.fillText(p.icon, x+12, y+36);
+    ctx.font='14px sans-serif'; ctx.fillStyle='#e9f3ff';
+    ctx.fillText(p.name, x+50, y+32);
+    ctx.textAlign='center';
+  });
+
+  const rows=Math.ceil(GAME.powers.length/cols);
+  let versoY = py + rows*70 + 40;
+  if(versoY < h-190) versoY = h-190;
+
+  ctx.font='italic 17px Georgia, serif'; ctx.fillStyle='#e9f3ff';
+  wrapText(ctx,'"El Señor es mi luz y mi salvación; ¿de quién temeré?"', w/2, versoY, w-120, 24);
+  ctx.font='14px sans-serif'; ctx.fillStyle='#f5a524';
+  ctx.fillText('— Salmos 27:1', w/2, versoY+56);
+
+  const now=new Date();
+  ctx.font='12px sans-serif'; ctx.fillStyle='#9fb3d1';
+  ctx.fillText(now.toLocaleDateString('es-AR')+' · '+now.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}), w/2, h-40);
+}
+
+function roundRect(ctx,x,y,w,h,r,fill,stroke){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+  if(fill) ctx.fill();
+  if(stroke) ctx.stroke();
+}
+function wrapText(ctx,text,x,y,maxWidth,lineHeight){
+  const words=text.split(' ');
+  let line=''; let curY=y;
+  for(let n=0;n<words.length;n++){
+    const test=line+words[n]+' ';
+    if(ctx.measureText(test).width>maxWidth && n>0){
+      ctx.fillText(line,x,curY);
+      line=words[n]+' '; curY+=lineHeight;
+    } else { line=test; }
+  }
+  ctx.fillText(line,x,curY);
+}
+
+document.getElementById('btnDownloadCard').addEventListener('click', ()=>{
+  sfxClick();
+  const canvas=document.getElementById('finalCanvas');
+  const link=document.createElement('a');
+  link.download='valor-para-esta-hora-score.png';
+  link.href=canvas.toDataURL('image/png');
+  link.click();
+});
+
+document.getElementById('btnShareCard').addEventListener('click', async ()=>{
+  sfxClick();
+  const canvas=document.getElementById('finalCanvas');
+  canvas.toBlob(async (blob)=>{
+    const file=new File([blob],'valor-para-esta-hora-score.png',{type:'image/png'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{
+        await navigator.share({
+          files:[file],
+          title:'Valor Para Esta Hora',
+          text:'¡Mirá mi score en Valor Para Esta Hora! 👑✨'
+        });
+        return;
+      }catch(e){ /* usuario canceló o no soportado, seguimos al fallback */ }
+    }
+    // fallback: descargar y abrir WhatsApp con texto
+    const link=document.createElement('a');
+    link.download='valor-para-esta-hora-score.png';
+    link.href=URL.createObjectURL(blob);
+    link.click();
+    const msg=encodeURIComponent('¡Mirá mi score en "Valor Para Esta Hora"! 👑✨ Score: '+GAME.totalPts+' pts. (Adjunto la imagen descargada)');
+    window.open('https://wa.me/?text='+msg,'_blank');
+  }, 'image/png');
+});
+
+document.getElementById('btnRestart').addEventListener('click', ()=>{
+  sfxClick();
+  GAME.totalPts=0; GAME.correct=0; GAME.totalQ=0; GAME.reflections=0; GAME.speedBonus=0;
+  GAME.powers=[]; GAME.levelResults=[];
+  document.getElementById('scoreFloat').style.display='none';
+  showScreen('screen-portada');
+});
+</script>
+</body>
+</html>

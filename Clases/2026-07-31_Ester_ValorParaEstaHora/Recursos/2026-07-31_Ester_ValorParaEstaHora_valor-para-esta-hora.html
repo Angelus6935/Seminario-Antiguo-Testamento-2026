@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, viewport-fit=cover">
+<title>Valor Para Esta Hora</title>
+<style>
+  :root{
+    --bg-deep:#0D0A14;
+    --bg-plum:#1B1226;
+    --gold:#E8C468;
+    --gold-dim:#8A7238;
+    --wine:#8B1E3F;
+    --wine-bright:#C4325A;
+    --parchment:#F0E6D2;
+    --parchment-dim:#B9AE96;
+    --good:#6FCF97;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{
+    height:100%;
+    background:
+      radial-gradient(ellipse at 50% -10%, rgba(232,196,104,0.10), transparent 55%),
+      linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-plum) 100%);
+    color:var(--parchment);
+    font-family: Georgia, 'Times New Roman', serif;
+    -webkit-font-smoothing:antialiased;
+    overscroll-behavior:none;
+  }
+  #app{
+    max-width:520px;
+    margin:0 auto;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    padding:calc(env(safe-area-inset-top) + 10px) 4vw 20px;
+  }
+
+  /* ---------- Barra superior ---------- */
+  #topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:10px; margin-bottom:14px;
+  }
+  #topbar .brand{
+    font-family: Arial Narrow, sans-serif;
+    letter-spacing:0.2em; text-transform:uppercase;
+    font-size:11px; color:var(--gold-dim);
+  }
+  #topbar .score{
+    font-family: Arial Narrow, sans-serif;
+    font-size:14px; color:var(--gold);
+    letter-spacing:0.05em;
+  }
+  #sound-toggle{
+    background:transparent; border:1px solid var(--gold-dim);
+    color:var(--gold-dim); font-size:13px; padding:4px 8px; cursor:pointer;
+  }
+  #sound-toggle.on{ color:var(--gold); border-color:var(--gold); }
+  #dots{ display:flex; gap:5px; margin-bottom:16px; justify-content:center; }
+  .dot{ width:7px; height:7px; border-radius:50%; background:rgba(232,196,104,0.2); }
+  .dot.done{ background:var(--gold); box-shadow:0 0 6px var(--gold); }
+  .dot.current{ background:var(--wine-bright); box-shadow:0 0 6px var(--wine-bright); }
+
+  /* ---------- Escenario ---------- */
+  #stage{ flex:1; display:flex; flex-direction:column; }
+
+  .eyebrow{
+    font-family: Arial Narrow, sans-serif;
+    letter-spacing:0.28em; text-transform:uppercase;
+    font-size:11px; color:var(--wine-bright);
+    margin-bottom:0.6rem;
+  }
+  h1.level-title{
+    font-size:clamp(22px,6vw,30px);
+    color:var(--parchment);
+    margin-bottom:0.8rem;
+    line-height:1.15;
+  }
+  .story-text{
+    font-size:14.5px; line-height:1.6; color:var(--parchment-dim);
+    margin-bottom:1rem;
+  }
+  .verse{
+    font-style:italic; color:var(--parchment);
+    border-left:3px solid var(--gold);
+    padding:0.7em 1em; margin:0.9rem 0;
+    background:rgba(232,196,104,0.05); font-size:14.5px;
+  }
+  .verse cite{
+    display:block; margin-top:0.5em; font-style:normal;
+    font-size:11px; letter-spacing:0.08em; color:var(--gold-dim); text-transform:uppercase;
+  }
+  .card-actions{ margin-top:auto; padding-top:1rem; }
+  .btn{
+    display:block; width:100%;
+    background:linear-gradient(135deg, var(--wine), var(--wine-bright));
+    color:var(--parchment); border:none;
+    padding:0.9em; font-family:Arial Narrow, sans-serif;
+    letter-spacing:0.12em; text-transform:uppercase; font-size:13px;
+    cursor:pointer;
+  }
+  .btn:disabled{ opacity:0.35; cursor:not-allowed; }
+  .btn-ghost{
+    background:transparent; border:1px solid var(--gold);
+    color:var(--gold);
+  }
+
+  /* ---------- Minijuego ---------- */
+  #game-wrap{ display:flex; flex-direction:column; gap:10px; }
+  .game-instructions{
+    font-size:12.5px; color:var(--gold-dim); text-align:center;
+    letter-spacing:0.03em;
+  }
+  canvas.game-canvas{
+    width:100%; height:56vh; max-height:460px;
+    display:block; touch-action:none;
+    background:var(--bg-plum);
+    border:1px solid var(--gold-dim);
+  }
+  #lane-buttons{
+    display:flex; gap:8px; justify-content:center;
+  }
+  .lane-btn{
+    flex:1; padding:0.9em 0; font-size:20px;
+    background:var(--bg-plum); border:1px solid var(--gold-dim); color:var(--gold);
+    cursor:pointer;
+  }
+  .lane-btn:active{ background:var(--gold); color:var(--bg-deep); }
+
+  /* ---------- Preguntas ---------- */
+  .option-btn{
+    display:block; width:100%; text-align:left;
+    background:var(--bg-plum); border:1px solid var(--gold-dim);
+    color:var(--parchment); padding:0.9em 1em; margin-bottom:0.7rem;
+    font-family:Georgia,serif; font-size:14.5px; cursor:pointer;
+  }
+  .option-btn:hover{ border-color:var(--gold); }
+  .option-btn.wrong{ border-color:var(--wine-bright); background:rgba(196,50,90,0.12); }
+  .option-btn.right{ border-color:var(--good); background:rgba(111,207,151,0.12); }
+  #feedback{ font-size:13px; color:var(--wine-bright); min-height:20px; margin-bottom:0.6rem; }
+
+  /* ---------- Reflexión ---------- */
+  textarea, input.fill{
+    width:100%; background:var(--bg-plum); border:1px solid var(--gold-dim);
+    color:var(--parchment); padding:0.8em; font-family:Georgia,serif; font-size:14.5px;
+    margin-bottom:0.8rem; resize:vertical;
+  }
+  .fill-line{ font-size:14px; color:var(--parchment-dim); margin-bottom:0.5rem; line-height:1.8; }
+  .fill-line strong{ color:var(--gold); }
+
+  /* ---------- Animación de poder ---------- */
+  #power-flash{
+    position:fixed; inset:0; z-index:60;
+    display:flex; align-items:center; justify-content:center; flex-direction:column;
+    background:radial-gradient(circle at 50% 45%, rgba(232,196,104,0.35), rgba(13,10,20,0.97) 65%);
+    opacity:0; pointer-events:none; text-align:center; padding:2rem;
+  }
+  #power-flash.show{ opacity:1; pointer-events:auto; animation:flashIn .6s ease; }
+  @keyframes flashIn{ from{opacity:0; transform:scale(0.9);} to{opacity:1; transform:scale(1);} }
+  #power-flash .power-eyebrow{
+    font-family:Arial Narrow, sans-serif; letter-spacing:0.3em; text-transform:uppercase;
+    font-size:12px; color:var(--gold-dim); margin-bottom:0.6rem;
+  }
+  #power-flash h2{
+    font-size:clamp(26px,7vw,40px); color:var(--gold);
+    text-shadow:0 0 30px rgba(232,196,104,0.6);
+  }
+
+  /* ---------- Puertas del castillo (nivel 7) ---------- */
+  #castle-doors{
+    position:fixed; inset:0; z-index:55; display:flex; pointer-events:none;
+  }
+  #castle-doors .door{
+    flex:1; background:linear-gradient(180deg, var(--bg-plum), var(--bg-deep));
+    border-right:2px solid var(--gold-dim);
+    transition:transform 1.4s ease;
+  }
+  #castle-doors .door:last-child{ border-right:none; border-left:2px solid var(--gold-dim); }
+  #castle-doors.open .door.left{ transform:translateX(-100%); }
+  #castle-doors.open .door.right{ transform:translateX(100%); }
+
+  /* ---------- Resumen final ---------- */
+  #summary-list{ list-style:none; margin:1rem 0; }
+  #summary-list li{
+    font-size:14px; color:var(--parchment-dim); padding:0.4em 0;
+    border-bottom:1px dashed rgba(232,196,104,0.15);
+  }
+  #summary-list li .lbl{ color:var(--gold); }
+  #score-card-preview{ width:100%; border:1px solid var(--gold-dim); margin:1rem 0; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <span class="brand">Valor Para Esta Hora</span>
+    <button id="sound-toggle">🎵 Música</button>
+    <span class="score" id="score-display">0 pts</span>
+  </div>
+  <div id="dots"></div>
+  <div id="stage"></div>
+</div>
+
+<div id="power-flash">
+  <div class="power-eyebrow">Poder activado</div>
+  <h2 id="power-name"></h2>
+</div>
+
+<div id="castle-doors">
+  <div class="door left"></div>
+  <div class="door right"></div>
+</div>
+
+<script>
+(function(){
+
+  // =====================================================================
+  // 1. DATOS DE LOS NIVELES
+  //    Cada nivel define: historia, escritura, pregunta de activación,
+  //    prompt de reflexión, nombre del poder y qué minijuego usa.
+  // =====================================================================
+  const LEVELS = [
+    { // NIVEL 1
+      title: "Valor silencioso",
+      eyebrow: "Nivel 1 · Resistencia",
+      story: "En la Marina de EE.UU., durante la Segunda Guerra Mundial, un marinero de 18 años era el único, entre 250 hombres, que se arrodillaba cada noche a orar — entre bromas y burlas, sin dudar nunca. (Historia contada por el presidente Thomas S. Monson.)",
+      verse: "\"No temas, porque yo estoy contigo; no desmayes, porque yo soy tu Dios.\"",
+      verseRef: "Isaías 41:10",
+      question: "¿Qué hizo el marinero para mostrar valor silencioso?",
+      options: [
+        { text:"Se arrodilló a orar cada noche, aunque se burlaran de él", correct:true },
+        { text:"Discutió con los que se burlaban de él", correct:false },
+        { text:"Dejó de orar para no llamar la atención", correct:false }
+      ],
+      reflectionPrompt: "Una situación donde necesito valor silencioso es…",
+      powerName: "Escudo de Oración",
+      minigame: "falling",
+      gameConfig: {
+        mode:"shoot", duration:18, spawnInterval:0.9, fallSpeed:70, fallSpeedVariance:40,
+        playerColor:"#E8C468",
+        itemTypes:[
+          {label:"burla", color:"#C4325A", good:false},
+          {label:"duda", color:"#C4325A", good:false},
+          {label:"miedo", color:"#C4325A", good:false}
+        ],
+        instructions:"Tocá y arrastrá para mover tu nave. Dispara sola cada segundo: derribá las presiones antes de que lleguen abajo."
+      }
+    },
+    { // NIVEL 2
+      title: "El riesgo real de Ester",
+      eyebrow: "Nivel 2 · Ascenso",
+      story: "Ester decidió acercarse al rey sin ser llamada, sabiendo que la ley castigaba eso con la muerte — a menos que el rey extendiera su cetro de oro.",
+      verse: "\"¿Y quién sabe si para esta hora has llegado al reino?\"",
+      verseRef: "Mardoqueo, Ester 4:14",
+      question: "¿Por qué era peligroso entrar a ver al rey sin ser llamada?",
+      options: [
+        { text:"Porque la ley castigaba eso con la muerte, salvo que el rey extendiera el cetro", correct:true },
+        { text:"Porque el rey odiaba a Ester", correct:false },
+        { text:"Porque estaba prohibido para las mujeres", correct:false }
+      ],
+      reflectionPrompt: "Un riesgo que enfrento por hacer lo correcto es…",
+      powerName: "Escalera de Fe",
+      minigame: "falling",
+      gameConfig: {
+        mode:"dodge", duration:16, spawnInterval:0.7, fallSpeed:95, fallSpeedVariance:50,
+        playerColor:"#E8C468",
+        itemTypes:[
+          {label:"fuego", color:"#C4325A", good:false, bad:true},
+          {label:"barril", color:"#C4325A", good:false, bad:true},
+          {label:"luz", color:"#E8C468", good:true, bad:false}
+        ],
+        instructions:"Arrastrá para esquivar el fuego y los barriles. Los orbes de luz son seguros — no hace falta esquivarlos."
+      }
+    },
+    { // NIVEL 3
+      title: "El ayuno: power-up espiritual",
+      eyebrow: "Nivel 3 · Preparación",
+      story: "Antes de actuar, Ester pidió que el pueblo ayunara junto a ella tres días. El ayuno no fue la acción valiente en sí — fue la preparación para poder tenerla. El élder Jorge F. Zeballos enseñó que el ayuno da fortaleza espiritual y prepara para resistir las pruebas.",
+      verse: "\"Ayunad por mí… y yo también ayunaré.\"",
+      verseRef: "Ester, Ester 4:16",
+      question: "¿Por qué Ester ayunó antes de actuar?",
+      options: [
+        { text:"Para buscar fortaleza espiritual antes de una decisión difícil", correct:true },
+        { text:"Porque no tenía comida disponible", correct:false },
+        { text:"Porque era solo una tradición sin propósito espiritual", correct:false }
+      ],
+      reflectionPrompt: "Una vez el ayuno me ayudó cuando…",
+      powerName: "Luz del Ayuno",
+      minigame: "falling",
+      gameConfig: {
+        mode:"catch", duration:18, spawnInterval:0.75, fallSpeed:90, fallSpeedVariance:40,
+        playerColor:"#E8C468",
+        itemTypes:[
+          {label:"A", color:"#E8C468", good:true},
+          {label:"O", color:"#E8C468", good:true},
+          {label:"U", color:"#E8C468", good:true},
+          {label:"X", color:"#C4325A", good:false}
+        ],
+        instructions:"Arrastrá la canasta para atrapar Ayuno (A), Oración (O) y Unidad (U). Evitá las distracciones (X)."
+      }
+    },
+    { // NIVEL 4
+      title: "Verdad central",
+      eyebrow: "Nivel 4 · El camino de luz",
+      story: "Una luz guía muestra el camino hacia el castillo. Memorizá el camino que se enciende, y seguilo tocando las mismas celdas en el mismo orden.",
+      verse: "\"Todo lo puedo en Cristo que me fortalece.\"",
+      verseRef: "Pablo, Filipenses 4:13",
+      question: "¿De dónde viene el valor verdadero?",
+      options: [
+        { text:"De confiar en el Padre Celestial y en Jesucristo", correct:true },
+        { text:"De no sentir miedo nunca", correct:false },
+        { text:"De ser popular entre los demás", correct:false }
+      ],
+      reflectionPrompt: "Cuando confío en Cristo, Él me da valor para…",
+      powerName: "Confianza en Cristo",
+      minigame: "simon",
+      gameConfig: { length:5 }
+    },
+    { // NIVEL 5
+      title: "Puente con Cristo",
+      eyebrow: "Nivel 5 · La carrera del Salvador",
+      story: "En Getsemaní, Cristo conocía el costo exacto de lo que iba a enfrentar — y avanzó de todas formas, por amor a nosotros.",
+      verse: "\"No se haga mi voluntad, sino la tuya.\"",
+      verseRef: "Jesucristo, Lucas 22:42",
+      question: "¿Qué muestra el valor de Cristo en Getsemaní?",
+      options: [
+        { text:"Que conocía el sufrimiento que vendría y avanzó igual, por amor", correct:true },
+        { text:"Que no sintió ningún temor ni dolor", correct:false },
+        { text:"Que evitó la prueba que tenía delante", correct:false }
+      ],
+      reflectionPrompt: "Cristo mostró valor cuando…",
+      powerName: "Valor del Salvador",
+      minigame: "runner",
+      gameConfig: { duration:16 }
+    },
+    { // NIVEL 6
+      title: "El solo que nadie más puede tocar",
+      eyebrow: "Nivel 6 · Rock",
+      story: "En una banda hay un momento — el solo, la nota que puede fallar en vivo — donde alguien se juega todo frente al público. Ester frente al rey fue ese momento.",
+      verse: "\"El solo que nadie más puede tocar.\"",
+      verseRef: "— sobre decisiones que solo vos podés tomar",
+      question: "¿Qué representa \"el solo que nadie más puede tocar\"?",
+      options: [
+        { text:"La decisión valiente que nadie puede tomar por vos", correct:true },
+        { text:"Un truco de guitarra difícil", correct:false },
+        { text:"Una canción cualquiera de la radio", correct:false }
+      ],
+      reflectionPrompt: "Mi decisión valiente es…",
+      powerName: "Mi Solo Único",
+      minigame: "rhythm",
+      gameConfig: { noteCount:14 }
+    }
+  ];
+
+  // Nivel 7 (final de la historia) se maneja aparte: no tiene minijuego,
+  // usa una plantilla de 3 campos en vez de una sola reflexión libre.
+  const LEVEL7 = {
+    title: "Mi acto de valentía",
+    eyebrow: "Nivel 7 · Las puertas del castillo",
+    story: "Ester llegó al castillo del rey. Ya había ayunado, ya había decidido. Solo quedaba entrar.",
+    verse: "\"Y así entraré a ver al rey, aunque no sea conforme a la ley; y si perezco, que perezca.\"",
+    verseRef: "Ester, Ester 4:16",
+    powerName: "Decisión Final"
+  };
+
+  const FINAL_VERSE = "\"El Señor es mi luz y mi salvación; ¿de quién temeré?\"";
+  const FINAL_VERSE_REF = "David, Salmos 27:1";
+  const FINAL_PHRASE = "El valor no es ausencia de miedo — es actuar igual.";
+
+  // =====================================================================
+  // 2. ESTADO GLOBAL Y AUDIO
+  // =====================================================================
+  let score = 0;
+  let levelIdx = 0;
+  const TOTAL_STEPS = LEVELS.length + 2; // + nivel 7 + resumen final
+
+  const stage = document.getElementById('stage');
+  const scoreDisplay = document.getElementById('score-display');
+  const dotsWrap = document.getElementById('dots');
+  const powerFlash = document.getElementById('power-flash');
+  const powerNameEl = document.getElementById('power-name');
+  const castleDoors = document.getElementById('castle-doors');
+  const soundToggle = document.getElementById('sound-toggle');
+
+  function buildDots(){
+    dotsWrap.innerHTML = '';
+    for(let i=0;i<TOTAL_STEPS;i++){
+      const d = document.createElement('div');
+      d.className = 'dot';
+      dotsWrap.appendChild(d);
+    }
+  }
+  function updateDots(current){
+    const dots = dotsWrap.querySelectorAll('.dot');
+    dots.forEach((d,i)=>{
+      d.className = 'dot' + (i<current ? ' done' : i===current ? ' current' : '');
+    });
+  }
+  function addScore(n){
+    score += n;
+    scoreDisplay.textContent = score + ' pts';
+  }
+
+  let audioCtx;
+  function ensureAudio(){
+    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+  }
+  function tone(freq, dur, type){
+    try{
+      ensureAudio();
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = type || 'sine';
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0.06, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(); o.stop(audioCtx.currentTime + dur);
+    }catch(e){}
+  }
+  // Música ambiente opcional: un arpegio suave en loop, generado por código
+  // (no hay archivo de audio embebido: así el archivo sigue siendo liviano).
+  let musicOn = false;
+  let musicInterval = null;
+  const AMBIENT_NOTES = [220, 261.6, 329.6, 392, 329.6, 261.6];
+  let ambientStep = 0;
+  soundToggle.addEventListener('click', ()=>{
+    musicOn = !musicOn;
+    soundToggle.classList.toggle('on', musicOn);
+    if(musicOn){
+      ensureAudio();
+      musicInterval = setInterval(()=>{
+        tone(AMBIENT_NOTES[ambientStep % AMBIENT_NOTES.length], 0.9, 'triangle');
+        ambientStep++;
+      }, 950);
+    } else {
+      clearInterval(musicInterval);
+    }
+  });
+
+  // =====================================================================
+  // 3. UTILIDADES DE CANVAS
+  // =====================================================================
+  function setupCanvas(canvas){
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    return { ctx, w: rect.width, h: rect.height };
+  }
+
+  // =====================================================================
+  // 4. MOTOR GENÉRICO: OBJETOS QUE CAEN (Niveles 1, 2 y 3)
+  //    mode "shoot": el jugador dispara hacia arriba para destruir presiones.
+  //    mode "dodge": el jugador esquiva objetos peligrosos.
+  //    mode "catch": el jugador atrapa objetos buenos y evita los malos.
+  // =====================================================================
+  function runFallingGame(canvas, cfg, onDone){
+    const { ctx, w, h } = setupCanvas(canvas);
+    let running = true;
+    let elapsed = 0, lastTime = performance.now();
+    let items = [], bullets = [];
+    let lives = 3;
+    let hits = 0, misses = 0;
+    let playerX = w/2;
+    const playerW = 46, playerH = 16;
+    let spawnTimer = 0, autoFireTimer = 0;
+
+    function setPlayerX(clientX){
+      const rect = canvas.getBoundingClientRect();
+      playerX = Math.max(playerW/2, Math.min(w-playerW/2, clientX-rect.left));
+    }
+    function onMove(e){
+      const x = e.touches ? e.touches[0].clientX : e.clientX;
+      setPlayerX(x);
+    }
+    function fireBullet(){ bullets.push({x:playerX, y:h-42, vy:-260}); }
+    function onDown(e){ onMove(e); if(cfg.mode==='shoot') fireBullet(); }
+
+    canvas.addEventListener('mousemove', onMove);
+    canvas.addEventListener('touchmove', onMove, {passive:true});
+    canvas.addEventListener('mousedown', onDown);
+    canvas.addEventListener('touchstart', onDown, {passive:true});
+
+    function spawnItem(){
+      const type = cfg.itemTypes[Math.floor(Math.random()*cfg.itemTypes.length)];
+      items.push({ x: Math.random()*(w-50)+25, y:-20, vy: cfg.fallSpeed + Math.random()*cfg.fallSpeedVariance, type });
+    }
+
+    function update(dt){
+      elapsed += dt; spawnTimer += dt;
+      if(spawnTimer > cfg.spawnInterval){ spawnTimer = 0; spawnItem(); }
+
+      if(cfg.mode === 'shoot'){
+        autoFireTimer += dt;
+        if(autoFireTimer > 0.55){ autoFireTimer = 0; fireBullet(); }
+        bullets.forEach(b=> b.y += b.vy*dt);
+        bullets = bullets.filter(b=> b.y > -20);
+      }
+
+      items.forEach(it=> it.y += it.vy*dt);
+
+      if(cfg.mode === 'shoot'){
+        for(let i=items.length-1;i>=0;i--){
+          const it = items[i];
+          let destroyed = false;
+          for(let j=bullets.length-1;j>=0;j--){
+            const b = bullets[j];
+            if(Math.abs(it.x-b.x)<26 && Math.abs(it.y-b.y)<22){
+              items.splice(i,1); bullets.splice(j,1); hits++; destroyed = true; break;
+            }
+          }
+          if(destroyed) continue;
+        }
+        for(let i=items.length-1;i>=0;i--){
+          if(items[i].y > h+20){ items.splice(i,1); misses++; lives = Math.max(0,lives-1); }
+        }
+      } else {
+        for(let i=items.length-1;i>=0;i--){
+          const it = items[i];
+          if(it.y > h-72 && it.y < h-18 && Math.abs(it.x-playerX) < (playerW/2+18)){
+            items.splice(i,1);
+            if(cfg.mode==='dodge'){
+              if(it.type.bad){ lives=Math.max(0,lives-1); misses++; } else { hits++; }
+            } else if(cfg.mode==='catch'){
+              if(it.type.good){ hits++; } else { misses++; lives=Math.max(0,lives-1); }
+            }
+            continue;
+          }
+          if(it.y > h+20){ items.splice(i,1); }
+        }
+      }
+    }
+
+    function draw(){
+      ctx.clearRect(0,0,w,h);
+      ctx.save();
+      ctx.shadowColor = cfg.playerColor; ctx.shadowBlur = 14;
+      ctx.fillStyle = cfg.playerColor;
+      ctx.fillRect(playerX-playerW/2, h-38, playerW, playerH);
+      ctx.restore();
+
+      ctx.fillStyle = '#F0E6D2';
+      bullets.forEach(b=> ctx.fillRect(b.x-2, b.y-8, 4, 12));
+
+      items.forEach(it=>{
+        ctx.save();
+        ctx.shadowColor = it.type.color; ctx.shadowBlur = 10;
+        ctx.fillStyle = it.type.color;
+        ctx.beginPath(); ctx.arc(it.x, it.y, 17, 0, Math.PI*2); ctx.fill();
+        ctx.restore();
+        ctx.fillStyle = '#0D0A14';
+        ctx.font = '11px Arial'; ctx.textAlign = 'center';
+        ctx.fillText(it.type.label, it.x, it.y+4);
+      });
+
+      ctx.fillStyle = '#F0E6D2'; ctx.font = '13px Arial';
+      ctx.textAlign = 'left';
+      ctx.fillText('❤'.repeat(lives) || '—', 8, 18);
+      ctx.textAlign = 'right';
+      ctx.fillText(Math.ceil(Math.max(0, cfg.duration-elapsed)) + 's', w-8, 18);
+    }
+
+    function loop(now){
+      if(!running) return;
+      const dt = Math.min(0.05, (now-lastTime)/1000);
+      lastTime = now;
+      update(dt); draw();
+      if(elapsed >= cfg.duration){ finish(); return; }
+      requestAnimationFrame(loop);
+    }
+    function finish(){
+      running = false;
+      canvas.removeEventListener('mousemove', onMove);
+      canvas.removeEventListener('touchmove', onMove);
+      canvas.removeEventListener('mousedown', onDown);
+      canvas.removeEventListener('touchstart', onDown);
+      onDone({ points: hits*10 });
+    }
+    requestAnimationFrame(loop);
+  }
+
+  // =====================================================================
+  // 5. MOTOR SIMON (Nivel 4 — el camino de luz)
+  // =====================================================================
+  function runSimonGame(canvas, cfg, onDone){
+    const { ctx, w, h } = setupCanvas(canvas);
+    const gridSize = 3;
+    const cellW = w/gridSize, cellH = h/gridSize;
+    const sequence = [];
+    for(let i=0;i<cfg.length;i++) sequence.push(Math.floor(Math.random()*gridSize*gridSize));
+    let playerIndex = 0, highlightCell = -1, phase = 'showing';
+
+    function cellRect(idx){
+      const cx = idx % gridSize, cy = Math.floor(idx/gridSize);
+      return { x:cx*cellW, y:cy*cellH, w:cellW, h:cellH };
+    }
+    function draw(){
+      ctx.clearRect(0,0,w,h);
+      for(let i=0;i<gridSize*gridSize;i++){
+        const r = cellRect(i);
+        ctx.save();
+        if(i===highlightCell){ ctx.shadowColor='#E8C468'; ctx.shadowBlur=22; ctx.fillStyle='#E8C468'; }
+        else { ctx.fillStyle='#1B1226'; }
+        ctx.fillRect(r.x+5, r.y+5, r.w-10, r.h-10);
+        ctx.restore();
+        ctx.strokeStyle='#8A7238';
+        ctx.strokeRect(r.x+5, r.y+5, r.w-10, r.h-10);
+      }
+      ctx.fillStyle='#F0E6D2'; ctx.font='13px Arial'; ctx.textAlign='center';
+      ctx.fillText(phase==='showing' ? 'Memorizá el camino de luz…' : 'Repetí el camino tocando las celdas', w/2, h-12);
+    }
+    function revealSequence(){
+      let i=0;
+      function showNext(){
+        if(i>=sequence.length){ highlightCell=-1; draw(); phase='input'; return; }
+        highlightCell = sequence[i]; draw();
+        setTimeout(()=>{
+          highlightCell=-1; draw();
+          setTimeout(()=>{ i++; showNext(); }, 220);
+        }, 550);
+      }
+      showNext();
+    }
+    function onTap(e){
+      if(phase!=='input') return;
+      const rect = canvas.getBoundingClientRect();
+      const px = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+      const py = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+      const idx = Math.floor(py/cellH)*gridSize + Math.floor(px/cellW);
+      highlightCell = idx; draw();
+      setTimeout(()=>{ highlightCell=-1; draw(); }, 150);
+
+      if(idx === sequence[playerIndex]){
+        playerIndex++;
+        tone(520 + playerIndex*40, 0.15, 'sine');
+        if(playerIndex >= sequence.length){
+          phase = 'done';
+          canvas.removeEventListener('click', onTap);
+          canvas.removeEventListener('touchstart', onTap);
+          onDone({ points:50 });
+        }
+      } else {
+        playerIndex = 0; // se reinicia el intento, sin penalizar puntos
+        tone(180, 0.2, 'sawtooth');
+      }
+    }
+    canvas.addEventListener('click', onTap);
+    canvas.addEventListener('touchstart', onTap, {passive:true});
+    draw();
+    setTimeout(revealSequence, 700);
+  }
+
+  // =====================================================================
+  // 6. MOTOR RUNNER (Nivel 5 — la carrera del Salvador)
+  // =====================================================================
+  function runRunnerGame(canvas, cfg, onDone){
+    const { ctx, w, h } = setupCanvas(canvas);
+    let running = true;
+    const groundY = h-46;
+    const player = { x:56, y:groundY, vy:0, jumping:false };
+    let obstacles = [], elapsed = 0, spawnTimer = 0, jumps = 0;
+
+    function jump(){ if(!player.jumping){ player.vy=-330; player.jumping=true; jumps++; tone(600,0.15,'square'); } }
+    function onTap(e){ e.preventDefault && e.preventDefault(); jump(); }
+    canvas.addEventListener('click', onTap);
+    canvas.addEventListener('touchstart', onTap, {passive:false});
+
+    function spawnObstacle(){ obstacles.push({ x:w+20, y:groundY-16 }); }
+
+    let lastTime = performance.now();
+    let hits = 0;
+    function loop(now){
+      if(!running) return;
+      const dt = Math.min(0.05, (now-lastTime)/1000);
+      lastTime = now; elapsed += dt; spawnTimer += dt;
+      if(spawnTimer > 1.15){ spawnTimer=0; spawnObstacle(); }
+
+      player.vy += 950*dt;
+      player.y += player.vy*dt;
+      if(player.y > groundY){ player.y = groundY; player.vy = 0; player.jumping = false; }
+
+      obstacles.forEach(o=> o.x -= 230*dt);
+      obstacles = obstacles.filter(o=> o.x > -30);
+
+      for(let i=obstacles.length-1;i>=0;i--){
+        const o = obstacles[i];
+        if(Math.abs(o.x-player.x) < 22 && player.y > groundY-18){
+          obstacles.splice(i,1); hits++;
+        }
+      }
+
+      ctx.clearRect(0,0,w,h);
+      ctx.strokeStyle='#8A7238'; ctx.beginPath(); ctx.moveTo(0,groundY+18); ctx.lineTo(w,groundY+18); ctx.stroke();
+      ctx.save(); ctx.shadowColor='#E8C468'; ctx.shadowBlur=12; ctx.fillStyle='#E8C468';
+      ctx.fillRect(player.x-14, player.y-28, 28, 28);
+      ctx.restore();
+      ctx.fillStyle='#C4325A';
+      obstacles.forEach(o=> ctx.fillRect(o.x-9, o.y-9, 18, 18));
+      ctx.fillStyle='#F0E6D2'; ctx.font='13px Arial'; ctx.textAlign='right';
+      ctx.fillText(Math.ceil(Math.max(0,cfg.duration-elapsed))+'s', w-8, 18);
+
+      if(elapsed >= cfg.duration){
+        running = false;
+        canvas.removeEventListener('click', onTap);
+        canvas.removeEventListener('touchstart', onTap);
+        onDone({ points: hits*8 + jumps*2 });
+        return;
+      }
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  }
+
+  // =====================================================================
+  // 7. MOTOR RITMO (Nivel 6 — el solo de rock)
+  // =====================================================================
+  function runRhythmGame(canvas, cfg, onDone, laneButtonsContainer){
+    const { ctx, w, h } = setupCanvas(canvas);
+    const lanes = 3, laneW = w/lanes, hitY = h-50;
+    let notes = [], spawned = 0, spawnTimer = 0, hits = 0, running = true, elapsed = 0;
+
+    function spawnNote(){
+      notes.push({ lane: Math.floor(Math.random()*lanes), y:-20, vy:190 });
+      spawned++;
+    }
+    function hitLane(lane){
+      let best=null, bestDist=Infinity;
+      notes.forEach(n=>{
+        if(n.lane===lane){ const d=Math.abs(n.y-hitY); if(d<bestDist){ bestDist=d; best=n; } }
+      });
+      if(best && bestDist<36){ notes.splice(notes.indexOf(best),1); hits++; tone(700,0.12,'square'); }
+      else { tone(160,0.12,'sawtooth'); }
+    }
+    laneButtonsContainer.innerHTML = '';
+    ['◀','●','▶'].forEach((label, i)=>{
+      const btn = document.createElement('button');
+      btn.className = 'lane-btn'; btn.textContent = label;
+      btn.addEventListener('click', ()=> hitLane(i));
+      btn.addEventListener('touchstart', (e)=>{ e.preventDefault(); hitLane(i); });
+      laneButtonsContainer.appendChild(btn);
+    });
+
+    let lastTime = performance.now();
+    function loop(now){
+      if(!running) return;
+      const dt = Math.min(0.05,(now-lastTime)/1000);
+      lastTime = now; elapsed += dt; spawnTimer += dt;
+      if(spawnTimer > 0.85 && spawned < cfg.noteCount){ spawnTimer=0; spawnNote(); }
+
+      notes.forEach(n=> n.y += n.vy*dt);
+      notes = notes.filter(n=> n.y < h+20);
+
+      ctx.clearRect(0,0,w,h);
+      for(let i=0;i<lanes;i++){ ctx.strokeStyle='rgba(232,196,104,0.15)'; ctx.strokeRect(i*laneW,0,laneW,h); }
+      ctx.strokeStyle='#E8C468'; ctx.beginPath(); ctx.moveTo(0,hitY); ctx.lineTo(w,hitY); ctx.stroke();
+      notes.forEach(n=>{
+        ctx.save(); ctx.shadowColor='#C4325A'; ctx.shadowBlur=10; ctx.fillStyle='#C4325A';
+        ctx.beginPath(); ctx.arc(n.lane*laneW+laneW/2, n.y, 13, 0, Math.PI*2); ctx.fill();
+        ctx.restore();
+      });
+      ctx.fillStyle='#F0E6D2'; ctx.font='13px Arial'; ctx.textAlign='left';
+      ctx.fillText('Aciertos: '+hits, 8, 18);
+
+      if(spawned >= cfg.noteCount && notes.length === 0){
+        running = false;
+        laneButtonsContainer.innerHTML = '';
+        onDone({ points: hits*10 });
+        return;
+      }
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  }
+
+  // =====================================================================
+  // 8. CONTROLADOR DE PANTALLAS
+  // =====================================================================
+  function renderIntro(idx){
+    updateDots(idx);
+    const L = LEVELS[idx];
+    stage.innerHTML = `
+      <div class="eyebrow">${L.eyebrow}</div>
+      <h1 class="level-title">${L.title}</h1>
+      <p class="story-text">${L.story}</p>
+      <div class="verse">${L.verse}<cite>${L.verseRef}</cite></div>
+      <div class="card-actions">
+        <button class="btn" id="start-btn">Comenzar</button>
+      </div>
+    `;
+    document.getElementById('start-btn').addEventListener('click', ()=> renderMinigame(idx));
+  }
+
+  function renderMinigame(idx){
+    const L = LEVELS[idx];
+    stage.innerHTML = `
+      <div class="eyebrow">${L.eyebrow}</div>
+      <div id="game-wrap">
+        <canvas class="game-canvas" id="game-canvas"></canvas>
+        <div class="game-instructions" id="game-instructions"></div>
+        <div id="lane-buttons"></div>
+      </div>
+    `;
+    const canvas = document.getElementById('game-canvas');
+    const laneButtons = document.getElementById('lane-buttons');
+    const instructions = document.getElementById('game-instructions');
+
+    function onDone(result){
+      addScore(result.points);
+      renderQuestion(idx, 1);
+    }
+
+    if(L.minigame === 'falling'){
+      instructions.textContent = L.gameConfig.instructions;
+      runFallingGame(canvas, L.gameConfig, onDone);
+    } else if(L.minigame === 'simon'){
+      instructions.textContent = 'Memorizá el camino de luz y repetilo tocando las celdas en orden.';
+      runSimonGame(canvas, L.gameConfig, onDone);
+    } else if(L.minigame === 'runner'){
+      instructions.textContent = 'Tocá la pantalla para saltar los obstáculos.';
+      runRunnerGame(canvas, L.gameConfig, onDone);
+    } else if(L.minigame === 'rhythm'){
+      instructions.textContent = 'Tocá el botón del carril cuando la nota llegue a la línea dorada.';
+      runRhythmGame(canvas, L.gameConfig, onDone, laneButtons);
+    }
+  }
+
+  function renderQuestion(idx, attempt){
+    const L = LEVELS[idx];
+    stage.innerHTML = `
+      <div class="eyebrow">${L.eyebrow} · Pregunta</div>
+      <h1 class="level-title" style="font-size:20px;">${L.question}</h1>
+      <div id="feedback"></div>
+      <div id="options"></div>
+    `;
+    const optionsWrap = document.getElementById('options');
+    const feedback = document.getElementById('feedback');
+    L.options.forEach(opt=>{
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.textContent = opt.text;
+      btn.addEventListener('click', ()=>{
+        if(opt.correct){
+          btn.classList.add('right');
+          tone(700, 0.2, 'triangle');
+          addScore(attempt===1 ? 20 : 10);
+          setTimeout(()=> renderReflection(idx), 500);
+        } else {
+          btn.classList.add('wrong');
+          tone(180, 0.2, 'sawtooth');
+          feedback.textContent = 'Intentá de nuevo — releé la Escritura de arriba.';
+          setTimeout(()=> renderQuestion(idx, attempt+1), 700);
+        }
+      });
+      optionsWrap.appendChild(btn);
+    });
+  }
+
+  function renderReflection(idx){
+    const L = LEVELS[idx];
+    stage.innerHTML = `
+      <div class="eyebrow">${L.eyebrow} · Reflexión</div>
+      <h1 class="level-title" style="font-size:20px;">${L.reflectionPrompt}</h1>
+      <textarea id="reflection-input" rows="4" placeholder="Escribí acá..."></textarea>
+      <div class="card-actions">
+        <button class="btn" id="activate-btn" disabled>Activar Poder</button>
+      </div>
+    `;
+    const input = document.getElementById('reflection-input');
+    const activateBtn = document.getElementById('activate-btn');
+    input.addEventListener('input', ()=>{
+      activateBtn.disabled = input.value.trim().length < 8;
+    });
+    activateBtn.addEventListener('click', ()=>{
+      addScore(10);
+      showPower(L.powerName, ()=>{
+        if(idx+1 < LEVELS.length) renderIntro(idx+1);
+        else renderLevel7();
+      });
+    });
+  }
+
+  function showPower(name, next){
+    powerNameEl.textContent = name;
+    powerFlash.classList.add('show');
+    tone(880, 0.4, 'triangle');
+    tone(1320, 0.4, 'sine');
+    setTimeout(()=>{
+      powerFlash.classList.remove('show');
+      next();
+    }, 1700);
+  }
+
+  // ---------- Nivel 7: sin minijuego, plantilla de 3 campos ----------
+  function renderLevel7(){
+    updateDots(LEVELS.length);
+    stage.innerHTML = `
+      <div class="eyebrow">${LEVEL7.eyebrow}</div>
+      <h1 class="level-title">${LEVEL7.title}</h1>
+      <p class="story-text">${LEVEL7.story}</p>
+      <div class="verse">${LEVEL7.verse}<cite>${LEVEL7.verseRef}</cite></div>
+      <div class="fill-line">Y así <input class="fill" id="f1" placeholder="la acción valiente que quiero hacer"></div>
+      <div class="fill-line">Y si <input class="fill" id="f2" placeholder="una posible consecuencia"></div>
+      <div class="fill-line">yo <input class="fill" id="f3" placeholder="algo que haré para confiar en el Señor"></div>
+      <div class="card-actions">
+        <button class="btn" id="final-decision-btn" disabled>Entrar al castillo</button>
+      </div>
+    `;
+    const f1 = document.getElementById('f1');
+    const f2 = document.getElementById('f2');
+    const f3 = document.getElementById('f3');
+    const btn = document.getElementById('final-decision-btn');
+    function check(){
+      btn.disabled = !(f1.value.trim().length>2 && f2.value.trim().length>2 && f3.value.trim().length>2);
+    }
+    [f1,f2,f3].forEach(el=> el.addEventListener('input', check));
+    btn.addEventListener('click', ()=>{
+      addScore(30);
+      castleDoors.classList.add('open');
+      tone(220, 0.6, 'sawtooth');
+      showPower(LEVEL7.powerName, ()=>{
+        castleDoors.classList.remove('open');
+        renderFinalSummary();
+      });
+    });
+  }
+
+  // ---------- Resumen final + tarjeta de puntaje ----------
+  function renderFinalSummary(){
+    updateDots(LEVELS.length+1);
+    stage.innerHTML = `
+      <div class="eyebrow">Cierre</div>
+      <h1 class="level-title">Valor Para Esta Hora</h1>
+      <div class="verse">${FINAL_VERSE}<cite>${FINAL_VERSE_REF}</cite></div>
+      <ul id="summary-list">
+        <li><span class="lbl">Escudo de Oración</span> — valor silencioso</li>
+        <li><span class="lbl">Escalera de Fe</span> — el riesgo de Ester</li>
+        <li><span class="lbl">Luz del Ayuno</span> — preparación</li>
+        <li><span class="lbl">Confianza en Cristo</span> — verdad central</li>
+        <li><span class="lbl">Valor del Salvador</span> — Getsemaní</li>
+        <li><span class="lbl">Mi Solo Único</span> — decisión personal</li>
+        <li><span class="lbl">Decisión Final</span> — mi acto de valentía</li>
+      </ul>
+      <p class="story-text" style="font-style:italic; color:var(--gold);">${FINAL_PHRASE}</p>
+      <canvas id="score-card-preview"></canvas>
+      <div class="card-actions">
+        <a class="btn" id="download-link" download="mi-valor-para-esta-hora.png">Descargar mi tarjeta de puntaje</a>
+      </div>
+    `;
+    drawScoreCard();
+  }
+
+  function drawScoreCard(){
+    const canvas = document.getElementById('score-card-preview');
+    const W = 600, H = 500;
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    const grad = ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0, '#1B1226'); grad.addColorStop(1, '#0D0A14');
+    ctx.fillStyle = grad; ctx.fillRect(0,0,W,H);
+
+    ctx.strokeStyle = '#8A7238'; ctx.lineWidth = 3;
+    ctx.strokeRect(14,14,W-28,H-28);
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#8A7238';
+    ctx.font = '13px Arial';
+    ctx.fillText('VALOR PARA ESTA HORA', W/2, 60);
+
+    ctx.fillStyle = '#F0E6D2';
+    ctx.font = 'italic 20px Georgia';
+    ctx.fillText('"Si perezco, que perezca"', W/2, 95);
+
+    ctx.fillStyle = '#E8C468';
+    ctx.font = 'bold 64px Georgia';
+    ctx.shadowColor = '#E8C468'; ctx.shadowBlur = 20;
+    ctx.fillText(score + ' pts', W/2, 190);
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = '#B9AE96';
+    ctx.font = '14px Georgia';
+    ctx.fillText('7 poderes activados · 7 decisiones de valor', W/2, 230);
+
+    const powers = ['Escudo de Oración','Escalera de Fe','Luz del Ayuno','Confianza en Cristo','Valor del Salvador','Mi Solo Único','Decisión Final'];
+    ctx.font = '13px Georgia';
+    ctx.fillStyle = '#F0E6D2';
+    let y = 270;
+    powers.forEach(p=>{ ctx.fillText(p, W/2, y); y += 26; });
+
+    ctx.fillStyle = '#8A7238';
+    ctx.font = '12px Arial';
+    ctx.fillText('Compartí tu score por WhatsApp', W/2, H-30);
+
+    const link = document.getElementById('download-link');
+    link.href = canvas.toDataURL('image/png');
+  }
+
+  // =====================================================================
+  // 9. INICIO
+  // =====================================================================
+  buildDots();
+  renderIntro(0);
+
+})();
+</script>
+</body>
+</html>

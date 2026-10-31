@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kaju Games: El Ojo Clínico</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        title: ['Montserrat', 'sans-serif'],
+                    },
+                    colors: {
+                        darkBg: '#05060f',
+                        panelBg: '#0e101f',
+                        cyanNeon: '#06b6d4',
+                        accentGold: '#fbbf24',
+                        accentPurple: '#a154f2',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glow-effect {
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.15);
+        }
+        .correct-tap {
+            animation: pop-correct 0.4s ease-out forwards;
+        }
+        @keyframes pop-correct {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); background-color: #10b981; color: white; }
+            100% { transform: scale(1); background-color: #064e3b; color: #34d399; border-color: #059669; }
+        }
+    </style>
+</head>
+<body class="bg-darkBg text-white min-h-screen flex flex-col justify-between select-none">
+
+    <!-- AUDIO SYNTH (Efectos de sonido locales de Kaju) -->
+    <script>
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function playSound(type) {
+            if (!audioCtx) audioCtx = new AudioCtx();
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'tap') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(400, now);
+                gain.gain.setValueAtTime(0.05, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                osc.start(now);
+                osc.stop(now + 0.05);
+            } else if (type === 'success') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.16); // G5
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                osc.start(now);
+                osc.stop(now + 0.45);
+            } else if (type === 'error') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(180, now);
+                osc.frequency.linearRampToValueAtTime(100, now + 0.25);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            } else if (type === 'win') {
+                const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.connect(g);
+                    g.connect(audioCtx.destination);
+                    o.type = 'triangle';
+                    o.frequency.setValueAtTime(freq, now + (idx * 0.08));
+                    g.gain.setValueAtTime(0.08, now + (idx * 0.08));
+                    g.gain.exponentialRampToValueAtTime(0.001, now + (idx * 0.08) + 0.4);
+                    o.start(now + (idx * 0.08));
+                    o.stop(now + (idx * 0.08) + 0.4);
+                });
+            }
+        }
+    </script>
+
+    <!-- HEADER -->
+    <header class="w-full bg-black/40 border-b border-white/5 p-4 flex justify-between items-center backdrop-blur-md">
+        <div class="flex items-center gap-2">
+            <span class="bg-cyanNeon/10 border border-cyanNeon/30 text-cyanNeon font-black font-title text-sm px-3 py-1 rounded-xl">
+                KAJU!
+            </span>
+            <span class="text-xs uppercase tracking-widest text-slate-400 font-bold font-title">El Ojo Clínico</span>
+        </div>
+        <div class="text-xs font-semibold text-accentGold bg-accentGold/10 border border-accentGold/20 px-2.5 py-1 rounded-full">
+            <i class="fa-solid fa-magnifying-glass"></i> Técnicas 2026
+        </div>
+    </header>
+
+    <!-- MAIN GAME AREA -->
+    <main class="flex-grow flex flex-col justify-center items-center p-3 md:p-6 w-full max-w-xl mx-auto">
+        
+        <!-- PANTALLA 1: MENU PRINCIPAL -->
+        <div id="screen-menu" class="w-full bg-panelBg/80 border border-white/10 p-6 rounded-3xl text-center backdrop-blur-md shadow-2xl relative overflow-hidden">
+            <div class="absolute top-[-50px] right-[-50px] w-32 h-32 bg-cyanNeon/10 rounded-full blur-2xl"></div>
+            
+            <div class="w-16 h-16 mx-auto bg-cyanNeon/10 border border-cyanNeon/30 rounded-2xl flex items-center justify-center text-3xl text-cyanNeon mb-4 animate-bounce">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+            </div>
+            
+            <h2 class="text-2xl md:text-3xl font-black font-title tracking-tight leading-tight mb-2">
+                ¿Tienes un <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-cyanNeon to-accentGold">Ojo Clínico</span>?
+            </h2>
+            <p class="text-xs md:text-sm text-slate-400 leading-relaxed mb-6">
+                El mundo te bombardea con imitaciones sutiles. Aprende el arte de comparar escrituras para descifrar las verdades del cielo.
+            </p>
+
+            <div class="space-y-3">
+                <button onclick="startLevel(0)" class="w-full bg-white hover:bg-slate-200 text-black py-4 px-6 rounded-2xl font-black font-title uppercase tracking-wider text-sm transition shadow-lg flex items-center justify-between">
+                    <span>Nivel 1: Las Réplicas AAA</span>
+                    <i class="fa-solid fa-shoe-prints"></i>
+                </button>
+                <button onclick="startLevel(1)" class="w-full bg-white hover:bg-slate-200 text-black py-4 px-6 rounded-2xl font-black font-title uppercase tracking-wider text-sm transition shadow-lg flex items-center justify-between">
+                    <span>Nivel 2: El Gran Filtro</span>
+                    <i class="fa-solid fa-scale-balanced"></i>
+                </button>
+                <button onclick="startLevel(2)" class="w-full bg-white hover:bg-slate-200 text-black py-4 px-6 rounded-2xl font-black font-title uppercase tracking-wider text-sm transition shadow-lg flex items-center justify-between">
+                    <span>Nivel 3: Informe de Gigantes</span>
+                    <i class="fa-solid fa-eye text-cyanNeon"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- PANTALLA 2: JUEGO ACTIVO (Panel de Diferencias) -->
+        <div id="screen-game" class="hidden w-full bg-panelBg/80 border border-white/10 p-4 md:p-6 rounded-3xl flex flex-col justify-between shadow-2xl min-h-[480px]">
+            
+            <!-- Encabezado de Nivel -->
+            <div class="flex justify-between items-center border-b border-white/5 pb-3 mb-4">
+                <div class="text-left">
+                    <span id="level-tag" class="text-[9px] uppercase tracking-widest text-cyanNeon font-black font-title">NIVEL 1</span>
+                    <h3 id="level-title" class="text-base font-bold text-white">Cargando...</h3>
+                </div>
+                <div class="bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
+                    <span class="text-[10px] text-slate-400 font-bold">FALTAN:</span>
+                    <span id="clues-left" class="text-xs font-black font-title text-accentGold">3</span>
+                </div>
+            </div>
+
+            <!-- Caja de Instrucción Rápida -->
+            <p id="level-instruction" class="text-xs text-slate-400 leading-snug mb-4 italic"></p>
+
+            <!-- Textos para Comparar -->
+            <div class="space-y-4 flex-grow flex flex-col justify-center">
+                <!-- Bloque A (La "Imitación" o Referencia) -->
+                <div class="bg-black/40 border border-white/5 rounded-2xl p-4">
+                    <span class="text-[8px] text-slate-500 uppercase tracking-widest font-black block mb-1">Texto A (Falso o Negativo)</span>
+                    <div id="text-container-a" class="text-xs md:text-sm text-slate-300 leading-relaxed tracking-wide">
+                        <!-- Se llena dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Bloque B (El "Original" o Verdadero) -->
+                <div class="bg-black/50 border border-cyanNeon/20 rounded-2xl p-4 glow-effect">
+                    <span class="text-[8px] text-cyanNeon uppercase tracking-widest font-black block mb-1">Texto B (Verdadero o Clave)</span>
+                    <div id="text-container-b" class="text-xs md:text-sm text-slate-200 leading-relaxed tracking-wide">
+                        <!-- Se llena dinámicamente -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 flex gap-3">
+                <button onclick="backToMenu()" class="w-1/3 bg-white/5 border border-white/10 hover:bg-white/10 py-3 rounded-xl text-xs font-bold transition">
+                    <i class="fa-solid fa-arrow-left mr-1"></i> Menú
+                </button>
+                <div class="w-2/3 flex items-center justify-end">
+                    <span class="text-[10px] text-slate-500 font-medium">Toca la palabra diferente en el Texto B</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANTALLA 3: FEEDBACK INTERMEDIO (Victoria de Nivel) -->
+        <div id="screen-feedback" class="hidden w-full bg-panelBg/80 border border-white/10 p-6 rounded-3xl text-center shadow-2xl">
+            <div class="w-16 h-16 mx-auto bg-emerald-500/15 border border-emerald-500/40 rounded-full flex items-center justify-center text-3xl text-emerald-400 mb-4 animate-bounce">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+
+            <h3 class="text-xl font-black font-title uppercase tracking-wider text-emerald-400 mb-2">¡Nivel Superado!</h3>
+            
+            <div class="bg-black/40 border border-white/5 p-4 rounded-2xl text-left mb-6 space-y-3">
+                <h4 class="text-xs font-bold text-accentGold uppercase tracking-widest flex items-center gap-1.5">
+                    <i class="fa-solid fa-compass"></i> Verdadero Código de Estudio:
+                </h4>
+                <p id="feedback-lesson-text" class="text-xs md:text-sm text-slate-300 leading-relaxed"></p>
+            </div>
+
+            <button id="btn-next-level" class="w-full bg-gradient-to-r from-cyanNeon to-purple-600 hover:from-cyanNeon/90 hover:to-purple-600/90 py-4 rounded-2xl font-black font-title uppercase text-sm transition">
+                Siguiente Nivel <i class="fa-solid fa-chevron-right ml-1"></i>
+            </button>
+        </div>
+
+        <!-- PANTALLA 4: PODIO FINAL -->
+        <div id="screen-congrats" class="hidden w-full bg-panelBg/80 border border-white/10 p-6 rounded-3xl text-center shadow-2xl relative">
+            <div class="absolute inset-0 bg-gradient-to-tr from-accentGold/5 to-transparent rounded-3xl pointer-events-none"></div>
+            
+            <div class="w-20 h-20 mx-auto bg-accentGold/10 border-2 border-accentGold rounded-full flex items-center justify-center text-5xl text-accentGold mb-4 shadow-xl shadow-accentGold/10">
+                👑
+            </div>
+
+            <h2 class="text-2xl font-black font-title uppercase tracking-widest text-accentGold mb-2">¡Ojo Clínico de Maestro!</h2>
+            <p class="text-xs text-slate-400 leading-relaxed mb-6">
+                Has completado los tres niveles de comparación de textos. Has entrenado el músculo espiritual del discernimiento para toda tu vida.
+            </p>
+
+            <div class="border border-dashed border-cyanNeon/30 bg-cyanNeon/5 rounded-2xl p-4 text-left mb-6">
+                <h4 class="text-xs font-bold font-title text-cyanNeon uppercase tracking-wider mb-1">
+                    <i class="fa-solid fa-bolt-lightning animate-pulse"></i> Desafío del lunes:
+                </h4>
+                <p class="text-xs text-slate-200 leading-relaxed">
+                    Escribe hoy mismo en tu diario de estudio un compromiso: cuando sientas dudas sobre si algo del mundo es bueno, ponte "la lupa de comparar" y contrástalo de rodillas con las palabras de los profetas vivos.
+                </p>
+            </div>
+
+            <button onclick="backToMenu()" class="w-full bg-white text-black py-4 rounded-2xl font-black font-title uppercase text-sm tracking-wider">
+                <i class="fa-solid fa-arrow-rotate-left mr-1"></i> Jugar de nuevo
+            </button>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="w-full text-center p-4 bg-black/20 border-t border-white/5 text-[9px] text-slate-500">
+        Kaju Games &copy; 2026 - Diseñado exclusivamente para Seminarios de la Iglesia
+    </footer>
+
+    <!-- LOGICA DEL JUEGO -->
+    <script>
+        let currentLevelIdx = 0;
+        let foundClues = [];
+        let totalCluesToFind = 0;
+
+        const levels = [
+            {
+                tag: "NIVEL 1",
+                title: "Zapatillas Réplica vs Originales",
+                instruction: "Identifica las 3 diferencias sutiles que delatan la descripción de la zapatilla de imitación AAA.",
+                textA: "Las zapatillas se ven idénticas por fuera. Tienen una costura de adorno y una plantilla dura de goma genérica que cansa el pie al caminar.",
+                textB: "Las zapatillas se ven idénticas por fuera. Tienen una costura de [refuerzo] y una plantilla [suave] de [nitrógeno] que amortigua el pie al caminar.",
+                clues: ["refuerzo", "suave", "nitrógeno"],
+                lesson: "Por fuera, la sal y el azúcar se ven idénticas. El engaño se descubre únicamente examinando los detalles y las intenciones con paciencia y rigor."
+            },
+            {
+                tag: "NIVEL 2",
+                title: "El Concilio Celestial (Moisés 4:1-2)",
+                instruction: "Compara la propuesta del Redentor frente al plan de control de Satanás. Encuentra las 3 diferencias claves.",
+                textA: "Satanás dijo: Redimiré a todos para que no se pierda nadie, y de seguro lo haré; por tanto, dame tu honra para glorificarme.",
+                textB: "Jesucristo dijo: [Hágase] tu [voluntad], y sea tuya la [gloria] para siempre, Padre.",
+                clues: ["Hágase", "voluntad", "gloria"],
+                lesson: "El plan de Satanás prometía salvación pero quitando el albedrío para robar la honra del Padre. La obediencia del Salvador nos enseña que el verdadero amor liberta."
+            },
+            {
+                tag: "NIVEL 3",
+                title: "El Informe de los Espías (Números 13-14)",
+                instruction: "Contrasta la mirada temerosa del mundo contra la visión de fe de Caleb. Halla las 3 diferencias críticas.",
+                textA: "Los diez espías dijeron: Es una tierra de gigantes inmensos, no podremos prevalecer contra ellos y vamos a morir.",
+                textB: "Caleb y Josué dijeron: Es una tierra de [bendición], el Señor está con nosotros, [subamos] y [conquistemos] ya.",
+                clues: ["bendición", "subamos", "conquistemos"],
+                lesson: "Ante exactamente el mismo desafío, el ojo del mundo ve obstáculos insuperables e inercia, mientras que el ojo de la fe ve promesas cumplidas y acción inmediata."
+            }
+        ];
+
+        function showScreen(id) {
+            const screens = ['screen-menu', 'screen-game', 'screen-feedback', 'screen-congrats'];
+            screens.forEach(s => {
+                const el = document.getElementById(s);
+                if (s === id) el.classList.remove('hidden');
+                else el.classList.add('hidden');
+            });
+        }
+
+        function startLevel(idx) {
+            playSound('tap');
+            currentLevelIdx = idx;
+            foundClues = [];
+            const lvl = levels[currentLevelIdx];
+
+            document.getElementById('level-tag').textContent = lvl.tag;
+            document.getElementById('level-title').textContent = lvl.title;
+            document.getElementById('level-instruction').textContent = lvl.instruction;
+
+            totalCluesToFind = lvl.clues.length;
+            document.getElementById('clues-left').textContent = totalCluesToFind;
+
+            // Renderizar Texto A (fácil de leer)
+            document.getElementById('text-container-a').textContent = lvl.textA;
+
+            // Renderizar Texto B mapeando palabras clave como botones interactivos
+            const containerB = document.getElementById('text-container-b');
+            containerB.innerHTML = '';
+
+            // Expresión regular para separar palabras conservando corchetes
+            const words = lvl.textB.split(' ');
+            words.forEach(word => {
+                let cleanWord = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()\[\]]/g,"");
+                const isClue = word.startsWith('[') && word.endsWith(']');
+                
+                const span = document.createElement('span');
+                if (isClue) {
+                    const clueText = word.slice(1, -1); // Sacar corchetes
+                    span.textContent = clueText + " ";
+                    span.className = "inline-block cursor-pointer px-1 py-0.5 rounded border border-white/10 hover:border-cyanNeon transition font-bold";
+                    span.onclick = () => tapClue(span, clueText);
+                } else {
+                    span.textContent = word + " ";
+                    span.className = "inline-block cursor-not-allowed text-slate-400";
+                    span.onclick = () => tapWrongWord();
+                }
+                containerB.appendChild(span);
+            });
+
+            showScreen('screen-game');
+        }
+
+        function tapClue(element, text) {
+            if (foundClues.includes(text)) return;
+            
+            playSound('tap');
+            foundClues.push(text);
+            element.classList.add('correct-tap');
+            element.onclick = null; // No volver a clickear
+
+            const remaining = totalCluesToFind - foundClues.length;
+            document.getElementById('clues-left').textContent = remaining;
+
+            if (remaining === 0) {
+                setTimeout(winLevel, 600);
+            }
+        }
+
+        function tapWrongWord() {
+            playSound('error');
+        }
+
+        function winLevel() {
+            playSound('success');
+            document.getElementById('feedback-lesson-text').textContent = levels[currentLevelIdx].lesson;
+            
+            const btnNext = document.getElementById('btn-next-level');
+            if (currentLevelIdx < levels.length - 1) {
+                btnNext.innerHTML = 'Siguiente Nivel <i class="fa-solid fa-chevron-right ml-1"></i>';
+                btnNext.onclick = () => startLevel(currentLevelIdx + 1);
+            } else {
+                btnNext.innerHTML = 'Ver Victoria Final <i class="fa-solid fa-trophy ml-1"></i>';
+                btnNext.onclick = showFinalCongrats;
+            }
+
+            showScreen('screen-feedback');
+        }
+
+        function showFinalCongrats() {
+            playSound('win');
+            showScreen('screen-congrats');
+        }
+
+        function backToMenu() {
+            playSound('tap');
+            showScreen('screen-menu');
+        }
+    </script>
+
+</body>
+</html>
+```eof
+
+***
+
+### 🎮 Cómo jugar con los jóvenes este lunes:
+Dado que **solo tendrás tu celular en la mano** y no hay proyector, tienes tres opciones sumamente dinámicas para poner este juego en marcha:
+
+1. **La Pizarra Humana (Tú controlas el celu):**
+   * Pones a dos chicos al frente de la clase y abres el juego en tu teléfono.
+   * Lees las dos descripciones en voz alta: *"Chicos, miren el Nivel 2. La imitación dice 'Satanás prometió que nos salvaría a todos robándose la honra', y la de Cristo dice... ¡Tienen que encontrar las 3 palabras clave diferentes!"*.
+   * Ellos te van diciendo las palabras y tú las vas tocando en tu pantalla. ¡El sintetizador emitirá divertidos ruidos en tiempo real!
+
+2. **Celu en Ronda (Pasa la antorcha):**
+   * El grupo se sienta en círculo.
+   * Le das el celular al primer joven: *"Santi, tienes que encontrar la primera diferencia del Nivel 1. Cuando la encuentres, le pasas el celular a Lucre para que busque la segunda"*.
+   * La música y los efectos de sonido mantendrán a toda la ronda atenta e interactuando físicamente con el texto sagrado.
+
+3. **Modo Alumnos (Ellos abren el juego):**
+   * Si tus jóvenes tienen datos móviles, puedes pasarles el archivo directamente por WhatsApp antes de empezar la clase.
+   * Cada uno abre el archivo desde el navegador de su teléfono y lo juega individualmente a modo de competencia para ver quién logra el podio final más rápido.
+
+¿Qué te parece este nuevo juego de "El Ojo Clínico" para tu clase, profe? Es una forma interactiva, rápida y sin necesidad de internet para enseñar el valor de **comparar pasajes** en tiempo récord.

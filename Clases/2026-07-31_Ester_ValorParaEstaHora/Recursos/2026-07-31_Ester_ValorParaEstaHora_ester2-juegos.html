@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Ester 2 — "Si perezco, que perezca" | Juegos de Seminario</title>
+<style>
+  :root{
+    --bg1:#070b14;
+    --bg2:#0d1a2b;
+    --cyan:#28e0ff;
+    --cyan-dim:#0f7a94;
+    --amber:#ffb547;
+    --amber-dim:#8a5a1a;
+    --white:#eaf6ff;
+    --danger:#ff4d6d;
+    --ok:#37e08a;
+    --card:#0f1c2e;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:
+      radial-gradient(circle at 20% 0%, rgba(40,224,255,.12), transparent 45%),
+      radial-gradient(circle at 90% 100%, rgba(255,181,71,.10), transparent 45%),
+      linear-gradient(180deg,var(--bg1),var(--bg2) 70%);
+    color:var(--white);
+    font-family:'Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;
+    overflow-x:hidden;
+    -webkit-tap-highlight-color:transparent;
+    user-select:none;
+  }
+  #app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;padding:14px 14px 28px;}
+  .screen{display:none;flex-direction:column;gap:14px;animation:fadeIn .4s ease;}
+  .screen.active{display:flex;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+  h1{font-size:1.35rem;line-height:1.25;margin:6px 0 2px;background:linear-gradient(90deg,var(--cyan),var(--amber));-webkit-background-clip:text;background-clip:text;color:transparent;text-align:center;}
+  h2{font-size:1.05rem;margin:0 0 4px;color:var(--cyan);}
+  p{line-height:1.45;font-size:.95rem;color:#cfe6f2;}
+  .tag{display:inline-block;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--amber);background:rgba(255,181,71,.12);border:1px solid var(--amber-dim);padding:3px 10px;border-radius:20px;margin-bottom:6px;}
+
+  .card{background:linear-gradient(160deg,var(--card),#0a1420);border:1px solid rgba(40,224,255,.25);border-radius:var(--radius);padding:16px;box-shadow:0 0 24px rgba(40,224,255,.06), inset 0 0 30px rgba(0,0,0,.25);}
+
+  button{
+    font-family:inherit; cursor:pointer; border:none; border-radius:14px;
+    padding:14px 18px; font-size:1rem; font-weight:600;
+    background:linear-gradient(135deg,var(--cyan),#1592b0); color:#00202b;
+    box-shadow:0 4px 18px rgba(40,224,255,.35);
+    transition:transform .15s ease, box-shadow .15s ease;
+    width:100%;
+  }
+  button:active{transform:scale(.96);}
+  button.secondary{background:linear-gradient(135deg,var(--amber),#c98a2c); color:#2b1a00; box-shadow:0 4px 18px rgba(255,181,71,.3);}
+  button.ghost{background:rgba(255,255,255,.06); color:var(--white); border:1px solid rgba(255,255,255,.2); box-shadow:none;}
+  button.whatsapp{background:linear-gradient(135deg,#25D366,#128C4B); color:#04220f; box-shadow:0 4px 18px rgba(37,211,102,.35);}
+
+  .hud{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.85rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:8px 12px;}
+  .hud .hearts{color:var(--danger);letter-spacing:2px;font-size:1rem;}
+  .hud .score{color:var(--amber);font-weight:700;}
+
+  canvas{width:100%;height:auto;display:block;border-radius:14px;background:#020810;border:1px solid rgba(40,224,255,.3);box-shadow:0 0 30px rgba(40,224,255,.15) inset;touch-action:none;}
+
+  .dpad{display:grid;grid-template-columns:64px 64px 64px;grid-template-rows:56px 56px 56px;gap:6px;justify-content:center;margin-top:4px;}
+  .dpad button{padding:0;font-size:1.4rem;box-shadow:0 3px 10px rgba(40,224,255,.3);}
+  .dpad .up{grid-column:2;grid-row:1;}
+  .dpad .left{grid-column:1;grid-row:2;}
+  .dpad .center{grid-column:2;grid-row:2;background:rgba(255,255,255,.05);box-shadow:none;color:#5aa;}
+  .dpad .right{grid-column:3;grid-row:2;}
+  .dpad .down{grid-column:2;grid-row:3;}
+
+  /* Modal de preguntas */
+  #modalOverlay{
+    position:fixed; inset:0; background:rgba(2,6,14,.86); backdrop-filter:blur(3px);
+    display:none; align-items:flex-end; justify-content:center; z-index:50; padding:0;
+  }
+  #modalOverlay.active{display:flex;}
+  #modalBox{
+    width:100%; max-width:480px; max-height:92vh; overflow-y:auto;
+    background:linear-gradient(160deg,#0f1e30,#081321);
+    border-top:2px solid var(--cyan); border-radius:22px 22px 0 0;
+    padding:20px 18px 26px; box-shadow:0 -8px 40px rgba(40,224,255,.2);
+    animation:slideUp .35s ease;
+  }
+  @keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+  .principio-label{color:var(--amber);font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700;}
+  .ensenanza{background:rgba(40,224,255,.07);border-left:3px solid var(--cyan);padding:10px 12px;border-radius:0 10px 10px 0;margin:8px 0;font-size:.9rem;}
+  .escritura{background:rgba(255,181,71,.08);border-left:3px solid var(--amber);padding:10px 12px;border-radius:0 10px 10px 0;margin:8px 0;font-size:.88rem;font-style:italic;color:#ffe3b3;}
+  .cita{background:rgba(255,255,255,.05);border-left:3px solid #9aa;padding:10px 12px;border-radius:0 10px 10px 0;margin:8px 0;font-size:.85rem;color:#d6e4ee;}
+  .opciones{display:flex;flex-direction:column;gap:8px;margin:12px 0;}
+  .opcion{
+    background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.15); color:var(--white);
+    text-align:left; padding:12px 14px; border-radius:12px; font-size:.92rem; font-weight:500;
+    box-shadow:none; width:100%;
+  }
+  .opcion.correcta{background:rgba(55,224,138,.18);border-color:var(--ok);color:#c8ffe4;}
+  .opcion.incorrecta{background:rgba(255,77,109,.18);border-color:var(--danger);color:#ffd0d8;}
+  .feedback{font-size:.9rem;font-weight:700;margin-top:6px;}
+  .feedback.ok{color:var(--ok);}
+  .feedback.bad{color:var(--danger);}
+  textarea{
+    width:100%; min-height:64px; border-radius:12px; border:1px solid rgba(40,224,255,.3);
+    background:#04101a; color:var(--white); padding:10px 12px; font-family:inherit; font-size:.9rem; resize:vertical;
+  }
+  .oculto{display:none !important;}
+
+  .principios-lista{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .principios-lista span{background:rgba(40,224,255,.12);border:1px solid var(--cyan-dim);color:var(--cyan);font-size:.72rem;padding:4px 9px;border-radius:16px;}
+
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0;}
+  .stat{background:rgba(255,255,255,.04);border-radius:12px;padding:10px;text-align:center;}
+  .stat .num{font-size:1.5rem;font-weight:800;color:var(--cyan);}
+  .stat .lbl{font-size:.72rem;color:#9db6c4;text-transform:uppercase;letter-spacing:.05em;}
+
+  footer.small{text-align:center;font-size:.72rem;color:#5b7788;margin-top:6px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ INTRO ============ -->
+  <section class="screen active" id="screen-intro">
+    <div class="tag">Seminario · Ester, Parte 2</div>
+    <h1>“Si perezco, que perezca”</h1>
+    <div class="card">
+      <p>Ester mostró un valor extraordinario al confiar en el Señor mientras enfrentaba un riesgo real, con el fin de salvar a su pueblo. Vas a repasar los principios de esta clase jugando dos juegos. Lee cada enseñanza con calma: la meta no es terminar rápido, sino aprender.</p>
+      <p style="margin-top:8px;"><strong>Juego 1:</strong> La Víbora Espiritual 🐍<br><strong>Juego 2:</strong> El Laberinto Espiritual 🌀</p>
+    </div>
+    <button id="btnStart">Comenzar Juego 1: La Víbora Espiritual</button>
+  </section>
+
+  <!-- ============ SNAKE ============ -->
+  <section class="screen" id="screen-snake">
+    <div class="tag">Juego 1 · La Víbora Espiritual</div>
+    <div class="hud">
+      <div class="hearts" id="snakeHearts">❤❤❤❤</div>
+      <div>Preguntas <span id="snakeProgress">0/0</span></div>
+      <div class="score">Puntos: <span id="snakeScore">0</span></div>
+    </div>
+    <canvas id="snakeCanvas" width="360" height="360"></canvas>
+    <p style="text-align:center;font-size:.8rem;color:#7fa;">Desliza el dedo sobre el tablero, o usa las flechas, para mover la víbora hacia las pelotitas de luz ✨</p>
+    <div class="dpad">
+      <button class="up" onclick="snakeSetDir(0,-1)">▲</button>
+      <button class="left" onclick="snakeSetDir(-1,0)">◀</button>
+      <button class="center" disabled>🐍</button>
+      <button class="right" onclick="snakeSetDir(1,0)">▶</button>
+      <button class="down" onclick="snakeSetDir(0,1)">▼</button>
+    </div>
+  </section>
+
+  <!-- ============ TRANSICION ============ -->
+  <section class="screen" id="screen-transition">
+    <div class="tag">¡Bien hecho!</div>
+    <h2 id="transTitle">Terminaste el Juego 1</h2>
+    <div class="card">
+      <p id="transText">Llevas acumulados algunos puntos y principios aprendidos. Ahora sigue el Laberinto Espiritual.</p>
+      <div class="stat-grid">
+        <div class="stat"><div class="num" id="transScore">0</div><div class="lbl">Puntos</div></div>
+        <div class="stat"><div class="num" id="transCorrectas">0</div><div class="lbl">Correctas</div></div>
+      </div>
+    </div>
+    <button id="btnToMaze">Comenzar Juego 2: El Laberinto Espiritual</button>
+  </section>
+
+  <!-- ============ MAZE ============ -->
+  <section class="screen" id="screen-maze">
+    <div class="tag">Juego 2 · El Laberinto Espiritual</div>
+    <div class="hud">
+      <div class="hearts" id="mazeHearts">❤❤❤</div>
+      <div>Llaves <span id="mazeProgress">0/0</span></div>
+      <div class="score">Puntos: <span id="mazeScore">0</span></div>
+    </div>
+    <canvas id="mazeCanvas" width="360" height="360"></canvas>
+    <p style="text-align:center;font-size:.8rem;color:#fc9;">Llega hasta la manzanita de luz 🍎 para responder. Junta todas las llaves para abrir la salida 🚪.</p>
+    <div class="dpad">
+      <button class="up" onclick="mazeMove(0,-1)">▲</button>
+      <button class="left" onclick="mazeMove(-1,0)">◀</button>
+      <button class="center" disabled>⭐</button>
+      <button class="right" onclick="mazeMove(1,0)">▶</button>
+      <button class="down" onclick="mazeMove(0,1)">▼</button>
+    </div>
+  </section>
+
+  <!-- ============ FINAL ============ -->
+  <section class="screen" id="screen-final">
+    <div class="tag">Resumen final</div>
+    <h1>¡Lo lograste!</h1>
+    <div class="card">
+      <div class="stat-grid">
+        <div class="stat"><div class="num" id="finalScore">0</div><div class="lbl">Score total</div></div>
+        <div class="stat"><div class="num" id="finalCorrectas">0</div><div class="lbl">Respuestas correctas</div></div>
+        <div class="stat"><div class="num" id="finalReflexiones">0</div><div class="lbl">Reflexiones escritas</div></div>
+        <div class="stat"><div class="num" id="finalPrincipiosNum">0</div><div class="lbl">Principios aprendidos</div></div>
+      </div>
+      <h2 style="margin-top:14px;">Principios que repasaste</h2>
+      <div class="principios-lista" id="finalPrincipiosLista"></div>
+      <p id="finalMensaje" style="margin-top:14px;font-style:italic;color:var(--amber);"></p>
+    </div>
+
+    <div class="card">
+      <h2>Reflexión final</h2>
+      <p>Escribe una reflexión más profunda sobre lo que aprendiste de Ester en esta clase, y cómo puedes aplicar el valor en tu propia vida.</p>
+      <textarea id="reflexionFinal" placeholder="Mi reflexión final..."></textarea>
+    </div>
+
+    <button class="whatsapp" id="btnWhatsapp">📱 Compartir mi Score por WhatsApp</button>
+
+    <div class="card" style="text-align:center;">
+      <p>Podés volver a intentarlo cuantas veces quieras. Cada intento te ayuda a aprender más.</p>
+      <button class="secondary" id="btnReplay">🔁 Volver a jugar</button>
+    </div>
+    <footer class="small">Ester, Parte 2 — "Si perezco, que perezca" · Manual del maestro de Seminario, Antiguo Testamento 2026</footer>
+  </section>
+
+</div>
+
+<!-- ============ MODAL DE PREGUNTA (compartido) ============ -->
+<div id="modalOverlay">
+  <div id="modalBox">
+    <div class="principio-label" id="qPrincipio">Principio</div>
+    <div class="ensenanza" id="qEnsenanza"></div>
+    <div class="escritura" id="qEscritura"></div>
+    <div class="cita oculto" id="qCita"></div>
+    <p style="font-weight:700;margin:10px 0 4px;" id="qPregunta"></p>
+    <div class="opciones" id="qOpciones"></div>
+    <div class="feedback oculto" id="qFeedback"></div>
+    <div id="qReflexionWrap" class="oculto">
+      <p style="margin:10px 0 4px;font-size:.85rem;color:#9db6c4;" id="qReflexionPrompt"></p>
+      <textarea id="qReflexionInput" placeholder="Escribe tu reflexión aquí (1-2 líneas)..."></textarea>
+      <button id="qContinuar" style="margin-top:10px;">Continuar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   BANCO DE PREGUNTAS — Ester, Parte 2: "Si perezco, que perezca"
+   ========================================================= */
+const QUESTION_BANK = [
+  {
+    principio: "El valor silencioso",
+    ensenanza: "El valor no siempre es un acto grande y ruidoso. A veces es la decisión callada de mantenerse firme en lo correcto, aunque otros se burlen o no entiendan.",
+    escritura: "2 Timoteo 1:7 — «Porque no nos ha dado Dios espíritu de cobardía, sino de poder, de amor y de dominio propio».",
+    cita: "El élder Gary E. Stevenson enseñó que el Señor nos dará poder, y que Su valentía será fruto de la fe en Jesucristo, la oración y la obediencia.",
+    pregunta: "¿De dónde proviene el verdadero valor, según el élder Stevenson?",
+    opciones: ["De impresionar a los demás", "De la fe en Jesucristo, la oración y la obediencia", "De ser más fuerte físicamente", "De ignorar los mandamientos"],
+    correcta: 1,
+    reflexion: "¿En qué área de tu vida necesitas ese tipo de valor silencioso?"
+  },
+  {
+    principio: "El riesgo real de Ester",
+    ensenanza: "En Persia, presentarse ante el rey sin haber sido llamado podía costar la vida, a menos que el rey extendiera su cetro de oro en señal de aceptación.",
+    escritura: "Ester 4:11 — la ley decía que quien se presentara ante el rey sin ser llamado podía morir, salvo que él extendiera su cetro.",
+    pregunta: "¿Qué arriesgaba Ester al presentarse ante el rey sin ser llamada?",
+    opciones: ["Nada, era una visita normal", "Su propia vida", "Perder solamente su corona", "Una discusión con Mardoqueo"],
+    correcta: 1,
+    reflexion: "¿Alguna vez sentiste que hacer lo correcto podía costarte algo importante? ¿Qué hiciste?"
+  },
+  {
+    principio: "Para esta hora",
+    ensenanza: "Mardoqueo le recordó a Ester que quizás Dios la había puesto en esa posición con un propósito específico, más grande que ella misma.",
+    escritura: "Ester 4:14 — «¿Y quién sabe si para esta hora [Dios] te ha traído al reino?».",
+    pregunta: "Según Mardoqueo, ¿por qué podría Ester estar en la posición de reina?",
+    opciones: ["Por pura casualidad", "Para tener lujos y comodidad", "Para esta hora, con un propósito de Dios", "Para complacer a Amán"],
+    correcta: 2,
+    reflexion: "¿Qué talento, llamamiento o posición te ha dado Dios que podrías usar 'para esta hora'?"
+  },
+  {
+    principio: "Confiar en el Señor da valor",
+    ensenanza: "Antes de actuar, Ester pidió a su pueblo ayunar con ella, mostrando que buscó primero la fortaleza del Señor y no solo su propio ingenio.",
+    escritura: "Ester 4:16 — «Ve, reúne a todos los judíos... y ayunad por mí».",
+    cita: "El manual enseña: 'A medida que confiamos en el Padre Celestial y en Jesucristo, Ellos nos dan valor'.",
+    pregunta: "¿Qué hizo Ester antes de presentarse ante el rey?",
+    opciones: ["Organizó un ejército", "Pidió ayuno y oración a su pueblo", "Escapó del palacio", "Ignoró el problema"],
+    correcta: 1,
+    reflexion: "¿Cómo te preparas espiritualmente antes de enfrentar algo difícil?"
+  },
+  {
+    principio: "\u201cSi perezco, que perezca\u201d",
+    ensenanza: "Ester decidió actuar aunque el resultado pudiera ser su propia muerte, entregándose por completo a la voluntad de Dios.",
+    escritura: "Ester 4:16 — «Así entraré a ver al rey... y si perezco, que perezca».",
+    pregunta: "¿Qué actitud mostró Ester con la frase 'si perezco, que perezca'?",
+    opciones: ["Resignación triste", "Entrega total a la voluntad de Dios, pase lo que pase", "Indiferencia ante el resultado", "Miedo paralizante"],
+    correcta: 1,
+    reflexion: "Reformula esa frase para una decisión valiente que tú necesitas tomar esta semana."
+  },
+  {
+    principio: "Ester se acercó al rey",
+    ensenanza: "Cuando Ester finalmente se presentó ante el rey, él extendió su cetro de oro y la recibió con favor.",
+    escritura: "Ester 5:1-2 — el rey le extendió el cetro de oro a Ester.",
+    pregunta: "¿Qué sucedió cuando Ester se presentó ante el rey?",
+    opciones: ["La rechazó de inmediato", "Extendió su cetro y la recibió", "La ignoró por completo", "La encarceló"],
+    correcta: 1,
+    reflexion: "¿Qué aprendes de que Dios pueda ablandar corazones cuando actuamos con fe?"
+  },
+  {
+    principio: "El momento correcto para hablar",
+    ensenanza: "En un banquete privado, Ester encontró el momento adecuado para revelar la verdad y pedir por la vida de su pueblo.",
+    escritura: "Ester 7:3 — «Si he hallado gracia... séame dada mi vida... y la de mi pueblo».",
+    pregunta: "¿Qué pidió Ester en el banquete privado con el rey y Amán?",
+    opciones: ["Más riquezas", "Su vida y la de su pueblo", "Un nuevo palacio", "Castigo para Mardoqueo"],
+    correcta: 1,
+    reflexion: "¿Te cuesta hablar en el momento correcto? ¿Qué te ayudaría a hacerlo con valor?"
+  },
+  {
+    principio: "Interceder por otros",
+    ensenanza: "Ester no se conformó con salvar solo su vida; también intervino para revertir el decreto que amenazaba a todo su pueblo.",
+    escritura: "Ester 8:3 — Ester se echó a los pies del rey y le suplicó con lágrimas.",
+    pregunta: "Después de que Amán fue derrotado, ¿qué hizo Ester?",
+    opciones: ["Se olvidó de su pueblo", "Suplicó al rey para revertir el decreto contra los judíos", "Se fue del reino", "Culpó a Mardoqueo"],
+    correcta: 1,
+    reflexion: "¿Por quién más, además de ti mismo, podrías usar tu valor para ayudar?"
+  },
+  {
+    principio: "El ayuno da fortaleza espiritual",
+    ensenanza: "Ester pidió a los judíos ayunar durante tres días antes de que ella actuara, buscando la fortaleza que solo Dios puede dar.",
+    escritura: "Ester 4:16 — «Ayunad por mí, y no comáis ni bebáis en tres días».",
+    cita: "El élder Jorge F. Zeballos enseñó que el ayuno nos brinda fortaleza espiritual y nos prepara para ser resistentes a las pruebas de esta vida.",
+    pregunta: "Según el élder Zeballos, ¿qué nos da el ayuno sincero?",
+    opciones: ["Solo hambre pasajera", "Fortaleza espiritual para resistir las pruebas", "Nada relevante", "Cansancio físico solamente"],
+    correcta: 1,
+    reflexion: "¿Has ayunado y orado con fe por algo importante? ¿Qué sentiste?"
+  },
+  {
+    principio: "La fortaleza de Jesucristo",
+    ensenanza: "Así como Ester confió en Dios para recibir valor, Jesucristo es la fuente perfecta de fortaleza para enfrentar cualquier prueba, tal como Él mostró valor perfecto en Getsemaní.",
+    escritura: "2 Timoteo 1:7 — Dios no nos ha dado espíritu de cobardía, sino de poder, de amor y de dominio propio.",
+    pregunta: "¿En quién debemos confiar, como Ester, para recibir verdadero valor?",
+    opciones: ["En nosotros mismos únicamente", "En Jesucristo", "En la suerte", "En otras personas solamente"],
+    correcta: 1,
+    reflexion: "¿Cómo puedes acercarte más a Jesucristo esta semana para recibir Su fortaleza?"
+  },
+  {
+    principio: "El valor no es transigir",
+    ensenanza: "El presidente Thomas S. Monson enseñó que el verdadero valor es la determinación de vivir con rectitud, y no solo evitar el conflicto o complacer a todos.",
+    escritura: "Josué 1:9 — «Esfuérzate y sé valiente; no temas ni desmayes».",
+    pregunta: "Según el presidente Monson, ¿qué trae la aprobación de Dios?",
+    opciones: ["Transigir para evitar problemas", "Tener valor y no transigir", "Complacer a todos siempre", "Evitar decisiones difíciles"],
+    correcta: 1,
+    reflexion: "¿Dónde necesitas tener valor esta semana en lugar de transigir?"
+  },
+  {
+    principio: "El orgullo y la ira hacen caer",
+    ensenanza: "Amán se llenó de orgullo e ira cuando Mardoqueo no se inclinó ante él, y esos sentimientos terminaron llevándolo a su propia caída.",
+    escritura: "Ester 3:5 — «Se llenó Amán de ira».",
+    pregunta: "¿Qué le sucedió finalmente a Amán a causa de su orgullo y su ira?",
+    opciones: ["Fue ascendido en el reino", "Terminó siendo castigado por su propia trampa", "No pasó nada", "Se hizo amigo de Mardoqueo"],
+    correcta: 1,
+    reflexion: "¿Qué sentimientos como el orgullo o la ira podrías entregar al Padre Celestial hoy?"
+  },
+  {
+    principio: "Dejar que Dios prevalezca",
+    ensenanza: "La presidenta Camille N. Johnson enseñó que Ester permitió que Dios escribiera su historia, en lugar de aferrarse a una narrativa cautelosa de supervivencia personal.",
+    escritura: "Ester 4:16 (contexto) — Ester se entregó por completo a la voluntad de Dios.",
+    pregunta: "Según la presidenta Johnson, ¿qué hizo Ester en lugar de aferrarse a la supervivencia personal?",
+    opciones: ["Huyó del palacio", "Ejerció fe y dejó que Dios prevaleciera en su historia", "Se escondió de todos", "Culpó a otros por su situación"],
+    correcta: 1,
+    reflexion: "¿En qué área de tu vida necesitas dejar que Dios 'escriba tu historia'?"
+  }
+];
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+/* =========================================================
+   ESTADO GLOBAL
+   ========================================================= */
+const state = {
+  score: 0,
+  correctas: 0,
+  reflexionesTexto: [],
+  principiosAprendidos: new Set(),
+  snakeQueue: [],
+  mazeQueue: [],
+};
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* =========================================================
+   MODAL DE PREGUNTA (compartido por ambos juegos)
+   ========================================================= */
+let currentQuestion = null;
+let currentOnResolved = null;
+
+function openQuestion(q, onResolved){
+  currentQuestion = q;
+  currentOnResolved = onResolved;
+
+  document.getElementById('qPrincipio').textContent = q.principio;
+  document.getElementById('qEnsenanza').textContent = q.ensenanza;
+  document.getElementById('qEscritura').textContent = q.escritura;
+  const citaEl = document.getElementById('qCita');
+  if(q.cita){ citaEl.textContent = q.cita; citaEl.classList.remove('oculto'); }
+  else { citaEl.classList.add('oculto'); }
+  document.getElementById('qPregunta').textContent = q.pregunta;
+
+  const opcionesDiv = document.getElementById('qOpciones');
+  opcionesDiv.innerHTML = '';
+  document.getElementById('qFeedback').classList.add('oculto');
+  document.getElementById('qReflexionWrap').classList.add('oculto');
+  document.getElementById('qReflexionInput').value = '';
+
+  q.opciones.forEach((op, idx)=>{
+    const btn = document.createElement('button');
+    btn.className = 'opcion';
+    btn.textContent = op;
+    btn.onclick = () => answerQuestion(idx);
+    opcionesDiv.appendChild(btn);
+  });
+
+  document.getElementById('modalOverlay').classList.add('active');
+}
+
+function answerQuestion(idx){
+  const q = currentQuestion;
+  const botones = document.querySelectorAll('#qOpciones .opcion');
+  botones.forEach(b=>b.onclick = null);
+  const correcta = idx === q.correcta;
+
+  botones[q.correcta].classList.add('correcta');
+  if(!correcta) botones[idx].classList.add('incorrecta');
+
+  const fb = document.getElementById('qFeedback');
+  fb.classList.remove('oculto');
+  if(correcta){
+    fb.textContent = '¡Correcto! ✅ +10 puntos';
+    fb.className = 'feedback ok';
+    state.score += 10;
+    state.correctas += 1;
+    state.principiosAprendidos.add(q.principio);
+  } else {
+    fb.textContent = 'No es la respuesta correcta. Sigue adelante con fe. ❌';
+    fb.className = 'feedback bad';
+  }
+
+  document.getElementById('qReflexionPrompt').textContent = q.reflexion;
+  document.getElementById('qReflexionWrap').classList.remove('oculto');
+  document.getElementById('qContinuar').onclick = () => finishQuestion(correcta);
+}
+
+function finishQuestion(correcta){
+  const texto = document.getElementById('qReflexionInput').value.trim();
+  if(texto.length > 0){
+    state.reflexionesTexto.push(texto);
+  }
+  document.getElementById('modalOverlay').classList.remove('active');
+  const cb = currentOnResolved;
+  currentOnResolved = null;
+  currentQuestion = null;
+  if(cb) cb(correcta);
+}
+
+/* =========================================================
+   JUEGO 1: LA VÍBORA ESPIRITUAL (Snake)
+   ========================================================= */
+const GRID = 18;
+let cell;
+const snakeCanvas = document.getElementById('snakeCanvas');
+const sctx = snakeCanvas.getContext('2d');
+
+let snake, snakeDir, snakeNextDir, food, snakeLives, snakeTimer, snakeRunning;
+
+function resizeCanvases(){
+  const w = Math.min(document.getElementById('app').clientWidth, 400);
+  [snakeCanvas, mazeCanvas].forEach(c=>{ c.width = w; c.height = w; });
+  cell = snakeCanvas.width / GRID;
+}
+
+function initSnake(){
+  resizeCanvases();
+  cell = snakeCanvas.width / GRID;
+  snake = [{x:8,y:9},{x:7,y:9},{x:6,y:9}];
+  snakeDir = {x:1,y:0};
+  snakeNextDir = {x:1,y:0};
+  snakeLives = 4;
+  state.snakeQueue = shuffle(QUESTION_BANK);
+  snakeQIndex = 0;
+  placeFood();
+  snakeRunning = true;
+  updateSnakeHud();
+  if(snakeTimer) clearInterval(snakeTimer);
+  snakeTimer = setInterval(snakeStep, 220);
+  drawSnake();
+}
+
+let snakeQIndex = 0;
+
+function placeFood(){
+  let ok=false;
+  while(!ok){
+    food = {x: Math.floor(Math.random()*GRID), y: Math.floor(Math.random()*GRID)};
+    ok = !snake.some(s=>s.x===food.x && s.y===food.y);
+  }
+}
+
+function snakeSetDir(dx,dy){
+  if(snakeDir.x===-dx && snakeDir.y===-dy) return; // no 180
+  snakeNextDir = {x:dx,y:dy};
+}
+
+document.addEventListener('keydown', (e)=>{
+  if(!document.getElementById('screen-snake').classList.contains('active')) return;
+  if(e.key==='ArrowUp') snakeSetDir(0,-1);
+  if(e.key==='ArrowDown') snakeSetDir(0,1);
+  if(e.key==='ArrowLeft') snakeSetDir(-1,0);
+  if(e.key==='ArrowRight') snakeSetDir(1,0);
+});
+
+let touchStartX=0, touchStartY=0;
+snakeCanvas.addEventListener('touchstart', (e)=>{
+  const t = e.changedTouches[0];
+  touchStartX = t.clientX; touchStartY = t.clientY;
+}, {passive:true});
+snakeCanvas.addEventListener('touchend', (e)=>{
+  const t = e.changedTouches[0];
+  const dx = t.clientX - touchStartX, dy = t.clientY - touchStartY;
+  if(Math.abs(dx) > Math.abs(dy)){
+    if(Math.abs(dx) > 20) snakeSetDir(dx>0?1:-1, 0);
+  } else {
+    if(Math.abs(dy) > 20) snakeSetDir(0, dy>0?1:-1);
+  }
+}, {passive:true});
+
+function snakeStep(){
+  if(!snakeRunning) return;
+  snakeDir = snakeNextDir;
+  const head = {x: snake[0].x + snakeDir.x, y: snake[0].y + snakeDir.y};
+
+  // wrap around edges
+  if(head.x<0) head.x=GRID-1;
+  if(head.x>=GRID) head.x=0;
+  if(head.y<0) head.y=GRID-1;
+  if(head.y>=GRID) head.y=0;
+
+  // self collision -> treat as losing a life, reset shape but keep score
+  if(snake.some(s=>s.x===head.x && s.y===head.y)){
+    loseSnakeLife();
+    return;
+  }
+
+  snake.unshift(head);
+
+  if(head.x===food.x && head.y===food.y){
+    // ate food -> pause and ask question
+    snakeRunning = false;
+    clearInterval(snakeTimer);
+    const q = state.snakeQueue[snakeQIndex % state.snakeQueue.length];
+    openQuestion(q, (correcta)=>{
+      snakeQIndex++;
+      updateSnakeHud();
+      if(!correcta){
+        snake.pop(); // no growth if wrong
+        loseSnakeLifeSoft();
+      }
+      placeFood();
+      if(snakeQIndex >= state.snakeQueue.length){
+        endSnakeGame();
+        return;
+      }
+      if(snakeLives > 0){
+        snakeRunning = true;
+        snakeTimer = setInterval(snakeStep, 220);
+      }
+    });
+  } else {
+    snake.pop();
+  }
+  drawSnake();
+}
+
+function loseSnakeLifeSoft(){
+  snakeLives -= 1;
+  updateSnakeHud();
+  if(snakeLives<=0){
+    endSnakeGame();
+  }
+}
+
+function loseSnakeLife(){
+  snakeLives -= 1;
+  updateSnakeHud();
+  snake = [{x:8,y:9},{x:7,y:9},{x:6,y:9}];
+  snakeDir = {x:1,y:0}; snakeNextDir = {x:1,y:0};
+  if(snakeLives<=0){
+    endSnakeGame();
+  }
+}
+
+function updateSnakeHud(){
+  document.getElementById('snakeHearts').textContent = '❤'.repeat(Math.max(snakeLives,0)) + '🖤'.repeat(Math.max(4-snakeLives,0));
+  document.getElementById('snakeScore').textContent = state.score;
+  document.getElementById('snakeProgress').textContent = `${Math.min(snakeQIndex, state.snakeQueue.length)}/${state.snakeQueue.length}`;
+}
+
+function drawSnake(){
+  sctx.clearRect(0,0,snakeCanvas.width, snakeCanvas.height);
+  // grid bg
+  sctx.fillStyle = '#020810';
+  sctx.fillRect(0,0,snakeCanvas.width, snakeCanvas.height);
+  // food glow
+  sctx.save();
+  sctx.shadowColor = '#ffb547';
+  sctx.shadowBlur = 14;
+  sctx.fillStyle = '#ffd88a';
+  sctx.beginPath();
+  sctx.arc((food.x+0.5)*cell, (food.y+0.5)*cell, cell*0.35, 0, Math.PI*2);
+  sctx.fill();
+  sctx.restore();
+  // snake
+  snake.forEach((s,i)=>{
+    sctx.fillStyle = i===0 ? '#28e0ff' : `rgba(40,224,255,${0.85 - i*0.03})`;
+    sctx.beginPath();
+    const r = cell*0.42;
+    sctx.roundRect ? sctx.roundRect(s.x*cell+2, s.y*cell+2, cell-4, cell-4, 6) : sctx.rect(s.x*cell+2, s.y*cell+2, cell-4, cell-4);
+    sctx.fill();
+  });
+}
+
+function endSnakeGame(){
+  clearInterval(snakeTimer);
+  snakeRunning = false;
+  document.getElementById('transTitle').textContent = snakeLives<=0 ? 'El Juego 1 terminó' : '¡Terminaste el Juego 1!';
+  document.getElementById('transText').textContent = 'Llevas acumulados puntos y principios aprendidos sobre el valor de Ester. Ahora continúa con el Laberinto Espiritual.';
+  document.getElementById('transScore').textContent = state.score;
+  document.getElementById('transCorrectas').textContent = state.correctas;
+  showScreen('screen-transition');
+}
+
+/* =========================================================
+   JUEGO 2: EL LABERINTO ESPIRITUAL (Maze)
+   ========================================================= */
+const mazeCanvas = document.getElementById('mazeCanvas');
+const mctx = mazeCanvas.getContext('2d');
+const MAZE_SIZE = 11;
+// 1 = pared, 0 = piso.  Diseño fijo tipo "cuartos conectados".
+const MAZE_LAYOUT = [
+ "11111111111",
+ "10000000001",
+ "10111110101",
+ "10100000101",
+ "10101111101",
+ "10101000001",
+ "10101011111",
+ "10100010001",
+ "10111010101",
+ "10000010001",
+ "11111111111"
+];
+
+let mazePlayer, mazeManzana, mazeLives, mazeKeys, mazeTotalKeys, mazeQIndex, mazeExit, mCell, mazeUnlocked;
+
+function initMaze(){
+  resizeCanvases();
+  mCell = mazeCanvas.width / MAZE_SIZE;
+  mazePlayer = {x:1,y:1};
+  mazeExit = {x:9,y:9};
+  mazeLives = 3;
+  mazeKeys = 0;
+  mazeUnlocked = false;
+  state.mazeQueue = shuffle(QUESTION_BANK);
+  mazeTotalKeys = state.mazeQueue.length;
+  mazeQIndex = 0;
+  placeManzana();
+  updateMazeHud();
+  drawMaze();
+}
+
+function isFloor(x,y){
+  if(x<0||y<0||y>=MAZE_SIZE||x>=MAZE_SIZE) return false;
+  return MAZE_LAYOUT[y][x] === '0';
+}
+
+function placeManzana(){
+  let ok=false, x,y;
+  while(!ok){
+    x = Math.floor(Math.random()*MAZE_SIZE);
+    y = Math.floor(Math.random()*MAZE_SIZE);
+    ok = isFloor(x,y) && !(x===mazePlayer.x && y===mazePlayer.y) && !(x===mazeExit.x && y===mazeExit.y);
+  }
+  mazeManzana = {x,y};
+}
+
+function mazeMove(dx,dy){
+  const nx = mazePlayer.x+dx, ny = mazePlayer.y+dy;
+  if(!isFloor(nx,ny)) return;
+  mazePlayer = {x:nx, y:ny};
+
+  if(mazeManzana && mazePlayer.x===mazeManzana.x && mazePlayer.y===mazeManzana.y){
+    const q = state.mazeQueue[mazeQIndex % state.mazeQueue.length];
+    openQuestion(q, (correcta)=>{
+      mazeQIndex++;
+      if(correcta){
+        mazeKeys++;
+        if(mazeKeys >= mazeTotalKeys){
+          mazeUnlocked = true;
+          mazeManzana = null;
+        } else {
+          placeManzana();
+        }
+      } else {
+        mazeLives--;
+        if(mazeLives>0){
+          placeManzana();
+        }
+      }
+      updateMazeHud();
+      if(mazeLives<=0){
+        endMazeGame();
+        return;
+      }
+      drawMaze();
+    });
+  } else if(mazeUnlocked && mazePlayer.x===mazeExit.x && mazePlayer.y===mazeExit.y){
+    endMazeGame();
+  }
+  drawMaze();
+}
+
+document.addEventListener('keydown', (e)=>{
+  if(!document.getElementById('screen-maze').classList.contains('active')) return;
+  if(e.key==='ArrowUp') mazeMove(0,-1);
+  if(e.key==='ArrowDown') mazeMove(0,1);
+  if(e.key==='ArrowLeft') mazeMove(-1,0);
+  if(e.key==='ArrowRight') mazeMove(1,0);
+});
+
+let mTouchStartX=0, mTouchStartY=0;
+mazeCanvas.addEventListener('touchstart', (e)=>{
+  const t = e.changedTouches[0];
+  mTouchStartX = t.clientX; mTouchStartY = t.clientY;
+}, {passive:true});
+mazeCanvas.addEventListener('touchend', (e)=>{
+  const t = e.changedTouches[0];
+  const dx = t.clientX - mTouchStartX, dy = t.clientY - mTouchStartY;
+  if(Math.abs(dx)<15 && Math.abs(dy)<15) return;
+  if(Math.abs(dx) > Math.abs(dy)) mazeMove(dx>0?1:-1, 0);
+  else mazeMove(0, dy>0?1:-1);
+}, {passive:true});
+
+function updateMazeHud(){
+  document.getElementById('mazeHearts').textContent = '❤'.repeat(Math.max(mazeLives,0)) + '🖤'.repeat(Math.max(3-mazeLives,0));
+  document.getElementById('mazeScore').textContent = state.score;
+  document.getElementById('mazeProgress').textContent = `${mazeKeys}/${mazeTotalKeys}`;
+}
+
+function drawMaze(){
+  mctx.clearRect(0,0,mazeCanvas.width, mazeCanvas.height);
+  for(let y=0;y<MAZE_SIZE;y++){
+    for(let x=0;x<MAZE_SIZE;x++){
+      mctx.fillStyle = MAZE_LAYOUT[y][x]==='1' ? '#0a1626' : '#050d18';
+      mctx.fillRect(x*mCell, y*mCell, mCell, mCell);
+      if(MAZE_LAYOUT[y][x]==='1'){
+        mctx.strokeStyle = 'rgba(40,224,255,.15)';
+        mctx.strokeRect(x*mCell, y*mCell, mCell, mCell);
+      }
+    }
+  }
+  // exit door
+  mctx.fillStyle = mazeUnlocked ? '#37e08a' : '#5a2a2a';
+  mctx.fillRect(mazeExit.x*mCell+3, mazeExit.y*mCell+3, mCell-6, mCell-6);
+  // manzana
+  if(mazeManzana){
+    mctx.save();
+    mctx.shadowColor = '#ffb547';
+    mctx.shadowBlur = 14;
+    mctx.fillStyle = '#ffd88a';
+    mctx.beginPath();
+    mctx.arc((mazeManzana.x+0.5)*mCell, (mazeManzana.y+0.5)*mCell, mCell*0.32, 0, Math.PI*2);
+    mctx.fill();
+    mctx.restore();
+  }
+  // player
+  mctx.fillStyle = '#28e0ff';
+  mctx.beginPath();
+  mctx.arc((mazePlayer.x+0.5)*mCell, (mazePlayer.y+0.5)*mCell, mCell*0.32, 0, Math.PI*2);
+  mctx.fill();
+}
+
+function endMazeGame(){
+  showFinalScreen();
+}
+
+/* =========================================================
+   PANTALLA FINAL
+   ========================================================= */
+function showFinalScreen(){
+  document.getElementById('finalScore').textContent = state.score;
+  document.getElementById('finalCorrectas').textContent = state.correctas;
+  document.getElementById('finalReflexiones').textContent = state.reflexionesTexto.length;
+  document.getElementById('finalPrincipiosNum').textContent = state.principiosAprendidos.size;
+
+  const lista = document.getElementById('finalPrincipiosLista');
+  lista.innerHTML = '';
+  state.principiosAprendidos.forEach(p=>{
+    const span = document.createElement('span');
+    span.textContent = p;
+    lista.appendChild(span);
+  });
+
+  const mensajes = [
+    "Como Ester, tú también puedes confiar en el Señor y actuar con valor en tu propia hora.",
+    "El valor verdadero nace de la confianza en Jesucristo. Él te dará fortaleza para hacer Su voluntad.",
+    "Quizás Dios te ha puesto justo donde estás 'para esta hora'. ¡Sigue confiando en Él!"
+  ];
+  document.getElementById('finalMensaje').textContent = mensajes[Math.floor(Math.random()*mensajes.length)];
+
+  showScreen('screen-final');
+}
+
+/* =========================================================
+   COMPARTIR POR WHATSAPP
+   ========================================================= */
+document.getElementById('btnWhatsapp').addEventListener('click', ()=>{
+  const reflexionFinal = document.getElementById('reflexionFinal').value.trim();
+  let texto = `📖 *Ester, Parte 2 — "Si perezco, que perezca"*\n\n`;
+  texto += `🏆 Score total: ${state.score}\n`;
+  texto += `✅ Respuestas correctas: ${state.correctas}\n`;
+  texto += `✍️ Reflexiones escritas: ${state.reflexionesTexto.length}\n`;
+  texto += `📚 Principios aprendidos: ${state.principiosAprendidos.size}\n`;
+  if(reflexionFinal){
+    texto += `\n💭 Mi reflexión: "${reflexionFinal}"\n`;
+  }
+  texto += `\nComo Ester, quiero tener valor para hacer la voluntad del Señor. 💪`;
+  const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+  window.open(url, '_blank');
+});
+
+/* =========================================================
+   NAVEGACIÓN / REINICIO
+   ========================================================= */
+document.getElementById('btnStart').addEventListener('click', ()=>{
+  showScreen('screen-snake');
+  initSnake();
+});
+
+document.getElementById('btnToMaze').addEventListener('click', ()=>{
+  showScreen('screen-maze');
+  initMaze();
+});
+
+document.getElementById('btnReplay').addEventListener('click', ()=>{
+  state.score = 0;
+  state.correctas = 0;
+  state.reflexionesTexto = [];
+  state.principiosAprendidos = new Set();
+  document.getElementById('reflexionFinal').value = '';
+  showScreen('screen-intro');
+});
+
+window.addEventListener('resize', ()=>{
+  resizeCanvases();
+  if(document.getElementById('screen-snake').classList.contains('active')) drawSnake();
+  if(document.getElementById('screen-maze').classList.contains('active')) drawMaze();
+});
+
+resizeCanvases();
+</script>
+</body>
+</html>

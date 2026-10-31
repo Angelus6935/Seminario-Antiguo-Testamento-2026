@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desafío: Las 7 Sumergidas</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(circle at 50% 30%, #0f172a 0%, #070a12 100%);
+            color: #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .game-card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 2px solid #06b6d4;
+            border-radius: 16px;
+            padding: 25px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(6, 182, 212, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        h1 { color: #ffffff; font-size: 1.6rem; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        .sub { color: #f59e0b; font-size: 0.9rem; font-weight: bold; margin-bottom: 20px; }
+        .scrambled {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: 5px;
+            color: #06b6d4;
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-shadow: 0 0 10px rgba(6,182,212,0.5);
+        }
+        .clue { font-style: italic; color: #94a3b8; font-size: 1rem; margin-bottom: 20px; min-height: 45px; }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1rem;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            background: #0f172a;
+            color: #fff;
+            text-align: center;
+            text-transform: uppercase;
+            outline: none;
+            margin-bottom: 15px;
+            transition: border 0.3s;
+        }
+        input[type="text"]:focus { border-color: #f59e0b; }
+        button {
+            width: 100%;
+            background: #06b6d4;
+            color: #070a12;
+            border: none;
+            padding: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        button:hover { background: #f59e0b; }
+        .timer { font-size: 1.2rem; color: #64748b; margin-top: 15px; font-family: monospace; }
+        .progress { color: #64748b; font-size: 0.85rem; margin-top: 10px; }
+        
+        /* Modal de éxito */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(7, 10, 18, 0.95);
+            align-items: center; justify-content: center;
+            z-index: 10; padding: 20px;
+        }
+        .modal-content {
+            background: #1e293b;
+            border: 3px solid #f59e0b;
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 350px;
+            box-shadow: 0 0 30px rgba(245,158,11,0.4);
+        }
+        .modal h2 { color: #f59e0b; margin-bottom: 10px; font-size: 1.8rem; }
+    </style>
+</head>
+<body>
+
+    <div class="game-card">
+        <h1>Desafío Seminario</h1>
+        <div class="sub">PUZZLE: LAS 7 SUMERGIDAS</div>
+        
+        <div class="progress" id="progress">Palabra 1 de 4</div>
+        <div class="scrambled" id="scrambled-word">ORGLULO</div>
+        <div class="clue" id="clue-text">"Lo que casi le cuesta la sanación y el milagro al general Naamán"</div>
+        
+        <input type="text" id="user-input" placeholder="Escribe la palabra aquí" autocomplete="off" autofocus>
+        <button onclick="checkAnswer()">VERIFICAR SUMERGIDA</button>
+        
+        <div class="timer">Tiempo: <span id="time-display">00:00</span></div>
+    </div>
+
+    <div class="modal" id="win-modal">
+        <div class="modal-content">
+            <h2>¡Milagro Concedido! ✨</h2>
+            <p style="margin: 15px 0; line-height: 1.5;">Tu piel espiritual está limpia. Lograste completar las 7 sumergidas de la obediencia exacta.</p>
+            <p style="font-size: 1.3rem; font-weight: bold; color: #06b6d4;">Tu tiempo récord:</p>
+            <p id="final-time" style="font-size: 2rem; font-weight: bold; margin: 10px 0; color: #fff; font-family: monospace;"></p>
+            <p style="font-size: 0.8rem; color: #64748b; margin-top: 15px;">Sácale una captura a esta pantalla y mándala al grupo de WhatsApp del Seminario. 🏆</p>
+        </div>
+    </div>
+
+    <script>
+        const puzzleData = [
+            { scrambled: "ORGLULO", answer: "ORGULLO", clue: '"Lo que casi le cuesta la sanación y el milagro al general Naamán."' },
+            { scrambled: "JODRAN", answer: "JORDAN", clue: '"El humilde río donde Eliseo mandó a Naamán a lavarse siete veces."' },
+            { scrambled: "OBEDIENICA", answer: "OBEDIENCIA", clue: '"Lo que Naamán demostró al sumergirse la séptima vez, desatando el poder."' },
+            { scrambled: "HABITOS", answer: "HABITOS", clue: '"Las cosas pequeñas y sencillas diarias según la cita del Pres. Oaks."' }
+        ];
+
+        let currentIndex = 0;
+        let seconds = 0;
+        let timerInterval;
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                seconds++;
+                let mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+                let secs = (seconds % 60).toString().padStart(2, '0');
+                document.getElementById('time-display').innerText = `${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function loadPuzzle() {
+            if(currentIndex < puzzleData.length) {
+                document.getElementById('progress').innerText = `Palabra ${currentIndex + 1} de ${puzzleData.length}`;
+                document.getElementById('scrambled-word').innerText = puzzleData[currentIndex].scrambled;
+                document.getElementById('clue-text').innerText = puzzleData[currentIndex].clue;
+                document.getElementById('user-input').value = "";
+                document.getElementById('user-input').focus();
+            } else {
+                clearInterval(timerInterval);
+                let mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+                let secs = (seconds % 60).toString().padStart(2, '0');
+                document.getElementById('final-time').innerText = `${mins}:${secs}`;
+                document.getElementById('win-modal').style.display = 'flex';
+            }
+        }
+
+        function checkAnswer() {
+            let input = document.getElementById('user-input').value.trim().toUpperCase();
+            // Limpiar acentos por si acaso
+            input = input.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            
+            if(input === puzzleData[currentIndex].answer) {
+                currentIndex++;
+                loadPuzzle();
+            } else {
+                alert("❌ ¡Sigue intentando! Recuerda el principio de la lección.");
+            }
+        }
+
+        // Permitir dar Enter en el teclado para verificar rápido
+        document.getElementById('user-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        window.onload = () => {
+            startTimer();
+            loadPuzzle();
+        };
+    </script>
+</body>
+</html>

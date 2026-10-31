@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kaju - Buscadores Activos Quiz Multijugador</title>
+    <!-- Tailwind CSS para diseño totalmente fluido -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Montserrat para títulos de gran impacto, e Inter para legibilidad -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome para iconos limpios -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        title: ['Montserrat', 'sans-serif'],
+                    },
+                    colors: {
+                        darkBg: '#0a0d1a',
+                        kRed: '#e21b3c',
+                        kBlue: '#1368ce',
+                        kYellow: '#d89e00',
+                        kGreen: '#26890c',
+                        cyanNeon: '#06b6d4',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.05); }
+        }
+        .bg-glow {
+            animation: pulse-glow 8s infinite ease-in-out;
+        }
+        .neon-border {
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+        }
+        .kahoot-btn-shadow {
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
+        }
+        .kahoot-btn-shadow:active {
+            transform: translateY(4px);
+            box-shadow: 0 0px 0 rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-darkBg text-white min-h-screen flex flex-col justify-between font-sans relative overflow-hidden select-none">
+
+    <!-- Efectos de Fondo de Neón -->
+    <div class="absolute -top-40 -left-40 w-96 h-96 bg-cyanNeon/10 rounded-full blur-3xl bg-glow pointer-events-none"></div>
+    <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl bg-glow pointer-events-none" style="animation-delay: 4s;"></div>
+
+    <!-- SISTEMA DE SEGURIDAD CONTRA REFERENCEERRORS (STUBS ASÍNCRONOS) -->
+    <script>
+        // Prevenir errores de clicks antes de cargar el módulo de Firebase
+        window.hostCreateGame = () => showModuleLoadingNotification();
+        window.playerJoinGame = () => showModuleLoadingNotification();
+        window.hostStartGame = () => {};
+        window.resetGame = () => {};
+        window.playerSubmitAnswer = () => {};
+        window.showScreen = () => {};
+        window.hostForceFinishQuestion = () => {};
+
+        function showModuleLoadingNotification() {
+            showNotification("Sincronizando con Kaju... Por favor espera un momento.");
+        }
+
+        function showNotification(msg) {
+            const container = document.getElementById('notification-container');
+            const text = document.getElementById('notification-text');
+            if (container && text) {
+                text.textContent = msg;
+                container.classList.remove('hidden');
+                setTimeout(() => {
+                    container.classList.add('hidden');
+                }, 4000);
+            }
+        }
+    </script>
+
+    <!-- AUDIO SYNTH (Web Audio API para sonidos interactivos locales) -->
+    <script>
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioCtx();
+            }
+        }
+
+        function playSound(type) {
+            initAudio();
+            if (!audioCtx) return;
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'tick') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(600, now);
+                gain.gain.setValueAtTime(0.08, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                osc.start(now);
+                osc.stop(now + 0.06);
+            } else if (type === 'correct') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                osc.start(now);
+                osc.stop(now + 0.6);
+            } else if (type === 'incorrect') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.linearRampToValueAtTime(80, now + 0.4);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            } else if (type === 'win') {
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.connect(g);
+                    g.connect(audioCtx.destination);
+                    o.type = 'triangle';
+                    o.frequency.setValueAtTime(freq, now + (idx * 0.12));
+                    g.gain.setValueAtTime(0.1, now + (idx * 0.12));
+                    g.gain.exponentialRampToValueAtTime(0.001, now + (idx * 0.12) + 0.5);
+                    o.start(now + (idx * 0.12));
+                    o.stop(now + (idx * 0.12) + 0.5);
+                });
+            }
+        }
+    </script>
+
+    <!-- FIREBASE MODULES: Configurando base de datos en tiempo real -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Parámetros de entorno dinámicos provistos por la plataforma
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-kaju-quiz-app';
+        
+        // SEGURIDAD PARA CONVERSIONES DE CONFIGURACIÓN
+        let firebaseConfig = {
+            apiKey: "",
+            authDomain: "",
+            projectId: "",
+            storageBucket: "",
+            messagingSenderId: "",
+            appId: ""
+        };
+
+        if (typeof __firebase_config !== 'undefined') {
+            if (typeof __firebase_config === 'string' && __firebase_config.trim() !== "") {
+                try {
+                    firebaseConfig = JSON.parse(__firebase_config);
+                } catch (e) {
+                    console.error("Fallo al parsear __firebase_config, se usará el valor crudo:", e);
+                }
+            } else if (typeof __firebase_config === 'object') {
+                firebaseConfig = __firebase_config;
+            }
+        }
+
+        const customAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let app, db, auth;
+        let isFirebaseActive = false;
+
+        if (firebaseConfig && firebaseConfig.projectId) {
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                isFirebaseActive = true;
+            } catch (error) {
+                console.warn("Error al inicializar Firebase, se activará el modo simulación local:", error);
+            }
+        }
+
+        window.isFirebaseActive = isFirebaseActive;
+
+        let currentRole = null; // 'HOST' o 'PLAYER'
+        let mySessionId = null;  // PIN de 4 dígitos
+        let myPlayerId = null;   // ID del documento del jugador
+        let activePlayers = [];  // Lista de jugadores conectados en la sala
+        let localPlayerName = "";
+        let currentQuestionIdx = 0;
+        let score = 0;
+        let streak = 0;
+        let timer = 20;
+        let timerInterval;
+        let questionStartTime;
+        let unsubSession = null;
+        let unsubPlayers = null;
+        let hasAnsweredCurrent = false;
+
+        // Banco de preguntas exacto para la lección de Espíritu Santo
+        const questions = [
+            {
+                question: "¿Qué representa la \"funda gruesa\" o estar \"desalineado\" en la analogía de la carga inalámbrica de las escrituras?",
+                options: [
+                    "Tener un teléfono o tablet que no es de última generación.",
+                    "Las distracciones, el ruido y la falta de enfoque al abrir las escrituras.",
+                    "No haber cargado el dispositivo antes de empezar la clase.",
+                    "No haber pagado la suscripción de internet de tu hogar."
+                ],
+                correctIndex: 1,
+                explanation: "Carga inalámbrica: Aunque la base espiritual (el Espíritu) siempre está activa, si nos desalineamos con distracciones cotidianas o ruidos del mundo, la carga espiritual no pasa."
+            },
+            {
+                question: "En la analogía de la canción \"Like a Stone\" de Audioslave, ¿qué significa leer las escrituras \"como una piedra\"?",
+                options: [
+                    "Esperar pasivamente que caiga revelación sin poner esfuerzo o moverse.",
+                    "Tener un corazón duro que no siente absolutamente nada de arrepentimiento.",
+                    "Leer velozmente de forma rápida sin analizar ningún término.",
+                    "Tener una mente fuerte y firme como la roca frente a las mentiras."
+                ],
+                correctIndex: 0,
+                explanation: "La barrera de la pasividad: Esperar inmóvil, sin hacernos preguntas ni interactuar con el texto. El Espíritu Santo es un maestro activo que requiere que nosotros nos movamos primero."
+            },
+            {
+                question: "¿Para qué sirve aplicar un \"tótem\" físico (como anotar, pausar o resaltar) según Inception y 1 Nefi 10:19?",
+                options: [
+                    "Para presumir a nuestros padres un diario de estudio estético y perfecto.",
+                    "Para terminar de leer los capítulos en la mitad de tiempo programado.",
+                    "Para mantener la mente despierta y discernir la voz del Espíritu en el ruido.",
+                    "Para convencer a los maestros de clase que somos los mejores alumnos."
+                ],
+                correctIndex: 2,
+                explanation: "El método activo: Al igual que el trompo en Inception, tus acciones físicas de estudio (anotar, pausar, subrayar) sirven para recordarte que estás despierto ante la voz del Espíritu Santo."
+            },
+            {
+                question: "Según el Élder David A. Bednar, ¿cuál es el error de pensar que el Espíritu es un \"sabelotodo celestial\"?",
+                options: [
+                    "Creer que no conoce absolutamente todas las respuestas del universo.",
+                    "Suponer que nos dará respuestas inmediatas si solo nos sentamos y no hacemos nada.",
+                    "Pensar que solo responde preguntas en las capillas de la Iglesia.",
+                    "Creer que se cansa de enseñarnos debido a nuestros pecados frecuentes."
+                ],
+                correctIndex: 1,
+                explanation: "Cita del líder: El Élder Bednar enseña que el Espíritu Santo no te dará las respuestas en la bandeja de la flojera pasiva; Él es un maestro activo que demanda tu esfuerzo."
+            },
+            {
+                question: "¿Cómo se relaciona el descifrado de los jeroglíficos antiguos con el estudio de las escrituras?",
+                options: [
+                    "Que debemos dominar de inmediato el egipcio antiguo para salvarnos.",
+                    "Que las escrituras son dibujos misteriosos imposibles de descifrar por jóvenes.",
+                    "Que usar herramientas activas (como buscar palabras) descifra el código hoy.",
+                    "Que los profetas de la antigüedad escribían con jeroglíficos indescifrables."
+                ],
+                correctIndex: 2,
+                explanation: "La Piedra de Rosetta: Así como Champollion descifró los jeroglíficos comparando palabras de forma activa, tú descifras el mensaje divino al cruzar referencias y buscar significados."
+            }
+        ];
+
+        async function authenticateUser() {
+            if (!isFirebaseActive) return null;
+            try {
+                if (customAuthToken) {
+                    const result = await signInWithCustomToken(auth, customAuthToken);
+                    return result.user;
+                } else {
+                    const result = await signInAnonymously(auth);
+                    return result.user;
+                }
+            } catch (err) {
+                console.error("Fallo de autenticación en Firebase:", err);
+                return null;
+            }
+        }
+
+        function showScreen(screenId) {
+            const screens = [
+                'screen-role-select',
+                'screen-host-lobby',
+                'screen-player-join',
+                'screen-player-wait-lobby',
+                'screen-quiz-game',
+                'screen-feedback-info',
+                'screen-leaderboard-view',
+                'screen-final-podium'
+            ];
+            screens.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    if (id === screenId) el.classList.remove('hidden');
+                    else el.classList.add('hidden');
+                }
+            });
+        }
+
+        async function hostCreateGame() {
+            initAudio();
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            currentRole = 'HOST';
+
+            // SISTEMA DE PREVENCIÓN: Redirección inmediata si no hay base de datos activa
+            if (!isFirebaseActive) {
+                document.getElementById('loading-overlay').classList.add('hidden');
+                startLocalSimulation();
+                return;
+            }
+
+            const user = await authenticateUser();
+            if (!user) {
+                document.getElementById('loading-overlay').classList.add('hidden');
+                showNotification("No se pudo conectar a internet. Activando modo simulador...");
+                startLocalSimulation();
+                return;
+            }
+
+            // PIN aleatorio
+            const pin = Math.floor(1000 + Math.random() * 9000).toString();
+            mySessionId = pin;
+
+            // Guardar sesión en Firestore (Rule 1 Compliance)
+            const sessionRef = doc(db, 'artifacts', appId, 'public', 'data', 'sessions', pin);
+            
+            try {
+                await setDoc(sessionRef, {
+                    pin: pin,
+                    status: 'LOBBY',
+                    currentQuestionIdx: 0,
+                    active: true,
+                    hostId: user.uid,
+                    createdAt: Date.now()
+                });
+
+                document.getElementById('display-pin').textContent = pin;
+                showScreen('screen-host-lobby');
+                document.getElementById('quiz-header-status').classList.remove('hidden');
+                document.getElementById('header-pin-display').innerHTML = `<i class="fa-solid fa-chalkboard-user text-cyanNeon mr-1"></i> MODO PROFE (PIN: ${pin})`;
+
+                // Escuchar a los jugadores. (Rule 2 Compliance: Traemos y filtramos en memoria)
+                const playersColRef = collection(db, 'artifacts', appId, 'public', 'data', 'players');
+
+                unsubPlayers = onSnapshot(playersColRef, (snapshot) => {
+                    activePlayers = [];
+                    snapshot.forEach(docSnap => {
+                        const data = docSnap.data();
+                        if (data.sessionId === pin) {
+                            activePlayers.push({ id: docSnap.id, ...data });
+                        }
+                    });
+                    updateHostLobbyUI();
+                }, (err) => {
+                    console.error("Error al escuchar jugadores:", err);
+                });
+
+            } catch (err) {
+                console.error("Error creando sesión:", err);
+                showNotification("Error de red. Iniciando modo simulación local.");
+                startLocalSimulation();
+            } finally {
+                document.getElementById('loading-overlay').classList.add('hidden');
+            }
+        }
+
+        function updateHostLobbyUI() {
+            const list = document.getElementById('lobby-players-list');
+            const count = document.getElementById('lobby-players-count');
+            list.innerHTML = '';
+            count.textContent = activePlayers.length;
+
+            if (activePlayers.length === 0) {
+                list.innerHTML = `<div class="text-slate-500 italic text-center col-span-full py-8">Escribe el PIN en la pizarra y espera que tus jóvenes se unan...</div>`;
+                document.getElementById('btn-start-game').disabled = true;
+                return;
+            }
+
+            document.getElementById('btn-start-game').disabled = false;
+
+            activePlayers.forEach(p => {
+                const item = document.createElement('div');
+                item.className = "bg-white/10 border border-white/10 px-4 py-3 rounded-xl text-center font-bold text-sm md:text-base animate-pulse shadow-md text-cyanNeon flex items-center justify-center gap-2";
+                item.innerHTML = `<i class="fa-solid fa-user-ninja text-xs"></i> ${p.name}`;
+                list.appendChild(item);
+            });
+        }
+
+        async function playerJoinGame() {
+            initAudio();
+            const pinInput = document.getElementById('join-pin').value.trim();
+            const nameInput = document.getElementById('join-name').value.trim();
+
+            if (!pinInput || !nameInput) {
+                showNotification("Por favor, ingresa el PIN y tu nombre.");
+                return;
+            }
+
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            currentRole = 'PLAYER';
+            localPlayerName = nameInput;
+
+            // SISTEMA DE PREVENCIÓN: Redirección inmediata si no hay base de datos activa
+            if (!isFirebaseActive) {
+                document.getElementById('loading-overlay').classList.add('hidden');
+                startLocalSimulationSolo(nameInput);
+                return;
+            }
+
+            const user = await authenticateUser();
+            if (!user) {
+                document.getElementById('loading-overlay').classList.add('hidden');
+                showNotification("Sin conexión. Iniciando simulación local...");
+                startLocalSimulationSolo(nameInput);
+                return;
+            }
+
+            const sessionRef = doc(db, 'artifacts', appId, 'public', 'data', 'sessions', pinInput);
+            try {
+                const sessionSnap = await getDoc(sessionRef);
+                if (!sessionSnap.exists()) {
+                    document.getElementById('loading-overlay').classList.add('hidden');
+                    showNotification("¡Código PIN incorrecto! Pídele el PIN al Profe.");
+                    return;
+                }
+
+                const sessionData = sessionSnap.data();
+                if (sessionData.status !== 'LOBBY') {
+                    document.getElementById('loading-overlay').classList.add('hidden');
+                    showNotification("La partida ya ha comenzado.");
+                    return;
+                }
+
+                mySessionId = pinInput;
+                const uid = user ? user.uid : crypto.randomUUID();
+                myPlayerId = uid;
+
+                const playerRef = doc(db, 'artifacts', appId, 'public', 'data', 'players', uid);
+                await setDoc(playerRef, {
+                    uid: uid,
+                    name: nameInput,
+                    sessionId: pinInput,
+                    score: 0,
+                    streak: 0,
+                    answeredQuestionIdx: -1,
+                    lastAnswerIndex: -1,
+                    isCorrect: false,
+                    lastUpdated: Date.now()
+                });
+
+                showScreen('screen-player-wait-lobby');
+                document.getElementById('quiz-header-status').classList.remove('hidden');
+                document.getElementById('header-pin-display').innerHTML = `<i class="fa-solid fa-mobile-screen text-amber-400 mr-1"></i> JUGANDO: ${nameInput}`;
+
+                // Escuchar estado global de la partida
+                unsubSession = onSnapshot(sessionRef, (snap) => {
+                    if (snap.exists()) {
+                        syncPlayerWithSession(snap.data());
+                    }
+                }, (err) => {
+                    console.error("Error escuchando sesión:", err);
+                });
+
+                // Escuchar lista de jugadores para saber quiénes juegan
+                const playersColRef = collection(db, 'artifacts', appId, 'public', 'data', 'players');
+                unsubPlayers = onSnapshot(playersColRef, (snapshot) => {
+                    activePlayers = [];
+                    snapshot.forEach(docSnap => {
+                        const data = docSnap.data();
+                        if (data.sessionId === pinInput) {
+                            activePlayers.push({ id: docSnap.id, ...data });
+                        }
+                    });
+                });
+
+            } catch (err) {
+                console.error("Error al unirse:", err);
+                showNotification("Error de red. Iniciando modo local.");
+                startLocalSimulationSolo(nameInput);
+            } finally {
+                document.getElementById('loading-overlay').classList.add('hidden');
+            }
+        }
+
+        function syncPlayerWithSession(sessionData) {
+            const status = sessionData.status;
+            currentQuestionIdx = sessionData.currentQuestionIdx;
+
+            if (status === 'LOBBY') {
+                showScreen('screen-player-wait-lobby');
+            } else if (status === 'QUESTION') {
+                hasAnsweredCurrent = false;
+                loadQuestionForPlayer();
+            } else if (status === 'FEEDBACK') {
+                showPlayerFeedback();
+            } else if (status === 'LEADERBOARD') {
+                showPlayerWaitingScreen("¡Mira el celular del Profe para ver los resultados!");
+            } else if (status === 'PODIUM') {
+                showPlayerFinalPodium();
+            }
+        }
+
+        function showPlayerWaitingScreen(message) {
+            showScreen('screen-player-wait-lobby');
+            document.getElementById('lobby-wait-message').innerHTML = `
+                <div class="space-y-4">
+                    <p class="text-xl font-bold text-cyanNeon">${message}</p>
+                    <p class="text-xs text-slate-400">Espera que el profesor avance a la siguiente pantalla...</p>
+                </div>
+            `;
+        }
+
+        function loadQuestionForPlayer() {
+            showScreen('screen-quiz-game');
+            const q = questions[currentQuestionIdx];
+            
+            document.getElementById('quiz-question').textContent = q.question;
+            for (let i = 0; i < 4; i++) {
+                const btn = document.getElementById(`opt-${i}`);
+                btn.onclick = () => playerSubmitAnswer(i);
+                document.getElementById(`opt-text-${i}`).textContent = q.options[i];
+                btn.className = btn.className.replace('opacity-50', 'opacity-100');
+                btn.disabled = false;
+            }
+
+            // Ocultar HUD del Host si es un Jugador
+            document.getElementById('host-responses-hud').classList.add('hidden');
+            document.getElementById('player-score-hud').classList.remove('hidden');
+
+            timer = 20;
+            document.getElementById('quiz-timer').textContent = timer;
+            document.getElementById('quiz-timer').parentElement.classList.remove('border-rose-500', 'text-rose-500');
+            document.getElementById('quiz-timer').parentElement.classList.add('border-cyanNeon', 'text-cyanNeon');
+
+            document.getElementById('user-current-score').textContent = score;
+            document.getElementById('user-current-streak').textContent = streak > 0 ? `🔥 ${streak}` : `😐 ${streak}`;
+            document.getElementById('current-index').textContent = currentQuestionIdx + 1;
+
+            questionStartTime = Date.now();
+
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timer--;
+                document.getElementById('quiz-timer').textContent = timer;
+                playSound('tick');
+
+                if (timer <= 5) {
+                    document.getElementById('quiz-timer').parentElement.classList.remove('border-cyanNeon', 'text-cyanNeon');
+                    document.getElementById('quiz-timer').parentElement.classList.add('border-rose-500', 'text-rose-500');
+                }
+
+                if (timer === 0) {
+                    clearInterval(timerInterval);
+                    if (!hasAnsweredCurrent) {
+                        playerSubmitAnswer(-1); // Tiempo fuera
+                    }
+                }
+            }, 1000);
+        }
+
+        async function playerSubmitAnswer(optionIndex) {
+            if (hasAnsweredCurrent) return;
+            hasAnsweredCurrent = true;
+            clearInterval(timerInterval);
+
+            // Bloquear botones
+            for (let i = 0; i < 4; i++) {
+                const btn = document.getElementById(`opt-${i}`);
+                btn.disabled = true;
+                if (i !== optionIndex) {
+                    btn.classList.add('opacity-50');
+                }
+            }
+
+            const q = questions[currentQuestionIdx];
+            const isCorrect = (optionIndex === q.correctIndex);
+            let pointsEarned = 0;
+            const timeTaken = (Date.now() - questionStartTime) / 1000;
+
+            if (isCorrect) {
+                const speedBonus = Math.max(0, 1 - (timeTaken / 20));
+                pointsEarned = Math.round(500 + (500 * speedBonus));
+                streak++;
+                score += pointsEarned;
+                playSound('correct');
+            } else {
+                streak = 0;
+                playSound('incorrect');
+            }
+
+            if (isFirebaseActive && myPlayerId && mySessionId) {
+                const playerRef = doc(db, 'artifacts', appId, 'public', 'data', 'players', myPlayerId);
+                try {
+                    await updateDoc(playerRef, {
+                        score: score,
+                        streak: streak,
+                        answeredQuestionIdx: currentQuestionIdx,
+                        lastAnswerIndex: optionIndex,
+                        isCorrect: isCorrect,
+                        lastUpdated: Date.now()
+                    });
+                } catch (err) {
+                    console.error("Error guardando progreso del jugador:", err);
+                }
+            }
+
+            showPlayerWaitingScreen(`¡Respuesta registrada! (${isCorrect ? '✅ Correcta' : '❌ Incorrecta'})`);
+        }
+
+        async function hostStartGame() {
+            if (activePlayers.length === 0) {
+                showNotification("Esperando que se conecte al menos un joven.");
+                return;
+            }
+            currentQuestionIdx = 0;
+            await hostChangeSessionStatus('QUESTION', 0);
+            hostLoadQuestionScreen();
+        }
+
+        async function hostChangeSessionStatus(status, questionIdx) {
+            if (!isFirebaseActive || !mySessionId) {
+                localSimulationStateChange(status, questionIdx);
+                return;
+            }
+            const sessionRef = doc(db, 'artifacts', appId, 'public', 'data', 'sessions', mySessionId);
+            try {
+                await updateDoc(sessionRef, {
+                    status: status,
+                    currentQuestionIdx: questionIdx
+                });
+            } catch (err) {
+                console.error("Error actualizando sesión:", err);
+            }
+        }
+
+        // Carga la pantalla de preguntas para el Profesor (Host Móvil)
+        function hostLoadQuestionScreen() {
+            showScreen('screen-quiz-game');
+            const q = questions[currentQuestionIdx];
+            document.getElementById('quiz-question').textContent = q.question;
+
+            // En el modo Profe, deshabilitamos las opciones para evitar clics accidentales
+            for (let i = 0; i < 4; i++) {
+                const btn = document.getElementById(`opt-${i}`);
+                btn.disabled = true;
+                document.getElementById(`opt-text-${i}`).textContent = q.options[i];
+                btn.classList.remove('opacity-50');
+            }
+
+            // Ocultar HUD del Jugador, mostrar el del Profesor
+            document.getElementById('player-score-hud').classList.add('hidden');
+            document.getElementById('host-responses-hud').classList.remove('hidden');
+            updateResponsesCounter();
+
+            timer = 20;
+            document.getElementById('quiz-timer').textContent = timer;
+
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timer--;
+                document.getElementById('quiz-timer').textContent = timer;
+                playSound('tick');
+
+                if (timer === 0) {
+                    clearInterval(timerInterval);
+                    hostFinishQuestion();
+                }
+            }, 1000);
+        }
+
+        function updateResponsesCounter() {
+            const count = activePlayers.filter(p => p.answeredQuestionIdx === currentQuestionIdx).length;
+            document.getElementById('responses-received-count').textContent = count;
+            document.getElementById('responses-total-count').textContent = activePlayers.length;
+
+            if (count > 0 && count === activePlayers.length) {
+                clearInterval(timerInterval);
+                hostFinishQuestion();
+            }
+        }
+
+        // El profesor puede finalizar la pregunta antes de que acabe el tiempo
+        function hostForceFinishQuestion() {
+            clearInterval(timerInterval);
+            hostFinishQuestion();
+        }
+
+        async function hostFinishQuestion() {
+            await hostChangeSessionStatus('FEEDBACK', currentQuestionIdx);
+            showFeedbackScreenGlobal();
+        }
+
+        function showFeedbackScreenGlobal() {
+            showScreen('screen-feedback-info');
+            const q = questions[currentQuestionIdx];
+
+            const card = document.getElementById('feedback-card');
+            const icon = document.getElementById('feedback-icon');
+            const title = document.getElementById('feedback-title');
+            const scoreText = document.getElementById('feedback-score');
+            const explanation = document.getElementById('feedback-explanation');
+
+            explanation.textContent = q.explanation;
+
+            if (currentRole === 'HOST') {
+                // Interfaz de control del Profe en su teléfono
+                card.className = "w-full max-w-xl rounded-3xl p-6 text-center bg-white/5 border border-white/10 relative overflow-hidden";
+                icon.className = "w-16 h-16 mx-auto rounded-full flex items-center justify-center text-3xl mb-4 bg-cyanNeon text-white shadow-xl shadow-cyanNeon/20 animate-bounce";
+                icon.innerHTML = '<i class="fa-solid fa-lightbulb"></i>';
+                title.textContent = "Control del Profesor";
+                title.className = "text-2xl font-black font-title uppercase tracking-wider text-cyanNeon mb-1";
+                scoreText.innerHTML = `Respuesta correcta: <span class="text-white block font-bold mt-1">${q.options[q.correctIndex]}</span>`;
+                
+                const btnAction = document.getElementById('btn-feedback-action');
+                btnAction.classList.remove('hidden');
+                btnAction.textContent = "Ver Tabla de Líderes";
+                btnAction.onclick = hostShowLeaderboard;
+            }
+        }
+
+        function showPlayerFeedback() {
+            showScreen('screen-feedback-info');
+            const q = questions[currentQuestionIdx];
+            const card = document.getElementById('feedback-card');
+            const icon = document.getElementById('feedback-icon');
+            const title = document.getElementById('feedback-title');
+            const scoreText = document.getElementById('feedback-score');
+            const explanation = document.getElementById('feedback-explanation');
+
+            explanation.textContent = q.explanation;
+
+            const myData = activePlayers.find(p => p.uid === myPlayerId) || { isCorrect: false, score: score };
+
+            if (myData.isCorrect) {
+                card.className = "w-full max-w-xl rounded-3xl p-6 text-center bg-kGreen/10 border border-kGreen/30 relative overflow-hidden";
+                icon.className = "w-16 h-16 mx-auto rounded-full flex items-center justify-center text-3xl mb-4 bg-kGreen text-white shadow-xl shadow-kGreen/20 animate-bounce";
+                icon.innerHTML = '<i class="fa-solid fa-check"></i>';
+                title.textContent = "¡Respuesta Correcta!";
+                title.className = "text-2xl font-black font-title uppercase tracking-wider text-kGreen mb-1";
+                scoreText.textContent = `Puntaje Total: ${score} pts (Racha: 🔥 ${streak})`;
+            } else {
+                card.className = "w-full max-w-xl rounded-3xl p-6 text-center bg-kRed/10 border border-kRed/30 relative overflow-hidden";
+                icon.className = "w-16 h-16 mx-auto rounded-full flex items-center justify-center text-3xl mb-4 bg-kRed text-white shadow-xl shadow-kRed/20";
+                icon.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+                title.textContent = "Respuesta Incorrecta";
+                title.className = "text-2xl font-black font-title uppercase tracking-wider text-kRed mb-1";
+                scoreText.textContent = `Sigue esforzándote. Puntaje: ${score} pts`;
+            }
+
+            // Ocultar botón de avanzar para el alumno
+            document.getElementById('btn-feedback-action').classList.add('hidden');
+        }
+
+        async function hostShowLeaderboard() {
+            await hostChangeSessionStatus('LEADERBOARD', currentQuestionIdx);
+            showLeaderboardViewGlobal();
+        }
+
+        function showLeaderboardViewGlobal() {
+            showScreen('screen-leaderboard-view');
+            
+            // Ordenar por puntaje
+            activePlayers.sort((a, b) => b.score - a.score);
+
+            const listContainer = document.getElementById('leaderboard-list');
+            listContainer.innerHTML = '';
+
+            // Mostrar top 5 limpio
+            activePlayers.slice(0, 5).forEach((p, index) => {
+                const row = document.createElement('div');
+                row.className = "flex justify-between items-center px-4 py-3 rounded-xl border bg-white/5 border-white/5 hover:bg-white/10 transition";
+
+                row.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="font-black font-title text-sm ${index === 0 ? 'text-amber-400' : 'text-slate-400'}">#${index + 1}</span>
+                        <span class="font-bold text-sm text-slate-200">${p.name}</span>
+                    </div>
+                    <span class="font-black font-title text-sm text-cyanNeon">${p.score.toLocaleString()} pts</span>
+                `;
+                listContainer.appendChild(row);
+            });
+
+            const btnLeaderboard = document.getElementById('btn-leaderboard-action');
+            if (currentRole === 'HOST') {
+                btnLeaderboard.classList.remove('hidden');
+                if (currentQuestionIdx < questions.length - 1) {
+                    btnLeaderboard.textContent = "Siguiente Pregunta";
+                    btnLeaderboard.onclick = hostNextQuestion;
+                } else {
+                    btnLeaderboard.textContent = "Ver Podio Final";
+                    btnLeaderboard.onclick = hostShowPodium;
+                }
+            } else {
+                btnLeaderboard.classList.add('hidden');
+            }
+        }
+
+        async function hostNextQuestion() {
+            currentQuestionIdx++;
+            await hostChangeSessionStatus('QUESTION', currentQuestionIdx);
+            hostLoadQuestionScreen();
+        }
+
+        async function hostShowPodium() {
+            await hostChangeSessionStatus('PODIUM', currentQuestionIdx);
+            showFinalPodiumGlobal();
+        }
+
+        function showFinalPodiumGlobal() {
+            showScreen('screen-final-podium');
+            playSound('win');
+
+            activePlayers.sort((a, b) => b.score - a.score);
+
+            // Adaptar visualización de podio móvil (lista organizada o bloques)
+            const podiumList = document.getElementById('podium-list-items');
+            podiumList.innerHTML = '';
+
+            activePlayers.slice(0, 3).forEach((p, index) => {
+                const item = document.createElement('div');
+                const colors = [
+                    'from-amber-400 to-amber-600 text-amber-950', // 1º
+                    'from-slate-300 to-slate-500 text-slate-950', // 2º
+                    'from-amber-700 to-amber-900 text-amber-100'  // 3º
+                ];
+                const icons = ['👑 1º', '🥈 2º', '🥉 3º'];
+
+                item.className = `bg-gradient-to-r ${colors[index]} p-4 rounded-2xl flex justify-between items-center font-title font-black shadow-lg mb-3`;
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm uppercase">${icons[index]}</span>
+                        <span class="text-base">${p.name}</span>
+                    </div>
+                    <span class="text-sm">${p.score.toLocaleString()} pts</span>
+                `;
+                podiumList.appendChild(item);
+            });
+        }
+
+        function showPlayerFinalPodium() {
+            showScreen('screen-final-podium');
+            activePlayers.sort((a, b) => b.score - a.score);
+
+            const myRank = activePlayers.findIndex(p => p.uid === myPlayerId) + 1;
+            const title = document.querySelector('#screen-final-podium h2');
+            
+            if (myRank > 0 && myRank <= 3) {
+                title.textContent = `🏆 ¡QUEDASTE EN EL PODIO! (#${myRank}) 🏆`;
+                playSound('win');
+            } else {
+                title.textContent = `👏 ¡Buen esfuerzo! Puesto #${myRank} 👏`;
+            }
+
+            showFinalPodiumGlobal();
+        }
+
+        function startLocalSimulation() {
+            showNotification("Capilla sin señal. Iniciando Kaju en modo Simulación...");
+            activePlayers = [
+                { uid: 'bot1', name: "Santi 🔥", score: 0, answeredQuestionIdx: -1, isCorrect: false },
+                { uid: 'bot2', name: "Lucre ✨", score: 0, answeredQuestionIdx: -1, isCorrect: false },
+                { uid: 'bot3', name: "Mateo 🎮", score: 0, answeredQuestionIdx: -1, isCorrect: false },
+                { uid: 'bot4', name: "Vale 🌈", score: 0, answeredQuestionIdx: -1, isCorrect: false }
+            ];
+
+            mySessionId = "LOCAL";
+            document.getElementById('display-pin').textContent = "LOCAL";
+            showScreen('screen-host-lobby');
+            document.getElementById('quiz-header-status').classList.remove('hidden');
+            document.getElementById('header-pin-display').innerHTML = `<i class="fa-solid fa-cloud-slash text-rose-500 mr-1"></i> MODO OFFLINE`;
+            updateHostLobbyUI();
+        }
+
+        function startLocalSimulationSolo(name) {
+            showNotification("Modo individual sin conexión activado.");
+            localPlayerName = name;
+            score = 0;
+            streak = 0;
+            currentQuestionIdx = 0;
+            loadQuestionForPlayer();
+        }
+
+        function localSimulationStateChange(status, questionIdx) {
+            currentQuestionIdx = questionIdx;
+            if (status === 'QUESTION') {
+                hostLoadQuestionScreen();
+                
+                // Los bots responden aleatoriamente
+                activePlayers.forEach(p => {
+                    p.answeredQuestionIdx = -1;
+                    const delay = 1000 + Math.random() * 8000;
+                    setTimeout(() => {
+                        p.answeredQuestionIdx = currentQuestionIdx;
+                        const isCorrect = Math.random() < 0.70; // 70% acierto
+                        p.isCorrect = isCorrect;
+                        if (isCorrect) {
+                            p.score += Math.round(500 + Math.random() * 450);
+                        }
+                        if (status === 'QUESTION') {
+                            updateResponsesCounter();
+                        }
+                    }, delay);
+                });
+            } else if (status === 'FEEDBACK') {
+                showFeedbackScreenGlobal();
+            } else if (status === 'LEADERBOARD') {
+                showLeaderboardViewGlobal();
+            } else if (status === 'PODIUM') {
+                showFinalPodiumGlobal();
+            }
+        }
+
+        function resetGame() {
+            if (unsubSession) unsubSession();
+            if (unsubPlayers) unsubPlayers();
+            currentRole = null;
+            mySessionId = null;
+            myPlayerId = null;
+            activePlayers = [];
+            score = 0;
+            streak = 0;
+            currentQuestionIdx = 0;
+            document.getElementById('quiz-header-status').classList.add('hidden');
+            showScreen('screen-role-select');
+        }
+
+        // Exponer de forma segura todas las funciones al DOM global tras cargar el script
+        window.hostCreateGame = hostCreateGame;
+        window.playerJoinGame = playerJoinGame;
+        window.hostStartGame = hostStartGame;
+        window.resetGame = resetGame;
+        window.playerSubmitAnswer = playerSubmitAnswer;
+        window.showScreen = showScreen;
+        window.hostForceFinishQuestion = hostForceFinishQuestion;
+
+    </script>
+
+    <!-- HEADER GLOBAL -->
+    <header class="w-full bg-black/40 border-b border-white/10 p-4 flex justify-between items-center z-10 backdrop-blur-md">
+        <div class="flex items-center gap-3">
+            <div class="bg-gradient-to-tr from-cyanNeon to-purple-600 text-white font-black px-4 py-1.5 rounded-xl font-title text-xl tracking-wider uppercase shadow-lg shadow-cyanNeon/20">
+                KAJU!
+            </div>
+            <span class="text-xs uppercase tracking-widest text-cyanNeon font-bold hidden md:inline font-title">Espíritu Santo Quiz</span>
+        </div>
+        <div id="quiz-header-status" class="hidden text-sm font-semibold text-slate-300">
+            <span id="header-pin-display" class="text-cyanNeon flex items-center">Cargando...</span>
+        </div>
+    </header>
+
+    <!-- FLOATING NOTIFICATION CONTAINER -->
+    <div id="notification-container" class="hidden fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-rose-600 border border-rose-500/30 text-white px-6 py-3 rounded-2xl shadow-xl font-bold flex items-center gap-3 animate-bounce">
+        <i class="fa-solid fa-circle-exclamation text-lg"></i>
+        <span id="notification-text">Aviso</span>
+    </div>
+
+    <!-- LOADING SCREEN -->
+    <div id="loading-overlay" class="hidden fixed inset-0 z-50 bg-black/80 flex flex-col justify-center items-center">
+        <div class="w-16 h-16 border-4 border-t-cyanNeon border-white/10 rounded-full animate-spin mb-4"></div>
+        <p class="font-bold text-lg text-slate-300 animate-pulse">Sincronizando con Kaju...</p>
+    </div>
+
+    <!-- PANTALLA 1: SELECCIÓN DE ROL (Host o Jugador) -->
+    <section id="screen-role-select" class="flex-grow flex flex-col justify-center items-center p-4 md:p-6 z-10">
+        <div class="w-full max-w-lg bg-white/5 border border-white/10 p-6 md:p-8 rounded-3xl text-center backdrop-blur-md relative">
+            <div class="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-gradient-to-tr from-cyanNeon to-purple-500 rounded-2xl flex items-center justify-center text-4xl shadow-xl shadow-cyanNeon/30">
+                <i class="fa-solid fa-gamepad animate-pulse"></i>
+            </div>
+            
+            <h2 class="text-2xl md:text-3xl font-extrabold font-title mt-6 mb-2">¡Kaju Espíritu Santo!</h2>
+            <p class="text-xs md:text-sm text-slate-400 mb-6">Selecciona cómo vas a jugar hoy en la clase de Seminario.</p>
+
+            <!-- Sección informativa para el profesor -->
+            <div class="bg-cyanNeon/10 border border-cyanNeon/20 rounded-2xl p-4 text-left mb-6 flex gap-3 items-start">
+                <i class="fa-solid fa-lightbulb text-cyanNeon text-lg mt-0.5"></i>
+                <div class="text-[11px] md:text-xs text-slate-300 leading-relaxed">
+                    <strong class="text-white">💡 Tip para el Profe:</strong> Puedes iniciar la partida cómodamente <strong>desde tu propio celular</strong>. El sistema te mostrará las preguntas y tú avanzarás las pantallas desde tu mano mientras los jóvenes se unen y responden desde sus dispositivos.
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <!-- Botón Host (Maestro) -->
+                <button onclick="hostCreateGame()" class="w-full bg-gradient-to-r from-cyanNeon to-purple-600 hover:from-cyanNeon/90 hover:to-purple-600/90 py-4 px-6 rounded-xl text-base md:text-lg font-black font-title tracking-wider uppercase transition shadow-lg shadow-cyanNeon/20 kahoot-btn-shadow flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-chalkboard-user"></i> Iniciar como PROFESOR
+                </button>
+                
+                <div class="flex items-center justify-center gap-2 py-1">
+                    <div class="h-px bg-white/10 flex-grow"></div>
+                    <span class="text-xs text-slate-500 uppercase tracking-widest font-bold">Ó</span>
+                    <div class="h-px bg-white/10 flex-grow"></div>
+                </div>
+
+                <!-- Botón Jugador (Jóvenes) -->
+                <button onclick="showScreen('screen-player-join')" class="w-full bg-white hover:bg-slate-200 text-black py-4 px-6 rounded-xl text-base md:text-lg font-black font-title tracking-wider uppercase transition kahoot-btn-shadow flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-mobile-screen-button"></i> Unirme desde mi Teléfono
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- PANTALLA 2: LOBBY DEL HOST (Sala de Espera) -->
+    <section id="screen-host-lobby" class="hidden flex-grow flex flex-col justify-between p-4 md:p-6 z-10 max-w-md md:max-w-xl w-full mx-auto">
+        <div class="text-center space-y-2 mt-2">
+            <h2 class="text-xs md:text-sm font-black font-title text-slate-400 uppercase tracking-widest">Escribe este PIN en la pizarra:</h2>
+            <div class="inline-block bg-black/60 border-4 border-cyanNeon px-8 py-4 rounded-3xl shadow-2xl shadow-cyanNeon/20 animate-bounce">
+                <span id="display-pin" class="text-4xl md:text-5xl font-black font-title tracking-widest text-cyanNeon">----</span>
+            </div>
+        </div>
+
+        <div class="my-4 bg-white/5 border border-white/10 rounded-2xl p-4 flex-grow flex flex-col justify-between min-h-[250px]">
+            <div class="flex justify-between items-center border-b border-white/10 pb-3 mb-3">
+                <h3 class="font-black font-title uppercase tracking-wider text-xs text-slate-300 flex items-center gap-2">
+                    <i class="fa-solid fa-users text-cyanNeon animate-pulse"></i> Jóvenes en la sala:
+                </h3>
+                <span class="bg-cyanNeon/15 border border-cyanNeon text-cyanNeon font-black font-title px-3 py-1 rounded-full text-xs">
+                    <span id="lobby-players-count">0</span> listos
+                </span>
+            </div>
+
+            <!-- Listado de jugadores -->
+            <div id="lobby-players-list" class="grid grid-cols-2 gap-3 overflow-y-auto max-h-56 flex-grow py-2">
+                <div class="text-slate-500 italic text-center col-span-full py-8 text-xs">Esperando que se conecten los jóvenes...</div>
+            </div>
+        </div>
+
+        <div class="w-full">
+            <button id="btn-start-game" disabled onclick="hostStartGame()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 py-4 rounded-2xl text-base font-black font-title tracking-wider uppercase transition shadow-lg disabled:opacity-30 disabled:pointer-events-none kahoot-btn-shadow">
+                ¡Empezar Juego ahora!
+            </button>
+        </div>
+    </section>
+
+    <!-- PANTALLA 3: UNIRSE A PARTIDA (Teléfono de Alumnos) -->
+    <section id="screen-player-join" class="hidden flex-grow flex flex-col justify-center items-center p-4 z-10">
+        <div class="w-full max-w-md bg-white/5 border border-white/10 p-6 md:p-8 rounded-3xl text-center backdrop-blur-md">
+            <h2 class="text-xl md:text-2xl font-black font-title text-white uppercase tracking-wider mb-4">Unirse al Kaju</h2>
+            
+            <div class="space-y-4 text-left">
+                <div>
+                    <label class="text-[9px] font-bold font-title text-cyanNeon uppercase tracking-widest pl-1 block mb-1">PIN del Profe</label>
+                    <input type="number" id="join-pin" class="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-white text-center text-xl font-black tracking-widest focus:outline-none focus:border-cyanNeon transition" placeholder="xxxx">
+                </div>
+
+                <div>
+                    <label class="text-[9px] font-bold font-title text-cyanNeon uppercase tracking-widest pl-1 block mb-1">Tu Nickname</label>
+                    <input type="text" id="join-name" maxlength="12" class="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-white text-base font-bold focus:outline-none focus:border-cyanNeon transition" placeholder="Tu nombre...">
+                </div>
+
+                <button onclick="playerJoinGame()" class="w-full bg-gradient-to-r from-cyanNeon to-purple-600 hover:from-cyanNeon/90 hover:to-purple-600/90 py-4 rounded-xl text-base font-black font-title tracking-wider uppercase transition shadow-lg shadow-cyanNeon/20 mt-2 kahoot-btn-shadow">
+                    ¡Listo para competir!
+                </button>
+                
+                <button onclick="resetGame()" class="w-full text-center text-[11px] text-slate-500 hover:text-slate-400 underline font-medium pt-2">
+                    Volver al inicio
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- PANTALLA 4: ESPERA EN LOBBY DEL JUGADOR -->
+    <section id="screen-player-wait-lobby" class="hidden flex-grow flex flex-col justify-center items-center p-4 z-10">
+        <div class="w-full max-w-md bg-white/5 border border-white/10 p-8 rounded-3xl text-center backdrop-blur-md space-y-6">
+            <div class="w-16 h-16 bg-cyanNeon/10 border-4 border-cyanNeon border-t-transparent rounded-full animate-spin mx-auto flex items-center justify-center text-xl">
+                <i class="fa-solid fa-gamepad animate-pulse text-cyanNeon"></i>
+            </div>
+            
+            <h2 class="text-xl md:text-2xl font-black font-title text-white">¡Ya estás adentro!</h2>
+            <div id="lobby-wait-message" class="text-xs md:text-sm text-slate-300 leading-relaxed">
+                Mira la pantalla del Profe. El juego comenzará en breve.
+            </div>
+        </div>
+    </section>
+
+    <!-- PANTALLA 5: PREGUNTA EN JUEGO -->
+    <section id="screen-quiz-game" class="hidden flex-grow flex flex-col justify-between p-3 md:p-6 z-10 max-w-3xl w-full mx-auto">
+        <!-- Pregunta -->
+        <div class="text-center my-auto py-2">
+            <h2 id="quiz-question" class="text-base md:text-xl font-black font-title leading-tight text-white px-2">
+                Cargando...
+            </h2>
+        </div>
+
+        <!-- Indicador de Respuestas y Temporizador -->
+        <div class="flex justify-between items-center my-3 px-2">
+            <div class="relative w-14 h-14 flex items-center justify-center rounded-full bg-black/60 border-4 border-cyanNeon shadow-lg">
+                <span id="quiz-timer" class="text-xl font-black font-title text-cyanNeon">20</span>
+            </div>
+
+            <!-- Profesor HUD -->
+            <div id="host-responses-hud" class="hidden flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-2">
+                <div class="text-left">
+                    <span class="text-[8px] text-slate-400 font-bold uppercase tracking-wider block">Respuestas</span>
+                    <span class="text-sm font-black font-title text-white">
+                        <span id="responses-received-count" class="text-cyanNeon">0</span> / <span id="responses-total-count">0</span>
+                    </span>
+                </div>
+                <button onclick="hostForceFinishQuestion()" class="bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg">
+                    Saltar
+                </button>
+            </div>
+
+            <!-- Jugador HUD -->
+            <div id="player-score-hud" class="bg-white/5 border border-white/10 rounded-xl px-4 py-2 flex items-center gap-3">
+                <div class="text-left">
+                    <span class="text-[8px] text-slate-400 font-bold uppercase tracking-wider block">Pts</span>
+                    <span id="user-current-score" class="text-xs font-black font-title text-white">0</span>
+                </div>
+                <div class="h-6 w-px bg-white/10"></div>
+                <div class="text-left">
+                    <span class="text-[8px] text-slate-400 font-bold uppercase tracking-wider block">Racha</span>
+                    <span id="user-current-streak" class="text-xs font-black font-title text-amber-400">🔥 0</span>
+                </div>
+                <div class="h-6 w-px bg-white/10"></div>
+                <div class="text-left">
+                    <span class="text-[8px] text-slate-400 font-bold uppercase tracking-wider block">Preg.</span>
+                    <span class="text-xs font-black font-title text-cyanNeon"><span id="current-index">1</span>/5</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de Opciones -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-auto mb-2">
+            <button id="opt-0" class="bg-kRed hover:bg-kRed/90 text-white rounded-xl p-3 flex items-center gap-3 text-left kahoot-btn-shadow min-h-[60px]">
+                <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-lg flex-shrink-0">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <span id="opt-text-0" class="text-xs font-bold leading-snug">Cargando...</span>
+            </button>
+
+            <button id="opt-1" class="bg-kBlue hover:bg-kBlue/90 text-white rounded-xl p-3 flex items-center gap-3 text-left kahoot-btn-shadow min-h-[60px]">
+                <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-lg flex-shrink-0">
+                    <i class="fa-solid fa-diamond"></i>
+                </div>
+                <span id="opt-text-1" class="text-xs font-bold leading-snug">Cargando...</span>
+            </button>
+
+            <button id="opt-2" class="bg-kYellow hover:bg-kYellow/90 text-white rounded-xl p-3 flex items-center gap-3 text-left kahoot-btn-shadow min-h-[60px]">
+                <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-lg flex-shrink-0">
+                    <i class="fa-regular fa-circle"></i>
+                </div>
+                <span id="opt-text-2" class="text-xs font-bold leading-snug">Cargando...</span>
+            </button>
+
+            <button id="opt-3" class="bg-kGreen hover:bg-kGreen/90 text-white rounded-xl p-3 flex items-center gap-3 text-left kahoot-btn-shadow min-h-[60px]">
+                <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-lg flex-shrink-0">
+                    <i class="fa-regular fa-square"></i>
+                </div>
+                <span id="opt-text-3" class="text-xs font-bold leading-snug">Cargando...</span>
+            </button>
+        </div>
+    </section>
+
+    <!-- PANTALLA 6: FEEDBACK INMEDIATO -->
+    <section id="screen-feedback-info" class="hidden flex-grow flex flex-col justify-center items-center p-4 z-10 max-w-lg w-full mx-auto">
+        <div class="w-full rounded-3xl p-6 text-center backdrop-blur-md relative overflow-hidden" id="feedback-card">
+            <div id="feedback-icon" class="w-16 h-16 mx-auto rounded-full flex items-center justify-center text-3xl mb-4 shadow-xl"></div>
+            
+            <h2 id="feedback-title" class="text-2xl font-black font-title uppercase tracking-wider mb-1">Evaluando...</h2>
+            <p id="feedback-score" class="text-sm text-slate-300 font-bold mb-3">Calculando puntos...</p>
+            
+            <!-- Recuadro explicativo de la lección -->
+            <div class="bg-black/40 border border-white/5 rounded-2xl p-4 text-left mb-5">
+                <span class="text-[10px] text-cyanNeon font-bold font-title uppercase tracking-widest block mb-1"><i class="fa-solid fa-compass mr-1"></i>¿Sabías que...?</span>
+                <p id="feedback-explanation" class="text-xs text-slate-300 leading-relaxed"></p>
+            </div>
+
+            <button id="btn-feedback-action" class="w-full bg-white text-black hover:bg-slate-200 py-3 rounded-xl text-base font-black font-title tracking-wider uppercase transition kahoot-btn-shadow">
+                Ver Posiciones <i class="fa-solid fa-chevron-right ml-1"></i>
+            </button>
+        </div>
+    </section>
+
+    <!-- PANTALLA 7: TABLA DE LÍDERES (Profesor y Alumno) -->
+    <section id="screen-leaderboard-view" class="hidden flex-grow flex flex-col justify-center items-center p-4 z-10 max-w-md w-full mx-auto">
+        <div class="w-full bg-white/5 border border-white/10 p-6 rounded-3xl backdrop-blur-md shadow-2xl">
+            <h2 class="text-xl font-black font-title text-center text-white uppercase tracking-wider mb-5 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-trophy text-amber-400"></i> Tabla de Posiciones
+            </h2>
+
+            <div id="leaderboard-list" class="space-y-3 mb-5">
+                <!-- Se inyecta con base de datos en tiempo real -->
+            </div>
+
+            <button id="btn-leaderboard-action" class="w-full bg-gradient-to-r from-cyanNeon to-purple-600 hover:from-cyanNeon/90 hover:to-purple-600/90 py-4 rounded-xl text-base font-black font-title tracking-wider uppercase transition kahoot-btn-shadow">
+                Cargando siguiente paso...
+            </button>
+        </div>
+    </section>
+
+    <!-- PANTALLA 8: PODIO FINAL -->
+    <section id="screen-final-podium" class="hidden flex-grow flex flex-col justify-center items-center p-4 z-10 max-w-md w-full mx-auto">
+        <h2 class="text-2xl font-black font-title text-center text-white uppercase tracking-widest mb-6 animate-pulse">
+            🏆 PODIO DE KAJU 🏆
+        </h2>
+
+        <!-- Estructura de Podio en formato Lista responsiva para celulares -->
+        <div id="podium-list-items" class="w-full mb-6">
+            <!-- Se inyecta dinámicamente -->
+        </div>
+
+        <button onclick="resetGame()" class="bg-white text-black hover:bg-slate-200 px-8 py-3.5 rounded-xl text-base font-black font-title tracking-wider uppercase transition kahoot-btn-shadow">
+            <i class="fa-solid fa-arrow-rotate-left mr-1"></i> Volver a Jugar
+        </button>
+    </section>
+
+    <!-- FOOTER GLOBAL -->
+    <footer class="w-full text-center p-4 bg-black/20 border-t border-white/5 text-[10px] text-slate-500 z-10 font-medium">
+        Kaju! - Sincronizado en tiempo real para Seminario &copy; 2026
+    </footer>
+
+</body>
+</html>

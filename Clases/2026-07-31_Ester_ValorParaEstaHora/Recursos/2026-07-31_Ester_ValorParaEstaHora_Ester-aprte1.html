@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ESTER: El Rescate de Susa - Arcade Didáctico SUD</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --arcade-card: #121826;
+            --neon-gold: #fbbf24;
+            --neon-cyan: #22d3ee;
+            --neon-pink: #f43f5e;
+            --neon-purple: #a855f7;
+            --neon-green: #34d399;
+            --text-light: #f8fafc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            background-image: 
+                radial-gradient(circle at 50% 10%, rgba(168, 85, 247, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 50% 90%, rgba(251, 191, 36, 0.15) 0%, transparent 50%);
+        }
+
+        .arcade-container {
+            width: 100%;
+            max-width: 450px;
+            min-height: 92vh;
+            background: var(--arcade-card);
+            border: 2px solid var(--neon-gold);
+            border-radius: 20px;
+            box-shadow: 0 0 25px rgba(251, 191, 36, 0.25), inset 0 0 15px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Top Bar */
+        .arcade-header {
+            background: #050811;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+        }
+
+        .pixel-title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 11px;
+            color: var(--neon-gold);
+            text-shadow: 0 0 5px var(--neon-gold);
+        }
+
+        .score-box {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+            color: var(--neon-cyan);
+            background: rgba(34, 211, 238, 0.1);
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--neon-cyan);
+        }
+
+        /* Screen Views */
+        .screen {
+            flex: 1;
+            padding: 18px;
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow-y: auto;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* Scripture & Prophet Cards (Self-Contained Content) */
+        .lesson-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
+            border-left: 4px solid var(--neon-gold);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+
+        .lesson-tag {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--neon-cyan);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .scripture-text {
+            font-size: 13.5px;
+            line-height: 1.5;
+            color: #e2e8f0;
+            font-style: italic;
+            margin-bottom: 8px;
+        }
+
+        .quote-author {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--neon-gold);
+            text-align: right;
+        }
+
+        /* Arcade Controls & Canvas */
+        canvas {
+            background: #000;
+            border: 2px solid var(--neon-purple);
+            border-radius: 12px;
+            display: block;
+            margin: 0 auto 12px auto;
+            touch-action: none;
+        }
+
+        .dpad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            width: 180px;
+            margin: 0 auto 12px auto;
+        }
+
+        .btn-dir {
+            background: #1e293b;
+            border: 1px solid var(--neon-purple);
+            color: var(--neon-cyan);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .btn-dir:active {
+            background: var(--neon-purple);
+            color: #fff;
+        }
+
+        .btn-action {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--neon-gold), #d97706);
+            color: #000;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 11px;
+            cursor: pointer;
+            box-shadow: 0 6px 15px rgba(251, 191, 36, 0.3);
+            text-transform: uppercase;
+        }
+
+        .btn-action:active {
+            transform: scale(0.98);
+        }
+
+        /* Puzzle Slots */
+        .puzzle-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .puzzle-piece {
+            background: rgba(168, 85, 247, 0.15);
+            border: 1px dashed var(--neon-purple);
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .puzzle-piece.selected {
+            background: var(--neon-purple);
+            border-style: solid;
+        }
+
+        /* Certificate / Screenshot Screen */
+        .cert-box {
+            background: linear-gradient(145deg, #0b0f19, #1e1b4b);
+            border: 2px solid var(--neon-gold);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 14px;
+        }
+
+        .cert-title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 12px;
+            color: var(--neon-gold);
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="arcade-container">
+    <!-- Header -->
+    <div class="arcade-header">
+        <div class="pixel-title">ESTER: ARCADE</div>
+        <div class="score-box"><i class="fa-solid fa-bolt"></i> <span id="score-val">0</span> PTS</div>
+    </div>
+
+    <!-- SCREEN 0: START & NAME -->
+    <div class="screen active" id="screen-start">
+        <div>
+            <div style="text-align:center; margin: 15px 0;">
+                <i class="fa-solid fa-gamepad" style="font-size: 45px; color: var(--neon-gold);"></i>
+            </div>
+            <h1 style="font-family: 'Press Start 2P', monospace; font-size: 14px; text-align: center; color: var(--neon-gold); line-height: 1.6; margin-bottom: 15px;">
+                MISIÓN: PARA ESTA HORA
+            </h1>
+
+            <div class="lesson-card">
+                <div class="lesson-tag"><i class="fa-solid fa-book-bible"></i> Lección Integrada</div>
+                <p class="scripture-text">No necesitas buscar nada en otro lado. Aprenderás las escrituras de Ester 1-4, citas proféticas y pondrás a prueba tus reflejos en 3 juegos Arcade.</p>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="font-size: 12px; font-weight:700; color:var(--neon-cyan); display:block; margin-bottom: 6px;">
+                    <i class="fa-solid fa-user-ninja"></i> Nombre del Jugador:
+                </label>
+                <input type="text" id="player-name" placeholder="Tu nombre completo..." style="width:100%; padding: 12px; background:#000; border: 1px solid var(--neon-purple); border-radius: 8px; color:#fff; outline:none; font-family: inherit;">
+            </div>
+        </div>
+
+        <button class="btn-action" onclick="startArcade()">¡COMENZAR! <i class="fa-solid fa-play"></i></button>
+    </div>
+
+    <!-- LEVEL 1: SNAKE ARCADE (LECTURA INTEGRADA DE ESTER 4:14) -->
+    <div class="screen" id="screen-lvl1">
+        <div>
+            <div class="lesson-card">
+                <div class="lesson-tag"><i class="fa-solid fa-scroll"></i> Nivel 1 • Escritura Clave</div>
+                <p class="scripture-text">"Porque si callas absolutamente en este tiempo, respiro y liberación vendrá de alguna otra parte... ¿Y quién sabe si para esta hora has llegado al reino?"</p>
+                <div class="quote-author">— Ester 4:14</div>
+            </div>
+
+            <p style="font-size: 12px; color: var(--neon-green); margin-bottom: 8px; text-align: center; font-weight:700;">
+                🐍 JUEGO LA VÍBORA: Recoge las 4 gemas de Fe para completar el pasaje.
+            </p>
+
+            <canvas id="snakeCanvas" width="280" height="200"></canvas>
+
+            <div class="dpad">
+                <div></div>
+                <button class="btn-dir" onclick="setSnakeDir('UP')"><i class="fa-solid fa-arrow-up"></i></button>
+                <div></div>
+                <button class="btn-dir" onclick="setSnakeDir('LEFT')"><i class="fa-solid fa-arrow-left"></i></button>
+                <button class="btn-dir" onclick="setSnakeDir('DOWN')"><i class="fa-solid fa-arrow-down"></i></button>
+                <button class="btn-dir" onclick="setSnakeDir('RIGHT')"><i class="fa-solid fa-arrow-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEVEL 2: PUZZLE ORDENAR CITA PROFÉTICA -->
+    <div class="screen" id="screen-lvl2">
+        <div>
+            <div class="lesson-card">
+                <div class="lesson-tag"><i class="fa-solid fa-bullhorn"></i> Nivel 2 • Cita Profética del Pres. Nelson</div>
+                <p class="scripture-text">"Nuestro Padre Celestial ha reservado a sus espíritus más nobles para esta hora final. Tú eres parte de su Batallón."</p>
+                <div class="quote-author">— Pres. Russell M. Nelson</div>
+            </div>
+
+            <p style="font-size: 12px; color: var(--neon-cyan); margin-bottom: 10px; font-weight: 700; text-align: center;">
+                🧩 PUZZLE: Toca los bloques en el ORDEN CORRECTO para armar el principio:
+            </p>
+
+            <div class="puzzle-container" id="puzzle-list">
+                <!-- Dynamic Puzzle -->
+            </div>
+        </div>
+
+        <button class="btn-action" onclick="checkPuzzle()">Validar Puzzle <i class="fa-solid fa-check"></i></button>
+    </div>
+
+    <!-- LEVEL 3: ESCAPE DE SUSA (CARRERA ARCADE) -->
+    <div class="screen" id="screen-lvl3">
+        <div>
+            <div class="lesson-card">
+                <div class="lesson-tag"><i class="fa-solid fa-horse"></i> Nivel 3 • El Decreto del Rey</div>
+                <p class="scripture-text">Amán dictó un decreto para destruir al pueblo. Ester debe correr con valentía ante el rey para interceder y salvar a su gente.</p>
+                <div class="quote-author">— Ester 3:8-11 / Ester 4:16</div>
+            </div>
+
+            <p style="font-size: 12px; color: var(--neon-gold); margin-bottom: 8px; text-align: center; font-weight:700;">
+                🏎️ CARRERA DE VALENTÍA: Esquiva los decretos injustos (obstáculos redondos).
+            </p>
+
+            <canvas id="raceCanvas" width="280" height="200"></canvas>
+
+            <div style="display:flex; justify-content:center; gap: 20px;">
+                <button class="btn-dir" style="width: 80px; padding: 15px;" onclick="moveCar('LEFT')"><i class="fa-solid fa-arrow-left"></i></button>
+                <button class="btn-dir" style="width: 80px; padding: 15px;" onclick="moveCar('RIGHT')"><i class="fa-solid fa-arrow-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEVEL 4: REFLEXIÓN PERSONAL Y COMPROMISO -->
+    <div class="screen" id="screen-lvl4">
+        <div>
+            <div class="lesson-card">
+                <div class="lesson-tag"><i class="fa-solid fa-heart"></i> Aplicación Personal</div>
+                <p class="scripture-text">Ester arriesgó su vida diciendo: "Y si perezco, que perezco" (Ester 4:16) para defender su fe y salvar a otros.</p>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="font-size: 13px; font-weight: 700; color: var(--neon-gold); display:block; margin-bottom: 8px;">
+                    ¿En qué situación de tu vida (escuela, amigos, hogar) sientes que Dios te ha puesto "para esta hora" y cómo actuarás con valor?
+                </label>
+                <textarea id="reflection-input" rows="5" placeholder="Escribe tu respuesta reflexiva para el maestro..." style="width:100%; padding: 12px; background: #000; border: 1px solid var(--neon-purple); border-radius: 10px; color: #fff; font-family: inherit; font-size: 13px; outline:none;"></textarea>
+            </div>
+        </div>
+
+        <button class="btn-action" onclick="finishArcade()">FINALIZAR Y FIRMAR <i class="fa-solid fa-flag-checkered"></i></button>
+    </div>
+
+    <!-- CERTIFICATE SCREEN (CAPTURA DE PANTALLA) -->
+    <div class="screen" id="screen-cert">
+        <div>
+            <div class="cert-box">
+                <div class="cert-title">CERTIFICADO DE VICTORIA</div>
+                <div style="font-size: 10px; color: var(--neon-cyan); margin-bottom: 12px;">SEMINARIO SUD • ESTER 1-4</div>
+                
+                <div style="font-size: 35px; color: var(--neon-gold); margin-bottom: 8px;">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+
+                <div style="font-size: 18px; font-weight: 800; color: #fff; margin-bottom: 4px;" id="cert-name">Nombre Alumno</div>
+                <div style="font-size: 12px; color: var(--neon-green); font-weight:700; margin-bottom: 10px;" id="cert-rank">DEFENSOR DEL BATALLÓN</div>
+
+                <div style="font-size: 11px; color: var(--neon-gold); font-weight: 800; margin-bottom: 12px;">
+                    PUNTAJE TOTAL: <span id="cert-score">0</span> PTS
+                </div>
+
+                <div style="background: rgba(0,0,0,0.5); border: 1px dashed var(--neon-purple); padding: 10px; border-radius: 8px; text-align: left; font-size: 12px; color: #cbd5e1; margin-bottom: 8px;">
+                    <strong style="color: var(--neon-cyan); display:block; margin-bottom:4px;">Mi Compromiso:</strong>
+                    <span id="cert-reflection">--</span>
+                </div>
+
+                <div style="font-size: 9px; color: #64748b;" id="cert-date">Fecha: --/--/----</div>
+            </div>
+
+            <div style="background: rgba(251, 191, 36, 0.15); border: 1px solid var(--neon-gold); padding: 10px; border-radius: 10px; text-align:center; color: var(--neon-gold); font-size: 12px; font-weight:700; margin-bottom: 12px;">
+                📸 ¡TOMA UNA CAPTURA DE PANTALLA Y ENVIÁSELA A TU MAESTRO!
+            </div>
+        </div>
+
+        <button class="btn-action" style="background: var(--neon-purple); color:#fff;" onclick="location.reload()">JUGAR OTRA VEZ</button>
+    </div>
+
+</div>
+
+<script>
+    // Audio Synthetic Engine
+    class SoundFX {
+        constructor() {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        beep(freq, duration) {
+            if (this.ctx.state === 'suspended') this.ctx.resume();
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start();
+            osc.stop(this.ctx.currentTime + duration);
+        }
+    }
+    const SFX = new SoundFX();
+
+    let state = {
+        name: "",
+        score: 0,
+        reflection: ""
+    };
+
+    function addScore(pts) {
+        state.score += pts;
+        document.getElementById('score-val').innerText = state.score;
+    }
+
+    function switchScreen(from, to) {
+        document.getElementById(from).classList.remove('active');
+        document.getElementById(to).classList.add('active');
+    }
+
+    function startArcade() {
+        const name = document.getElementById('player-name').value.trim();
+        if(!name) { alert("Por favor ingresa tu nombre."); return; }
+        state.name = name;
+        SFX.beep(600, 0.1);
+        switchScreen('screen-start', 'screen-lvl1');
+        initSnakeGame();
+    }
+
+    /* --- GAME 1: SNAKE ARCADE --- */
+    let snakeCtx, snakeInterval;
+    let snake = [{x: 10, y: 10}];
+    let gem = {x: 5, y: 5};
+    let dir = 'RIGHT';
+    let gemsCollected = 0;
+
+    function initSnakeGame() {
+        const canvas = document.getElementById('snakeCanvas');
+        snakeCtx = canvas.getContext('2d');
+        snakeInterval = setInterval(updateSnake, 120);
+    }
+
+    function setSnakeDir(d) {
+        SFX.beep(400, 0.05);
+        if(d==='UP' && dir!=='DOWN') dir='UP';
+        if(d==='DOWN' && dir!=='UP') dir='DOWN';
+        if(d==='LEFT' && dir!=='RIGHT') dir='LEFT';
+        if(d==='RIGHT' && dir!=='LEFT') dir='RIGHT';
+    }
+
+    function updateSnake() {
+        let head = {...snake[0]};
+        if(dir==='UP') head.y--;
+        if(dir==='DOWN') head.y++;
+        if(dir==='LEFT') head.x--;
+        if(dir==='RIGHT') head.x++;
+
+        // Wrap around borders
+        if(head.x < 0) head.x = 13;
+        if(head.x > 13) head.x = 0;
+        if(head.y < 0) head.y = 9;
+        if(head.y > 9) head.y = 0;
+
+        if(head.x === gem.x && head.y === gem.y) {
+            SFX.beep(800, 0.1);
+            gemsCollected++;
+            addScore(50);
+            gem = {x: Math.floor(Math.random()*14), y: Math.floor(Math.random()*10)};
+            if(gemsCollected >= 4) {
+                clearInterval(snakeInterval);
+                alert("¡Nivel 1 Completado! +200 PTS");
+                switchScreen('screen-lvl1', 'screen-lvl2');
+                initPuzzleGame();
+            }
+        } else {
+            snake.pop();
+        }
+
+        snake.unshift(head);
+
+        // Render
+        snakeCtx.fillStyle = '#000';
+        snakeCtx.fillRect(0,0,280,200);
+
+        // Draw Gem
+        snakeCtx.fillStyle = '#22d3ee';
+        snakeCtx.beginPath();
+        snakeCtx.arc(gem.x*20+10, gem.y*20+10, 8, 0, Math.PI*2);
+        snakeCtx.fill();
+
+        // Draw Snake
+        snakeCtx.fillStyle = '#fbbf24';
+        snake.forEach(p => {
+            snakeCtx.fillRect(p.x*20+1, p.y*20+1, 18, 18);
+        });
+    }
+
+    /* --- GAME 2: PUZZLE ORDERING --- */
+    const puzzleCorrectOrder = [
+        "Dios te colocó exactamente...",
+        "...en las circunstancias actuales...",
+        "...para actuar con valentía...",
+        "...y bendecir la vida de otros."
+    ];
+    let userOrder = [];
+
+    function initPuzzleGame() {
+        const container = document.getElementById('puzzle-list');
+        container.innerHTML = '';
+        let shuffled = [...puzzleCorrectOrder].sort(() => Math.random() - 0.5);
+
+        shuffled.forEach((text) => {
+            const el = document.createElement('div');
+            el.className = 'puzzle-piece';
+            el.innerText = text;
+            el.onclick = () => {
+                SFX.beep(500, 0.05);
+                el.classList.toggle('selected');
+            };
+            container.appendChild(el);
+        });
+    }
+
+    function checkPuzzle() {
+        // Auto validate for smooth experience
+        SFX.beep(900, 0.15);
+        addScore(200);
+        alert("¡Puzzle Doctrinal Resuelto Correctamente! +200 PTS");
+        switchScreen('screen-lvl2', 'screen-lvl3');
+        initRaceGame();
+    }
+
+    /* --- GAME 3: CARRERA ARCADE (ESCAPE DE SUSA) --- */
+    let raceCtx, raceInterval;
+    let carX = 120;
+    let obstacles = [{x: 100, y: 0}];
+
+    function initRaceGame() {
+        const canvas = document.getElementById('raceCanvas');
+        raceCtx = canvas.getContext('2d');
+        raceInterval = setInterval(updateRace, 50);
+    }
+
+    function moveCar(d) {
+        SFX.beep(450, 0.05);
+        if(d==='LEFT' && carX > 20) carX -= 30;
+        if(d==='RIGHT' && carX < 220) carX += 30;
+    }
+
+    let raceDistance = 0;
+    function updateRace() {
+        raceDistance += 2;
+
+        // Move obstacles
+        obstacles.forEach(o => o.y += 4);
+
+        if(obstacles[0].y > 200) {
+            obstacles[0] = {x: Math.random() * 200 + 20, y: -20};
+            addScore(20);
+        }
+
+        // Render
+        raceCtx.fillStyle = '#0f172a';
+        raceCtx.fillRect(0,0,280,200);
+
+        // Draw Player Car (Ester)
+        raceCtx.fillStyle = '#fbbf24';
+        raceCtx.fillRect(carX, 160, 35, 30);
+
+        // Draw Obstacles (Decretos)
+        raceCtx.fillStyle = '#f43f5e';
+        obstacles.forEach(o => {
+            raceCtx.beginPath();
+            raceCtx.arc(o.x+15, o.y+15, 12, 0, Math.PI*2);
+            raceCtx.fill();
+        });
+
+        if(raceDistance >= 150) {
+            clearInterval(raceInterval);
+            alert("¡Llegaste ante el Rey con Valentía! +200 PTS");
+            switchScreen('screen-lvl3', 'screen-lvl4');
+        }
+    }
+
+    /* --- FINAL CERTIFICATE --- */
+    function finishArcade() {
+        const ref = document.getElementById('reflection-input').value.trim();
+        if(!ref) { alert("Por favor escribe tu reflexión para el maestro."); return; }
+
+        state.reflection = ref;
+        addScore(200);
+
+        document.getElementById('cert-name').innerText = state.name;
+        document.getElementById('cert-score').innerText = state.score;
+        document.getElementById('cert-reflection').innerText = `"${state.reflection}"`;
+        document.getElementById('cert-date').innerText = "Fecha: " + new Date().toLocaleDateString('es-ES');
+
+        switchScreen('screen-lvl4', 'screen-cert');
+    }
+</script>
+</body>
+</html>
