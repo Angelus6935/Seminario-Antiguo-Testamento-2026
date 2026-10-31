@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Tablas en el Corazón · Jeremías 31</title>
+<style>
+:root{--bg:#0A0E1A;--card:#141B2E;--gold:#E8B24D;--cyan:#2DD4E8;--flesh:#e11d48;--text:#ffffff;--muted:#B8C2D9;--ok:#34d399;--bad:#f87171;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:radial-gradient(circle at 50% -10%,#24163f 0%,var(--bg) 55%) fixed;color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;min-height:100vh}
+#app{max-width:480px;margin:0 auto;padding:16px 16px 40px}
+.screen{display:none;animation:fade .35s ease}
+.screen.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+h1{font-size:32px;line-height:1.1;margin:6px 0;background:linear-gradient(90deg,var(--gold),#ffd98a,var(--flesh));-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font-size:22px;margin:6px 0 10px;color:var(--gold)}
+p{line-height:1.5}
+.muted{color:var(--muted)}
+.btn{display:block;width:100%;border:0;border-radius:14px;padding:14px 16px;margin:12px 0 0;font-size:17px;font-weight:700;color:#0A0E1A;background:linear-gradient(90deg,var(--gold),#ffd98a);cursor:pointer;box-shadow:0 6px 22px rgba(232,178,77,.25)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.cyan{background:linear-gradient(90deg,var(--cyan),#8beefa)}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid #2c3656;box-shadow:none}
+.lang{display:flex;gap:6px;justify-content:flex-end}
+.lang button{border:1px solid #2c3656;background:transparent;color:var(--muted);border-radius:10px;padding:6px 12px;font-weight:700;cursor:pointer}
+.lang button.on{background:var(--gold);color:#0A0E1A;border-color:var(--gold)}
+input[type=text],textarea{width:100%;border-radius:12px;border:1px solid #2c3656;background:#0d1324;color:var(--text);padding:12px;font-size:16px;font-family:inherit}
+textarea{min-height:96px;resize:vertical}
+.card{background:var(--card);border-radius:18px;padding:16px;margin:12px 0}
+.badge{display:inline-block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--cyan);border:1px solid rgba(45,212,232,.4);border-radius:999px;padding:4px 10px}
+.quote{border-left:3px solid var(--gold);padding:8px 12px;margin:10px 0;background:rgba(232,178,77,.07);border-radius:0 10px 10px 0;font-style:italic}
+.quote small{display:block;font-style:normal;color:var(--gold);margin-top:6px}
+.inst{background:rgba(45,212,232,.08);border:1px dashed rgba(45,212,232,.45);border-radius:12px;padding:10px 12px;margin-top:12px}
+.trio{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.trio div{background:#0d1324;border-radius:12px;padding:8px;text-align:center;font-size:13px}
+.trio b{display:block;color:var(--gold);font-size:11px;letter-spacing:.06em}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.cols div{background:#0d1324;border-radius:12px;padding:10px;font-size:13.5px}
+.cols div b{display:block;margin-bottom:4px}
+.cols .stone b{color:#9ca3af}.cols .flesh b{color:#fb7185}
+ul.tight{padding-left:20px;margin:6px 0} ul.tight li{margin:4px 0}
+canvas.gc{width:100%;height:auto;display:block;border-radius:16px;touch-action:none;background:#0d1324}
+.hint{color:var(--muted);font-size:14px;text-align:center;margin:8px 0}
+.pad{display:flex;gap:12px;margin-top:10px}
+.pad button,.dpad button{font-size:26px;border-radius:14px;border:1px solid #2c3656;background:var(--card);color:var(--cyan);touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer}
+.pad button{flex:1;padding:14px 0}
+.pad button:active,.dpad button:active{background:#22305a}
+.dpad{display:grid;grid-template-columns:repeat(3,64px);grid-template-rows:repeat(2,56px);gap:6px;justify-content:center;margin-top:10px}
+.dpad .u{grid-column:2;grid-row:1}.dpad .l{grid-column:1;grid-row:2}.dpad .d{grid-column:2;grid-row:2}.dpad .r{grid-column:3;grid-row:2}
+.hitbtn{display:block;width:100%;margin-top:10px;padding:18px;font-size:22px;font-weight:800;border:0;border-radius:16px;color:#0A0E1A;background:linear-gradient(90deg,var(--gold),#ffd98a);touch-action:manipulation;cursor:pointer}
+.opt{display:block;width:100%;text-align:left;border:1px solid #2c3656;background:#0f1628;color:var(--text);border-radius:14px;padding:14px;margin:10px 0;font-size:16px;cursor:pointer;line-height:1.35}
+.opt.ok{border-color:var(--ok);background:rgba(52,211,153,.15)}
+.opt.bad{border-color:var(--bad);background:rgba(248,113,113,.12);opacity:.7}
+.fb{min-height:24px;font-weight:700;text-align:center;margin-top:6px}
+.fb.ok{color:var(--ok)}.fb.bad{color:var(--bad)}
+.overlay{position:fixed;inset:0;background:rgba(5,8,16,.82);display:none;align-items:center;justify-content:center;padding:16px;z-index:10}
+.overlay.active{display:flex}
+.overlay .card{max-width:440px;width:100%;max-height:90vh;overflow:auto;border:1px solid rgba(232,178,77,.35);animation:fade .3s}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chip{border:1px solid #2c3656;background:#0f1628;color:var(--text);border-radius:999px;padding:7px 11px;font-size:13px;cursor:pointer}
+.chip:active{background:#22305a}
+.counter{font-size:12px;color:var(--muted);text-align:right;margin-top:2px}
+.rq{margin:14px 0}
+.rq label{display:block;font-weight:700;margin-bottom:6px}
+.center{text-align:center}
+#heart-cv{width:220px;height:220px;display:block;margin:6px auto}
+#end-img{width:100%;border-radius:16px;margin-top:14px;display:none}
+.rk{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:12px;padding:10px 12px;margin:6px 0;font-size:15px}
+.rk.me{border:2px solid var(--gold);box-shadow:0 0 14px rgba(232,178,77,.3)}
+.rk .p{width:30px;text-align:center;font-weight:800;color:var(--muted)}
+.rk .n{flex:1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rk .s{font-size:12px;color:var(--muted)}
+.rk .v{font-weight:800;color:#fb7185}
+.big-phrase{font-size:22px;font-weight:800;text-align:center;line-height:1.35;color:var(--gold);margin:16px 0}
+</style>
+</head>
+<body>
+<div id="app">
+
+<section class="screen active" id="s-start">
+  <div class="lang"><button data-lang="es" class="on">ES</button><button data-lang="en">EN</button></div>
+  <canvas id="heart-cv" width="440" height="440"></canvas>
+  <h1 data-i18n="appTitle"></h1>
+  <p class="muted" data-i18n="appSub"></p>
+  <div class="card">
+    <label for="in-name" data-i18n="askName"></label>
+    <input type="text" id="in-name" maxlength="24" autocomplete="off">
+    <button class="btn" id="btn-start" disabled data-i18n="start"></button>
+  </div>
+</section>
+
+<section class="screen" id="s-heart">
+  <span class="badge" id="ht-badge"></span>
+  <canvas id="heart-cv2" class="" width="440" height="440" style="width:220px;height:220px;display:block;margin:10px auto"></canvas>
+  <h2 class="center" id="ht-title"></h2>
+  <p class="center muted" id="ht-text"></p>
+  <button class="btn" id="ht-btn" data-i18n="continue"></button>
+</section>
+
+<section class="screen" id="s-intro">
+  <span class="badge" id="in-badge"></span>
+  <h2 id="in-title"></h2>
+  <div class="card" id="in-body"></div>
+  <button class="btn" id="in-btn" data-i18n="play"></button>
+</section>
+
+<section class="screen" id="s-game">
+  <span class="badge" id="g-label"></span>
+  <div id="g-area" style="margin-top:8px"></div>
+</section>
+
+<section class="screen" id="s-mc">
+  <span class="badge" id="mc-label"></span>
+  <h2 id="mc-q"></h2>
+  <div id="mc-opts"></div>
+  <div class="fb" id="mc-fb"></div>
+  <button class="btn" id="mc-next" style="display:none" data-i18n="continue"></button>
+</section>
+
+<section class="screen" id="s-reflect">
+  <span class="badge" data-i18n="reflectBadge"></span>
+  <h2 data-i18n="reflectTitle"></h2>
+  <p class="muted" data-i18n="reflectHint"></p>
+  <div id="rf-box"></div>
+  <button class="btn" id="rf-btn" disabled data-i18n="send"></button>
+</section>
+
+<section class="screen" id="s-end">
+  <canvas id="heart-cv3" width="440" height="440" style="width:200px;height:200px;display:block;margin:6px auto"></canvas>
+  <h1 class="center" id="end-title"></h1>
+  <div class="big-phrase" data-i18n="finalPhrase"></div>
+  <p class="muted center" data-i18n="endSub"></p>
+  <button class="btn" id="end-share" data-i18n="share"></button>
+  <p class="hint" id="end-msg"></p>
+  <div id="end-rank" style="display:none">
+    <h2 class="center" style="margin-top:22px">🏆 <span data-i18n="rankTitle"></span></h2>
+    <div id="rank-list"></div>
+    <p class="hint" id="rank-upd"></p>
+  </div>
+  <img id="end-img" alt="">
+</section>
+
+</div>
+
+<div class="overlay" id="memo"><div class="card" id="memo-card"></div></div>
+
+<script>
+'use strict';
+// =====================================================================
+//  TABLAS DE CARNE · Jeremías 31 · Seminario 2026
+// =====================================================================
+const RANKING_URL = 'https://script.google.com/macros/s/AKfycbwTCdA6fbDs97164sMVTaIkBkyGA8gv94w-vY2nYSFgcfo9pbblG2UWhlgh7Cuiotgx9g/exec';
+const JUEGO_ID = 'tablas-de-carne';
+const TEST = /[?&]test/.test(location.search);
+
+const S = { name: '', lang: 'es', id: '', li: 0, score: 0, answers: [], done: false };
+const $ = s => document.querySelector(s);
+const Q = (es, en) => ({ es, en });
+function T(o) { if (o == null) return ''; if (typeof o === 'string') return o; return o[S.lang] != null ? o[S.lang] : o.es; }
+function el(tag, cls, html) { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function rnd(n) { return Math.floor(Math.random() * n); }
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function show(id) { document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id)); window.scrollTo(0, 0); }
+function mulberry(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function cleanText(s) {
+  return String(s).replace(/ñ/g, '\u0001').replace(/Ñ/g, '\u0002').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Za-z0-9.,;:?!¿¡()'"\- \n\u0001\u0002]/g, '').replace(/\u0001/g, 'ñ').replace(/\u0002/g, 'Ñ').replace(/\s+/g, ' ').trim();
+}
+
+// ---------------- Textos de interfaz ----------------
+const UI = {
+  appTitle: Q('Tablas en el Corazón', 'Tables of the Heart'),
+  appSub: Q('Jeremías 31 · “Escribiré Mi ley en su corazón”. Tu corazón empieza de piedra… ¿podés transformarlo en 4 niveles?', 'Jeremiah 31 · “I will write My law in their hearts.” Your heart starts as stone… can you transform it in 4 levels?'),
+  askName: Q('¿Cómo te llamás?', "What's your name?"),
+  start: Q('Comenzar', 'Start'),
+  play: Q('Entendido, ¡a jugar!', 'Got it, let’s play!'),
+  continue: Q('Continuar', 'Continue'),
+  level: Q('Nivel', 'Level'),
+  question: Q('Pregunta', 'Question'),
+  correct: Q('✔ ¡Correcto!', '✔ Correct!'),
+  tryAgain: Q('✖ Intentá de nuevo', '✖ Try again'),
+  reflectBadge: Q('Reflexión final', 'Final reflection'),
+  reflectTitle: Q('¿Está escrito en tu corazón?', 'Is it written in your heart?'),
+  reflectHint: Q('Respondé con tus palabras (mínimo 10 caracteres cada una). Tus respuestas se enviarán al maestro.', 'Answer in your own words (at least 10 characters each). Your answers will be sent to the teacher.'),
+  send: Q('Enviar mis respuestas', 'Submit my answers'),
+  chars: Q('caracteres', 'characters'),
+  endTitle: Q('¡Lo lograste, {n}!', 'You did it, {n}!'),
+  finalPhrase: Q('El Señor no quiere solo que sepas Su ley… quiere escribirla en tu corazón.', 'The Lord doesn’t just want you to know His law… He wants to write it in your heart.'),
+  endSub: Q('Tu puntaje es secreto hasta que lo compartas. Tocá el botón para generar tu tarjeta y enviarla al maestro.', 'Your score is secret until you share it. Tap the button to create your card and send it to the teacher.'),
+  share: Q('📤 Compartir con el Maestro', '📤 Share with the Teacher'),
+  downloaded: Q('Se descargó la imagen. Adjuntala en WhatsApp y enviásela al maestro.', 'The image was downloaded. Attach it in WhatsApp and send it to the teacher.'),
+  shared: Q('¡Listo! Gracias por compartir.', 'Done! Thanks for sharing.'),
+  score: Q('PUNTAJE', 'SCORE'),
+  cardTop: Q('SEMINARIO · JEREMÍAS 31', 'SEMINARY · JEREMIAH 31'),
+  saveMemory: Q('Guardar recuerdo ✨', 'Keep this memory ✨'),
+  rankTitle: Q('Ranking de la clase', 'Class ranking'),
+  rankDone: Q('✔ Terminó', '✔ Finished'),
+  rankLevel: Q('Nivel', 'Level'),
+  rankReflect: Q('Reflexión', 'Reflection'),
+  rankUpd: Q('Se actualiza cada 5 segundos', 'Updates every 5 seconds'),
+  rankOff: Q('Sin conexión, reintentando…', 'Offline, retrying…'),
+  rankEmpty: Q('Todavía no hay resultados…', 'No results yet…'),
+  you: Q('(vos)', '(you)')
+};
+function applyLang() {
+  document.documentElement.lang = S.lang;
+  document.querySelectorAll('[data-i18n]').forEach(e => { e.textContent = T(UI[e.dataset.i18n]); });
+  document.querySelectorAll('.lang button').forEach(b => b.classList.toggle('on', b.dataset.lang === S.lang));
+  $('#in-name').placeholder = S.lang === 'es' ? 'Tu nombre' : 'Your name';
+}
+
+// ---------------- Audio sintético ----------------
+let AC = null;
+function ac() { if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { AC = null; } } if (AC && AC.state === 'suspended') AC.resume(); return AC; }
+function tone(f, d, type, v, delay) {
+  const a = ac(); if (!a) return;
+  const o = a.createOscillator(), g = a.createGain(); o.type = type || 'sine'; o.frequency.value = f;
+  const t = a.currentTime + (delay || 0); g.gain.setValueAtTime(v || .12, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
+  o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + d + .03);
+}
+const sfx = {
+  ok() { tone(660, .12, 'triangle', .14); tone(990, .2, 'triangle', .14, .1); },
+  bad() { tone(160, .28, 'sawtooth', .1); },
+  click() { tone(540, .05, 'square', .05); },
+  hit() { tone(120, .12, 'square', .14); tone(80, .2, 'triangle', .12, .03); },
+  chime() { [784, 988, 1175].forEach((f, i) => tone(f, .25, 'sine', .1, i * .08)); },
+  win() { [523, 659, 784, 1047].forEach((f, i) => tone(f, .22, 'triangle', .14, i * .12)); },
+  beat() { tone(70, .12, 'sine', .25); tone(60, .14, 'sine', .2, .16); }
+};
+function buzz(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { } }
+
+// ---------------- Ranking en vivo (Google Sheets) ----------------
+window.__rankLog = [];
+function sendRank(nivel, estado) {
+  const data = { id: S.id, juego: JUEGO_ID, nombre: S.name, nivel, estado, puntaje: S.score };
+  window.__rankLog.push(data);
+  if (TEST || !RANKING_URL) return;
+  try {
+    fetch(RANKING_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(data) }).catch(() => { });
+  } catch (e) { }
+}
+
+// ---------------- Loop (nunca se detiene) ----------------
+let active = null, bgAnim = null, lastT = 0, TT = 0;
+const KEY = {};
+window.addEventListener('keydown', e => { KEY[e.key] = true; if (active && active.onKey) active.onKey(e.key); });
+window.addEventListener('keyup', e => { KEY[e.key] = false; });
+function loop(t) {
+  const dt = Math.min(.05, ((t - lastT) / 1000) || 0); lastT = t; TT += dt;
+  try {
+    if (active) { if (active.update) active.update(dt); if (active.draw) active.draw(); }
+    if (bgAnim) bgAnim(dt);
+  } catch (err) { console.error(err); active = null; }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// ---------------- Helpers de canvas ----------------
+function makeCanvas(area, w, h) { const cv = el('canvas', 'gc'); cv.width = w; cv.height = h; cv.style.aspectRatio = w + '/' + h; area.appendChild(cv); return { cv, ctx: cv.getContext('2d') }; }
+function cvPos(cv, e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * cv.width / r.width, y: (e.clientY - r.top) * cv.height / r.height }; }
+function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function wrapLines(ctx, text, maxW) {
+  const words = String(text).split(' '); const lines = []; let line = '';
+  for (const w of words) { const t = line ? line + ' ' + w : w; if (ctx.measureText(t).width > maxW && line) { lines.push(line); line = w; } else line = t; }
+  if (line) lines.push(line); return lines;
+}
+function hex2rgb(h) { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+function mix(a, b, k) { const A = hex2rgb(a), B = hex2rgb(b); return 'rgb(' + A.map((v, i) => Math.round(v + (B[i] - v) * k)).join(',') + ')'; }
+
+// ---------------- EL CORAZÓN (piedra → carne) ----------------
+const CRACKS = (() => {
+  const r = mulberry(31); const out = [];
+  for (let i = 0; i < 10; i++) {
+    let x = (r() - .5) * 1.2, y = (r() - .5) * 1.1 - .1; const pts = [[x, y]];
+    const ang = r() * Math.PI * 2;
+    for (let k = 0; k < 4; k++) { x += Math.cos(ang + (r() - .5) * 1.4) * .18; y += Math.sin(ang + (r() - .5) * 1.4) * .18; pts.push([x, y]); }
+    out.push(pts);
+  }
+  return out;
+})();
+const SPECKS = (() => { const r = mulberry(7); return Array.from({ length: 70 }, () => [(r() - .5) * 2.4, (r() - .5) * 2.2, r() * 2.2 + .6, r()]); })();
+function heartPath(ctx, cx, cy, s) {
+  ctx.beginPath();
+  ctx.moveTo(cx, cy + s * .95);
+  ctx.bezierCurveTo(cx - s * 1.35, cy + s * .15, cx - s * 1.05, cy - s * 1.0, cx, cy - s * .42);
+  ctx.bezierCurveTo(cx + s * 1.05, cy - s * 1.0, cx + s * 1.35, cy + s * .15, cx, cy + s * .95);
+  ctx.closePath();
+}
+function drawHeart(ctx, cx, cy, s, stage, t) {
+  stage = clamp(stage, 0, 4); const k = stage / 4;
+  const beat = stage >= 3 ? 1 + .045 * Math.pow(Math.max(0, Math.sin(t * 5)), 6) : 1;
+  ctx.save(); ctx.translate(cx, cy); ctx.scale(beat, beat); ctx.translate(-cx, -cy);
+  if (stage >= 2) { ctx.shadowColor = stage >= 3 ? 'rgba(244,63,94,.7)' : 'rgba(232,178,77,.6)'; ctx.shadowBlur = s * .35; }
+  const g = ctx.createRadialGradient(cx - s * .3, cy - s * .35, s * .1, cx, cy, s * 1.3);
+  g.addColorStop(0, mix('#b8bec8', '#fb7185', k)); g.addColorStop(1, mix('#4b5563', '#9f1239', k));
+  heartPath(ctx, cx, cy, s); ctx.fillStyle = g; ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.save(); heartPath(ctx, cx, cy, s); ctx.clip();
+  if (k < 1) { // textura de piedra
+    for (const p of SPECKS) { ctx.fillStyle = 'rgba(30,35,45,' + (.35 * (1 - k) * p[3]) + ')'; ctx.beginPath(); ctx.arc(cx + p[0] * s * .5, cy + p[1] * s * .5, p[2] * s / 60, 0, 6.28); ctx.fill(); }
+  }
+  const nCr = stage >= 4 ? 0 : Math.min(CRACKS.length, Math.round(clamp(stage, 0, 3.5) * 3));
+  for (let i = 0; i < nCr; i++) {
+    const c = CRACKS[i]; ctx.beginPath();
+    c.forEach((p, j) => { const X = cx + p[0] * s, Y = cy + p[1] * s; if (j) ctx.lineTo(X, Y); else ctx.moveTo(X, Y); });
+    ctx.strokeStyle = stage >= 1.5 ? 'rgba(255,214,120,.9)' : 'rgba(20,24,32,.85)';
+    ctx.lineWidth = Math.max(1.5, s / 40); ctx.shadowColor = '#ffd678'; ctx.shadowBlur = stage >= 1.5 ? s / 10 : 0; ctx.stroke(); ctx.shadowBlur = 0;
+  }
+  if (stage >= 3.5) { // la ley escrita en el corazón
+    ctx.globalAlpha = clamp((stage - 3.5) * 2, 0, 1);
+    ctx.fillStyle = '#ffe3a3'; ctx.textAlign = 'center'; ctx.font = 'italic bold ' + Math.round(s * .26) + 'px Georgia,serif';
+    ctx.shadowColor = '#ffd678'; ctx.shadowBlur = s / 8;
+    ctx.fillText(T(Q('Mi ley', 'My law')), cx, cy - s * .02);
+    ctx.font = 'italic ' + Math.round(s * .14) + 'px Georgia,serif';
+    ctx.fillText(T(Q('Jeremías 31:33', 'Jeremiah 31:33')), cx, cy + s * .25);
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+  }
+  ctx.restore();
+  // brillo
+  ctx.globalAlpha = .25 + .2 * k; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(cx - s * .42, cy - s * .38, s * .16, s * .09, -.6, 0, 6.28); ctx.fill(); ctx.globalAlpha = 1;
+  ctx.restore();
+}
+function animHeart(cvId, getStage) {
+  const cv = $(cvId), ctx = cv.getContext('2d');
+  bgAnim = () => { ctx.clearRect(0, 0, cv.width, cv.height); drawHeart(ctx, cv.width / 2, cv.height / 2 + 10, cv.width * .33, getStage(), TT); };
+}
+
+// =====================================================================
+//  NIVEL 1 · EL CINCEL
+// =====================================================================
+function gameChisel(area, done) {
+  const W = 360, H = 400;
+  const { cv, ctx } = makeCanvas(area, W, H);
+  const btn = el('button', 'hitbtn', T(Q('🔨 ¡Golpear!', '🔨 Strike!'))); area.appendChild(btn);
+  area.appendChild(el('p', 'hint', T(Q('Tocá “Golpear” (o la pantalla) cuando la aguja esté en la zona dorada. 3 golpes por piedra.', 'Tap “Strike” (or the screen) when the needle is in the gold zone. 3 strikes per stone.'))));
+  const phrases = [
+    { s: Q('Saber que el cuerpo necesita descansar', 'Knowing the body needs rest'), h: Q('Quiero dormir temprano', 'I want to sleep early') },
+    { s: Q('Saber que hay tiempo para todo', 'Knowing there is time for everything'), h: Q('Quiero soltar el celular', 'I want to put my phone down') },
+    { s: Q('Saber que evita el estrés a última hora', 'Knowing it avoids last-minute stress'), h: Q('Quiero hacer la tarea a tiempo', 'I want to do my homework on time') }
+  ];
+  const steps = [Q('INFLUYE', 'INFLUENCES'), Q('DOMINA', 'DOMINATES'), Q('ES EL NÚCLEO', 'IS THE CORE')];
+  let pi = 0, hits = 0, misses = 0, m = 0, dir = 1, zc = .5, zw = .24, broken = 0, shake = 0, fin = false, parts = [], flash = 0;
+  const newZone = () => { zw = .24 - pi * .04; zc = zw / 2 + .05 + Math.random() * (.9 - zw); };
+  newZone();
+  if (TEST) window.__chisel = { get m() { return m; }, get zc() { return zc; }, get zw() { return zw; }, get broken() { return broken; } };
+  function strike() {
+    if (fin || broken > 0) return;
+    if (Math.abs(m - zc) <= zw / 2) {
+      hits++; sfx.hit(); buzz(40); shake = .25;
+      for (let i = 0; i < 14; i++) parts.push({ x: 180 + (Math.random() - .5) * 120, y: 170 + (Math.random() - .5) * 60, vx: (Math.random() - .5) * 220, vy: -Math.random() * 200, a: 1 });
+      if (hits >= 3) { broken = 1.6; sfx.ok(); } else newZone();
+    } else { misses++; sfx.bad(); flash = .3; }
+  }
+  btn.addEventListener('pointerdown', e => { e.preventDefault(); strike(); });
+  cv.addEventListener('pointerdown', strike);
+  active = {
+    onKey(k) { if (k === ' ' || k === 'Enter') strike(); },
+    update(dt) {
+      if (fin) return;
+      const sp = .85 + pi * .35;
+      if (broken <= 0) { m += dir * sp * dt; if (m > 1) { m = 1; dir = -1; } if (m < 0) { m = 0; dir = 1; } }
+      if (broken > 0) { broken -= dt; if (broken <= 0) { pi++; hits = 0; if (pi >= 3) { fin = true; sfx.win(); setTimeout(() => done(100 + Math.max(0, 60 - misses * 10)), 900); } else newZone(); } }
+      shake = Math.max(0, shake - dt); flash = Math.max(0, flash - dt);
+      parts.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 500 * dt; p.a -= dt * 1.4; }); parts = parts.filter(p => p.a > 0);
+    },
+    draw() {
+      ctx.fillStyle = '#0d1324'; ctx.fillRect(0, 0, W, H);
+      // pasos INFLUYE → DOMINA → ES EL NÚCLEO
+      steps.forEach((s, i) => {
+        const x = 12 + i * 116; const on = i < pi || (i === pi && !fin) || fin;
+        ctx.fillStyle = i < pi || fin ? 'rgba(232,178,77,.9)' : (i === pi ? 'rgba(45,212,232,.25)' : 'rgba(255,255,255,.05)');
+        rr(ctx, x, 12, 108, 34, 10); ctx.fill();
+        ctx.fillStyle = i < pi || fin ? '#0A0E1A' : (on ? '#2DD4E8' : '#6b7280'); ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+        ctx.fillText((i + 1) + '. ' + T(s), x + 54, 34);
+      });
+      const sx = shake > 0 ? (Math.random() - .5) * 10 : 0;
+      if (pi < 3) {
+        const ph = phrases[pi];
+        if (broken > 0) {
+          ctx.globalAlpha = Math.min(1, (1.6 - broken) * 3);
+          drawHeart(ctx, 180, 150, 48, 3, TT);
+          ctx.fillStyle = '#ffd98a'; ctx.font = 'bold 21px system-ui'; ctx.textAlign = 'center';
+          wrapLines(ctx, '💗 ' + T(ph.h), 300).forEach((l, i) => ctx.fillText(l, 180, 235 + i * 26));
+          ctx.globalAlpha = 1;
+        } else {
+          // bloque de piedra
+          const g = ctx.createLinearGradient(0, 100, 0, 250); g.addColorStop(0, '#9ca3af'); g.addColorStop(1, '#4b5563');
+          ctx.fillStyle = g; rr(ctx, 40 + sx, 100, 280, 150, 18); ctx.fill();
+          for (let i = 0; i < hits * 3; i++) { const c = CRACKS[i]; ctx.beginPath(); c.forEach((p, j) => { const X = 180 + sx + p[0] * 120, Y = 175 + p[1] * 60; if (j) ctx.lineTo(X, Y); else ctx.moveTo(X, Y); }); ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 2.5; ctx.stroke(); }
+          ctx.fillStyle = '#111827'; ctx.font = 'bold 18px system-ui'; ctx.textAlign = 'center';
+          wrapLines(ctx, '“' + T(ph.s) + '”', 240).forEach((l, i, a) => ctx.fillText(l, 180 + sx, 180 - (a.length - 1) * 12 + i * 24));
+          ctx.fillStyle = '#E8B24D'; ctx.font = 'bold 13px system-ui';
+          ctx.fillText('●'.repeat(hits) + '○'.repeat(3 - hits), 180, 275);
+        }
+      } else {
+        drawHeart(ctx, 180, 175, 60, 1.5, TT);
+      }
+      parts.forEach(p => { ctx.globalAlpha = Math.max(0, p.a); ctx.fillStyle = '#9ca3af'; ctx.fillRect(p.x, p.y, 5, 5); }); ctx.globalAlpha = 1;
+      // medidor
+      const mx = 30, mw = 300, my = 320;
+      ctx.fillStyle = flash > 0 ? 'rgba(248,113,113,.35)' : '#1a2340'; rr(ctx, mx, my, mw, 26, 13); ctx.fill();
+      if (broken <= 0 && !fin) { ctx.fillStyle = 'rgba(232,178,77,.85)'; rr(ctx, mx + (zc - zw / 2) * mw, my, zw * mw, 26, 10); ctx.fill(); }
+      ctx.fillStyle = '#fff'; ctx.fillRect(mx + m * mw - 3, my - 8, 6, 42);
+      ctx.fillStyle = '#B8C2D9'; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(T(Q('Piedra ', 'Stone ')) + Math.min(pi + 1, 3) + '/3', 180, 380);
+      if (fin) { ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#E8B24D'; ctx.font = 'bold 26px system-ui'; ctx.fillText(T(Q('¡La piedra se agrieta!', 'The stone is cracking!')), 180, 200); }
+    }
+  };
+}
+
+// =====================================================================
+//  NIVEL 2 · ESCRITO EN EL CORAZÓN (trazar con el dedo)
+// =====================================================================
+function gameTrace(area, done) {
+  const W = 360, H = 420;
+  const { cv, ctx } = makeCanvas(area, W, H);
+  area.appendChild(el('p', 'hint', T(Q('Pasá el dedo por encima de cada palabra hasta que brille toda en dorado.', 'Run your finger over each word until it all glows gold.'))));
+  const words = S.lang === 'es' ? ['LEY', 'CORAZÓN', 'CONVENIO', 'ESPÍRITU'] : ['LAW', 'HEART', 'COVENANT', 'SPIRIT'];
+  let wi = 0, targets = [], covered = 0, down = false, trail = [], wordDone = 0, fin = false, t0 = TT;
+  function build() {
+    const off = document.createElement('canvas'); off.width = W; off.height = H; const g = off.getContext('2d');
+    g.font = 'bold 100px system-ui,Arial'; const fs = Math.min(120, Math.floor(100 * (W - 40) / g.measureText(words[wi]).width));
+    g.font = 'bold ' + fs + 'px system-ui,Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#fff';
+    g.fillText(words[wi], W / 2, 240);
+    const d = g.getImageData(0, 0, W, H).data; targets = [];
+    for (let y = 0; y < H; y += 7) for (let x = 0; x < W; x += 7) if (d[(y * W + x) * 4 + 3] > 128) targets.push({ x, y, c: false });
+    covered = 0; window.__traceTargets = targets;
+  }
+  build();
+  function paint(p) {
+    if (wordDone > 0 || fin) return;
+    trail.push({ x: p.x, y: p.y, a: 1 });
+    for (const tg of targets) if (!tg.c && (tg.x - p.x) ** 2 + (tg.y - p.y) ** 2 < 17 * 17) { tg.c = true; covered++; }
+    if (covered / targets.length >= .82) {
+      targets.forEach(t => t.c = true); wordDone = 1.1; sfx.chime();
+    }
+  }
+  cv.addEventListener('pointerdown', e => { down = true; ac(); paint(cvPos(cv, e)); });
+  cv.addEventListener('pointermove', e => { if (down) paint(cvPos(cv, e)); });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => cv.addEventListener(ev, () => { down = false; }));
+  active = {
+    update(dt) {
+      trail.forEach(p => p.a -= dt * 2); trail = trail.filter(p => p.a > 0);
+      if (wordDone > 0) {
+        wordDone -= dt;
+        if (wordDone <= 0) { wi++; if (wi >= words.length) { fin = true; sfx.win(); const secs = TT - t0; setTimeout(() => done(100 + Math.max(0, Math.round(60 - secs))), 900); } else build(); }
+      }
+    },
+    draw() {
+      ctx.fillStyle = '#0d1324'; ctx.fillRect(0, 0, W, H);
+      ctx.globalAlpha = .45; drawHeart(ctx, 180, 245, 150, 1.5 + wi * .5, TT); ctx.globalAlpha = 1;
+      // progreso
+      ctx.fillStyle = '#1a2340'; rr(ctx, 16, 14, W - 32, 10, 5); ctx.fill();
+      ctx.fillStyle = '#E8B24D'; rr(ctx, 16, 14, (W - 32) * Math.min(1, (wi + (targets.length ? covered / targets.length : 0)) / words.length), 10, 5); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 14px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(T(Q('Palabra ', 'Word ')) + Math.min(wi + 1, words.length) + '/' + words.length, 180, 46);
+      if (!fin) {
+        for (const tg of targets) {
+          if (tg.c) { ctx.fillStyle = '#ffd98a'; ctx.shadowColor = '#E8B24D'; ctx.shadowBlur = 8; ctx.beginPath(); ctx.arc(tg.x, tg.y, 3.6, 0, 6.28); ctx.fill(); ctx.shadowBlur = 0; }
+          else { ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.arc(tg.x, tg.y, 2.2, 0, 6.28); ctx.fill(); }
+        }
+      }
+      trail.forEach(p => { ctx.globalAlpha = p.a * .6; ctx.fillStyle = '#2DD4E8'; ctx.beginPath(); ctx.arc(p.x, p.y, 10, 0, 6.28); ctx.fill(); }); ctx.globalAlpha = 1;
+      if (wordDone > 0) { ctx.fillStyle = '#E8B24D'; ctx.font = 'bold 22px system-ui'; ctx.fillText('✨ ' + words[wi] + ' ✨', 180, 385); }
+      if (fin) { ctx.fillStyle = '#E8B24D'; ctx.font = 'bold 24px system-ui'; ctx.fillText(T(Q('¡La piedra se parte!', 'The stone breaks open!')), 180, 385); }
+    }
+  };
+}
+
+// =====================================================================
+//  NIVEL 3 · ESCUDO DEL CORAZÓN
+// =====================================================================
+function gameShield(area, done) {
+  const W = 360, H = 420, CX = 180, CY = 220, R = 92, HALF = .62;
+  const { cv, ctx } = makeCanvas(area, W, H);
+  area.appendChild(el('p', 'hint', T(Q('Girá el escudo arrastrando el dedo alrededor del corazón (o con ◀ ▶). Bloqueá lo gris, dejá pasar lo dorado.', 'Turn the shield by dragging around the heart (or ◀ ▶). Block the gray, let the gold through.'))));
+  const ctr = padLR(area);
+  const BAD = S.lang === 'es' ? ['Presión', 'Peso', 'Cansancio', '“Tengo que…”', 'Vacío', 'Obligación'] : ['Pressure', 'Weight', 'Tiredness', '“I have to…”', 'Emptiness', 'Obligation'];
+  const GOOD = S.lang === 'es' ? ['Deseo', 'Gozo', 'Libertad', '“Quiero…”', 'Amor'] : ['Desire', 'Joy', 'Freedom', '“I want to…”', 'Love'];
+  let ang = -Math.PI / 2, life = 30, hits = 0, objs = [], spawn = .6, t = 0, fin = false, shake = 0, floats = [];
+  const setAng = e => { const p = cvPos(cv, e); ang = Math.atan2(p.y - CY, p.x - CX); };
+  let dragging = false;
+  cv.addEventListener('pointerdown', e => { dragging = true; setAng(e); });
+  cv.addEventListener('pointermove', e => { if (dragging || e.pointerType === 'mouse') setAng(e); });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => cv.addEventListener(ev, () => { dragging = false; }));
+  const adiff = (a, b) => { let d = a - b; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return d; };
+  const flo = (txt, col) => floats.push({ x: CX, y: CY - 70, t: txt, c: col, a: 1 });
+  active = {
+    update(dt) {
+      if (fin) return; t += dt;
+      if (ctr.l || KEY.ArrowLeft) ang -= 3.4 * dt;
+      if (ctr.r || KEY.ArrowRight) ang += 3.4 * dt;
+      spawn -= dt;
+      if (spawn <= 0) {
+        spawn = Math.max(.6, 1.05 - t * .006);
+        const good = Math.random() < .42; const list = good ? GOOD : BAD;
+        objs.push({ a: Math.random() * Math.PI * 2, r: 240, v: 62 + Math.random() * 34 + t * .5, good, w: list[rnd(list.length)] });
+      }
+      for (const o of objs) {
+        o.r -= o.v * dt;
+        if (!o.chk && o.r <= R + 6) {
+          o.chk = true;
+          if (Math.abs(adiff(o.a, ang)) < HALF) {
+            o.dead = true;
+            if (o.good) { sfx.bad(); flo(T(Q('¡Dejá pasar lo bueno!', 'Let the good through!')), '#fca5a5'); }
+            else { sfx.click(); }
+          }
+        }
+        if (!o.dead && o.r <= 44) {
+          o.dead = true;
+          if (o.good) { life += 14; sfx.ok(); flo('+ ' + o.w, '#ffd98a'); }
+          else { life -= 12; hits++; sfx.bad(); buzz(120); shake = .3; flo('− ' + o.w, '#9ca3af'); }
+        }
+      }
+      objs = objs.filter(o => !o.dead);
+      life = clamp(life, 0, 100);
+      if (life <= 0) { life = 30; objs = []; flo(T(Q('¡Otra vez! Protegé tu corazón', 'Again! Protect your heart')), '#fff'); }
+      shake = Math.max(0, shake - dt);
+      floats.forEach(f => { f.y -= 40 * dt; f.a -= dt * .8; }); floats = floats.filter(f => f.a > 0);
+      if (life >= 100) { fin = true; sfx.beat(); sfx.win(); setTimeout(() => done(100 + Math.max(0, 60 - hits * 8)), 1100); }
+    },
+    draw() {
+      const g = ctx.createRadialGradient(CX, CY, 20, CX, CY, 260); g.addColorStop(0, '#1b1530'); g.addColorStop(1, '#0a0e1a');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      const sx = shake > 0 ? (Math.random() - .5) * 8 : 0;
+      drawHeart(ctx, CX + sx, CY, 40, 2 + life / 100 * 1.6, TT);
+      // escudo
+      ctx.strokeStyle = '#2DD4E8'; ctx.lineWidth = 10; ctx.lineCap = 'round'; ctx.shadowColor = '#2DD4E8'; ctx.shadowBlur = 16;
+      ctx.beginPath(); ctx.arc(CX, CY, R, ang - HALF, ang + HALF); ctx.stroke(); ctx.shadowBlur = 0;
+      ctx.strokeStyle = 'rgba(45,212,232,.12)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(CX, CY, R, 0, 6.28); ctx.stroke();
+      ctx.textAlign = 'center';
+      for (const o of objs) {
+        const x = CX + Math.cos(o.a) * o.r, y = CY + Math.sin(o.a) * o.r;
+        if (o.good) { ctx.fillStyle = '#ffd98a'; ctx.shadowColor = '#E8B24D'; ctx.shadowBlur = 14; ctx.beginPath(); ctx.arc(x, y, 9, 0, 6.28); ctx.fill(); ctx.shadowBlur = 0; ctx.fillStyle = '#ffe3a3'; }
+        else { ctx.save(); ctx.translate(x, y); ctx.rotate(o.a + Math.PI); ctx.fillStyle = '#9ca3af'; ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(-8, -6); ctx.lineTo(-8, 6); ctx.closePath(); ctx.fill(); ctx.restore(); ctx.fillStyle = '#cbd5e1'; }
+        ctx.font = 'bold 11px system-ui'; ctx.fillText(o.w, x, y - 13);
+      }
+      floats.forEach(f => { ctx.globalAlpha = Math.max(0, f.a); ctx.fillStyle = f.c; ctx.font = 'bold 15px system-ui'; ctx.fillText(f.t, f.x, f.y); }); ctx.globalAlpha = 1;
+      // vida
+      ctx.fillStyle = '#1a2340'; rr(ctx, 16, 14, W - 32, 14, 7); ctx.fill();
+      const lg = ctx.createLinearGradient(16, 0, W - 16, 0); lg.addColorStop(0, '#9ca3af'); lg.addColorStop(1, '#f43f5e');
+      ctx.fillStyle = lg; rr(ctx, 16, 14, (W - 32) * life / 100, 14, 7); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 13px system-ui'; ctx.fillText(T(Q('Vida del corazón ', 'Heart life ')) + Math.round(life) + '%', 180, 48);
+      if (fin) { ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fb7185'; ctx.font = 'bold 26px system-ui'; ctx.fillText(T(Q('¡Tu corazón late!', 'Your heart is beating!')), 180, 380); }
+    }
+  };
+}
+function padLR(area) {
+  const st = { l: false, r: false }; const p = el('div', 'pad');
+  [['◀', 'l'], ['▶', 'r']].forEach(([s, k]) => {
+    const b = el('button', '', s);
+    b.addEventListener('pointerdown', e => { e.preventDefault(); st[k] = true; });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, () => { st[k] = false; }));
+    p.appendChild(b);
+  });
+  area.appendChild(p); return st;
+}
+
+// =====================================================================
+//  NIVEL 4 · EL VIAJE DE FRIEREN (exploración)
+// =====================================================================
+const MEMORIES = [
+  { e: '🕯️', x: 160, y: 720, title: Q('Que el Evangelio llegue al corazón', 'Let the gospel reach the heart'),
+    body: Q('<div class="quote">“Cuando tenía la responsabilidad de enseñar el Evangelio a la juventud mediante los programas de Seminario en todo el mundo, él, golpeando suavemente mi pecho con el dedo índice, dijo: ‘Hal, ¿por qué no haces un mayor esfuerzo por que el Evangelio les llegue al corazón?’”<small>Presidente Henry B. Eyring, sobre el presidente Gordon B. Hinckley (“Todo saldrá bien”, Liahona, marzo de 2008)</small></div><p>• ¿Qué creen que significa tener el Evangelio del Salvador grabado en el corazón?<br>• ¿Por qué es importante que los adolescentes reciban el Evangelio en sus corazones?</p>',
+      '<div class="quote">“When I had the responsibility to teach the gospel to youth through the Seminary programs throughout the world, he tapped my chest gently with his index finger and said: ‘Hal, why don’t you make a greater effort to get the gospel into their hearts?’”<small>President Henry B. Eyring, about President Gordon B. Hinckley (Liahona, March 2008, translated)</small></div><p>• What do you think it means to have the Savior’s gospel engraved in your heart?<br>• Why is it important for teenagers to receive the gospel in their hearts?</p>') },
+  { e: '📘', x: 580, y: 560, title: Q('1. Conocimiento sin corazón', '1. Knowledge without heart'),
+    body: Q('<p>Se puede saber mucho del Evangelio sin que esté escrito en el corazón.</p>', '<p>You can know a lot about the gospel without it being written in your heart.</p>') },
+  { e: '🌅', x: 190, y: 330, title: Q('2. Un despertar', '2. An awakening'),
+    body: Q('<p>Como Frieren, podemos darnos cuenta de que nos falta algo más profundo.</p>', '<p>Like Frieren, we can realize we are missing something deeper.</p>') },
+  { e: '🧭', x: 540, y: 130, title: Q('3. Un viaje', '3. A journey'),
+    body: Q('<p>La conversión es un proceso. El Señor escribe Su ley en nosotros día a día.</p>', '<p>Conversion is a process. The Lord writes His law in us day by day.</p>') }
+];
+function openMemo(m, cb) {
+  const ov = $('#memo'), card = $('#memo-card');
+  card.innerHTML = '<div class="center" style="font-size:44px">' + m.e + '</div><h2 class="center">' + T(m.title) + '</h2>' + T(m.body);
+  const b = el('button', 'btn', T(UI.saveMemory)); card.appendChild(b);
+  b.onclick = () => { sfx.click(); ov.classList.remove('active'); cb(); };
+  ov.classList.add('active'); sfx.chime();
+}
+function gameJourney(area, done) {
+  const W = 360, H = 440, WW = 720, WH = 1000;
+  const { cv, ctx } = makeCanvas(area, W, H);
+  area.appendChild(el('p', 'hint', T(Q('Mové al viajero con las flechas o tocando el lugar a donde querés ir. Juntá los 4 recuerdos brillantes.', 'Move the traveler with the arrows or by tapping where you want to go. Collect the 4 glowing memories.'))));
+  const dp = el('div', 'dpad'); const st = { u: 0, d: 0, l: 0, r: 0 };
+  [['u', '▲'], ['l', '◀'], ['d', '▼'], ['r', '▶']].forEach(([k, s]) => {
+    const b = el('button', k, s);
+    b.addEventListener('pointerdown', e => { e.preventDefault(); st[k] = 1; target = null; });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, () => { st[k] = 0; }));
+    dp.appendChild(b);
+  });
+  area.appendChild(dp);
+  const R = mulberry(61);
+  const flowers = Array.from({ length: 320 }, () => ({ x: R() * WW, y: R() * WH, c: ['#f9a8d4', '#fde68a', '#c4b5fd', '#ffffff', '#93c5fd'][Math.floor(R() * 5)], s: 2 + R() * 3 }));
+  const trees = Array.from({ length: 22 }, () => ({ x: R() * WW, y: R() * WH, s: 18 + R() * 14 }));
+  const mem = MEMORIES.map(m => ({ ...m, got: false }));
+  const pl = { x: 360, y: 930, dir: 1 };
+  let target = null, paused = false, got = 0, fin = false, camX = 0, camY = 0, t0 = TT, walk = 0;
+  window.__journey = { pl, mem };
+  cv.addEventListener('pointerdown', e => { const p = cvPos(cv, e); target = { x: p.x + camX, y: p.y + camY }; });
+  active = {
+    update(dt) {
+      if (paused || fin) return;
+      let dx = (st.r || KEY.ArrowRight || KEY.d ? 1 : 0) - (st.l || KEY.ArrowLeft || KEY.a ? 1 : 0);
+      let dy = (st.d || KEY.ArrowDown || KEY.s ? 1 : 0) - (st.u || KEY.ArrowUp || KEY.w ? 1 : 0);
+      if (!dx && !dy && target) { const vx = target.x - pl.x, vy = target.y - pl.y, d = Math.hypot(vx, vy); if (d < 4) target = null; else { dx = vx / d; dy = vy / d; } }
+      const len = Math.hypot(dx, dy);
+      if (len) { dx /= len; dy /= len; pl.x += dx * 140 * dt; pl.y += dy * 140 * dt; walk += dt * 10; if (dx) pl.dir = dx > 0 ? 1 : -1; }
+      pl.x = clamp(pl.x, 16, WW - 16); pl.y = clamp(pl.y, 16, WH - 16);
+      camX = clamp(pl.x - W / 2, 0, WW - W); camY = clamp(pl.y - H / 2, 0, WH - H);
+      for (const m of mem) {
+        if (!m.got && Math.hypot(m.x - pl.x, m.y - pl.y) < 30) {
+          m.got = true; paused = true; target = null; st.u = st.d = st.l = st.r = 0;
+          openMemo(m, () => {
+            paused = false; got++;
+            if (got >= mem.length) { fin = true; sfx.beat(); sfx.win(); const secs = TT - t0; setTimeout(() => done(100 + Math.max(0, Math.round(80 - secs))), 1100); }
+          });
+          break;
+        }
+      }
+    },
+    draw() {
+      ctx.save(); ctx.translate(-camX, -camY);
+      const g = ctx.createLinearGradient(0, 0, 0, WH); g.addColorStop(0, '#1e3a2f'); g.addColorStop(1, '#2f5d3a');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, WW, WH);
+      // sendero
+      ctx.strokeStyle = 'rgba(232,210,150,.25)'; ctx.lineWidth = 26; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(360, 980);
+      mem.forEach(m => ctx.lineTo(m.x, m.y)); ctx.stroke();
+      for (const f of flowers) { ctx.fillStyle = f.c; ctx.beginPath(); ctx.arc(f.x, f.y, f.s, 0, 6.28); ctx.fill(); }
+      for (const tr of trees) { ctx.fillStyle = '#14281e'; ctx.beginPath(); ctx.arc(tr.x + 4, tr.y + 6, tr.s, 0, 6.28); ctx.fill(); ctx.fillStyle = '#245c3b'; ctx.beginPath(); ctx.arc(tr.x, tr.y, tr.s, 0, 6.28); ctx.fill(); }
+      ctx.textAlign = 'center';
+      for (const m of mem) {
+        if (m.got) { ctx.fillStyle = 'rgba(255,217,138,.25)'; ctx.beginPath(); ctx.arc(m.x, m.y, 10, 0, 6.28); ctx.fill(); continue; }
+        const pulse = 1 + .15 * Math.sin(TT * 4);
+        ctx.fillStyle = 'rgba(255,217,138,.25)'; ctx.beginPath(); ctx.arc(m.x, m.y, 26 * pulse, 0, 6.28); ctx.fill();
+        ctx.fillStyle = '#ffe3a3'; ctx.shadowColor = '#E8B24D'; ctx.shadowBlur = 20; ctx.beginPath(); ctx.arc(m.x, m.y, 11, 0, 6.28); ctx.fill(); ctx.shadowBlur = 0;
+        ctx.font = '22px serif'; ctx.fillText(m.e, m.x, m.y - 26);
+      }
+      // viajero (figura genérica: capa blanca y cabello claro)
+      const bob = Math.sin(walk) * 2;
+      ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(pl.x, pl.y + 14, 11, 4, 0, 0, 6.28); ctx.fill();
+      ctx.fillStyle = '#e5e7eb'; ctx.beginPath(); ctx.moveTo(pl.x - 11, pl.y + 12); ctx.lineTo(pl.x + 11, pl.y + 12); ctx.lineTo(pl.x + 6, pl.y - 6 + bob); ctx.lineTo(pl.x - 6, pl.y - 6 + bob); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#fde2c8'; ctx.beginPath(); ctx.arc(pl.x, pl.y - 12 + bob, 7, 0, 6.28); ctx.fill();
+      ctx.fillStyle = '#f1f5f9'; ctx.beginPath(); ctx.arc(pl.x - 4 * pl.dir, pl.y - 15 + bob, 7, Math.PI * .9, Math.PI * 2.1); ctx.fill();
+      ctx.strokeStyle = '#a16207'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(pl.x + 10 * pl.dir, pl.y + 12); ctx.lineTo(pl.x + 12 * pl.dir, pl.y - 18 + bob); ctx.stroke();
+      ctx.fillStyle = '#2DD4E8'; ctx.beginPath(); ctx.arc(pl.x + 12 * pl.dir, pl.y - 20 + bob, 3, 0, 6.28); ctx.fill();
+      ctx.restore();
+      // brújula hacia el próximo recuerdo
+      const next = mem.find(m => !m.got);
+      if (next && !fin) {
+        const a = Math.atan2(next.y - pl.y, next.x - pl.x);
+        ctx.save(); ctx.translate(W - 34, H - 34); ctx.rotate(a);
+        ctx.fillStyle = 'rgba(10,14,26,.6)'; ctx.beginPath(); ctx.arc(0, 0, 22, 0, 6.28); ctx.fill();
+        ctx.fillStyle = '#E8B24D'; ctx.beginPath(); ctx.moveTo(14, 0); ctx.lineTo(-8, -8); ctx.lineTo(-4, 0); ctx.lineTo(-8, 8); ctx.closePath(); ctx.fill(); ctx.restore();
+      }
+      // HUD
+      ctx.fillStyle = 'rgba(10,14,26,.65)'; rr(ctx, 10, 10, 170, 50, 12); ctx.fill();
+      drawHeart(ctx, 36, 36, 15, 3 + got * .25, TT);
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 14px system-ui'; ctx.textAlign = 'left';
+      ctx.fillText(T(Q('Recuerdos ', 'Memories ')) + got + '/4', 60, 41);
+      if (fin) { ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(0, 0, W, H); ctx.textAlign = 'center'; ctx.fillStyle = '#fb7185'; ctx.font = 'bold 24px system-ui'; ctx.fillText(T(Q('¡Un corazón de carne!', 'A heart of flesh!')), 180, 220); }
+    }
+  };
+}
+
+// =====================================================================
+//  CONTENIDO DE LOS NIVELES (textos literales del PowerPoint)
+// =====================================================================
+const LEVELS = [
+  {
+    intro: {
+      title: Q('Sé que debería…', 'I know I should…'),
+      body: Q(
+        '<p><b>¿Por qué sabemos lo que conviene… y aun así nos cuesta hacerlo?</b></p><div class="trio"><div>😴<b>DORMIR TEMPRANO</b>Saber que el cuerpo necesita descansar.</div><div>📱<b>SOLTAR EL CELULAR</b>Saber que hay tiempo para todo.</div><div>📚<b>HACER LA TAREA A TIEMPO</b>Saber que evita el estrés a última hora.</div></div><div class="quote">“¿Qué puedes hacer para que el Evangelio de Jesucristo no solo influya en tu vida, sino que sea la influencia dominante, y de hecho, el núcleo de lo que eres?”<small>Élder D. Todd Christofferson, del Cuórum de los Doce Apóstoles (“Cuando te hayas convertido”, Liahona, mayo de 2004, pág. 11)</small></div><div class="trio"><div><b>PASO 1</b>INFLUYE</div><div><b>PASO 2</b>DOMINA</div><div><b>PASO 3</b>ES EL NÚCLEO</div></div><div class="inst">🔨 Rompé las piedras del “saber” para que se conviertan en “quiero”.</div>',
+        '<p><b>Why do we know what’s good for us… and still struggle to do it?</b></p><div class="trio"><div>😴<b>SLEEP EARLY</b>Knowing the body needs rest.</div><div>📱<b>PUT THE PHONE DOWN</b>Knowing there is time for everything.</div><div>📚<b>DO HOMEWORK ON TIME</b>Knowing it avoids last-minute stress.</div></div><div class="quote">“What can you do to make the gospel of Jesus Christ not just an influence in your life but the dominant influence and, indeed, the very core of who you are?”<small>Elder D. Todd Christofferson (“When Thou Art Converted,” May 2004)</small></div><div class="trio"><div><b>STEP 1</b>INFLUENCES</div><div><b>STEP 2</b>DOMINATES</div><div><b>STEP 3</b>IS THE CORE</div></div><div class="inst">🔨 Break the stones of “knowing” so they become “I want to.”</div>')
+    },
+    game: gameChisel,
+    q: { q: Q('Según el élder Christofferson, ¿qué debería llegar a ser el Evangelio en nuestra vida?', 'According to Elder Christofferson, what should the gospel become in our lives?'),
+      a: [Q('La influencia dominante, y de hecho, el núcleo de lo que somos', 'The dominant influence and, indeed, the very core of who we are'), Q('Solo una influencia de vez en cuando', 'Just an occasional influence'), Q('Una lista de reglas para cumplir', 'A list of rules to follow'), Q('Algo para los domingos', 'Something for Sundays')] },
+    heart: { title: Q('La piedra se agrieta', 'The stone is cracking'), text: Q('Saber no alcanza: el Evangelio tiene que llegar a ser el núcleo de quién sos.', 'Knowing isn’t enough: the gospel must become the core of who you are.') }
+  },
+  {
+    intro: {
+      title: Q('“Escribiré Mi ley en su corazón”', '“I will write My law in their hearts”'),
+      body: Q(
+        '<p><b>Principio:</b> Cuando nos volvemos al Señor, Él nos congrega como Su pueblo del convenio y escribe Su ley en nuestro corazón.</p><div class="quote">“Jehová se manifestó a mí hace ya mucho tiempo, diciendo: Sí, con amor eterno te he amado; […]”<small>Jeremías 31:3</small></div><div class="quote">“He aquí que vienen días, dice Jehová, en los cuales haré un nuevo convenio con la casa de Israel y con la casa de Judá,”<small>Jeremías 31:31</small></div><div class="quote">“Mas este es el convenio que haré con la casa de Israel después de aquellos días, dice Jehová: […]”<small>Jeremías 31:33</small></div><div class="quote">“siendo manifiesto que sois carta de Cristo expedida por nosotros, escrita no con tinta, sino con el Espíritu del Dios vivo; no en tablas de piedra, sino en tablas de carne del corazón.”<small>2 Corintios 3:3</small></div><div class="cols"><div class="stone"><b>🪨 TABLAS DE PIEDRA</b>La ley escrita por fuera · Saber</div><div class="flesh"><b>❤️ TABLAS DE CARNE DEL CORAZÓN</b>La ley escrita por dentro · Ser</div></div><div class="inst">✍️ Trazá con el dedo las palabras para escribirlas en el corazón.</div>',
+        '<p><b>Principle:</b> When we turn to the Lord, He gathers us as His covenant people and writes His law in our hearts.</p><div class="quote">“The Lord hath appeared of old unto me, saying, Yea, I have loved thee with an everlasting love: therefore with lovingkindness have I drawn thee.”<small>Jeremiah 31:3</small></div><div class="quote">“Behold, the days come, saith the Lord, that I will make a new covenant with the house of Israel, and with the house of Judah:”<small>Jeremiah 31:31</small></div><div class="quote">“But this shall be the covenant that I will make with the house of Israel; After those days, saith the Lord, I will put my law in their inward parts, and write it in their hearts; and will be their God, and they shall be my people.”<small>Jeremiah 31:33</small></div><div class="quote">“Forasmuch as ye are manifestly declared to be the epistle of Christ ministered by us, written not with ink, but with the Spirit of the living God; not in tables of stone, but in fleshy tables of the heart.”<small>2 Corinthians 3:3</small></div><div class="cols"><div class="stone"><b>🪨 TABLES OF STONE</b>The law written outside · Knowing</div><div class="flesh"><b>❤️ FLESHY TABLES OF THE HEART</b>The law written inside · Being</div></div><div class="inst">✍️ Trace the words with your finger to write them in the heart.</div>')
+    },
+    game: gameTrace,
+    q: { q: Q('Según 2 Corintios 3:3, ¿dónde escribe el Señor?', 'According to 2 Corinthians 3:3, where does the Lord write?'),
+      a: [Q('En tablas de carne del corazón', 'In fleshy tables of the heart'), Q('En tablas de piedra', 'In tables of stone'), Q('Con tinta sobre papel', 'With ink on paper'), Q('Solo en los libros de las Escrituras', 'Only in the books of scripture')] },
+    heart: { title: Q('La piedra se parte', 'The stone breaks open'), text: Q('El Señor quiere escribir Su ley por dentro, no solo por fuera.', 'The Lord wants to write His law inside, not just outside.') }
+  },
+  {
+    intro: {
+      title: Q('¿Corazón insensible o corazón vivo?', 'A numb heart or a living heart?'),
+      body: Q(
+        '<p>🎵 <b>“Numb” · Linkin Park (2003)</b></p><p><b>¿Cómo vivimos lo que hacemos?</b></p><p><b>De qué habla:</b> La presión de tratar de ser lo que otros esperan, hasta sentirse vacío e insensible por dentro.</p><div class="cols"><div class="stone"><b>CUMPLIR SOLO POR FUERA</b>• Presión, peso, cansancio<br>• “Tengo que…”<br><br>🪨 Corazón de piedra</div><div class="flesh"><b>LA LEY EN EL CORAZÓN</b>• Deseo, gozo, libertad<br>• “Quiero…”<br><br>❤️ Corazón de carne</div></div><p><i>¿Alguna vez cumpliste algo del Evangelio solo por obligación? ¿Qué cambiaría si naciera de tu corazón?</i></p><div class="inst">🛡️ Protegé tu corazón: bloqueá la presión y dejá entrar el deseo, el gozo y la libertad.</div>',
+        '<p>🎵 <b>“Numb” · Linkin Park (2003)</b></p><p><b>How do we live what we do?</b></p><p><b>What it’s about:</b> The pressure of trying to be what others expect, until you feel empty and numb inside.</p><div class="cols"><div class="stone"><b>OBEYING ONLY ON THE OUTSIDE</b>• Pressure, weight, tiredness<br>• “I have to…”<br><br>🪨 Heart of stone</div><div class="flesh"><b>THE LAW IN THE HEART</b>• Desire, joy, freedom<br>• “I want to…”<br><br>❤️ Heart of flesh</div></div><p><i>Have you ever done something in the gospel only out of obligation? What would change if it came from your heart?</i></p><div class="inst">🛡️ Protect your heart: block the pressure and let desire, joy and freedom in.</div>')
+    },
+    game: gameShield,
+    q: { q: Q('Según la clase, ¿qué diferencia hay entre cumplir solo por fuera y tener la ley en el corazón?', 'According to the class, what is the difference between obeying only on the outside and having the law in your heart?'),
+      a: [Q('Por fuera es “tengo que…” (presión); en el corazón es “quiero…” (deseo, gozo y libertad)', 'Outside is “I have to…” (pressure); in the heart is “I want to…” (desire, joy and freedom)'), Q('No hay ninguna diferencia', 'There is no difference'), Q('Por fuera es mejor porque nadie se da cuenta', 'Outside is better because nobody notices'), Q('Con la ley en el corazón ya no hace falta obedecer', 'With the law in your heart you no longer need to obey')] },
+    heart: { title: Q('Tu corazón empieza a latir', 'Your heart begins to beat'), text: Q('Cuando obedecer nace del deseo, el corazón deja de ser de piedra.', 'When obedience comes from desire, the heart stops being stone.') }
+  },
+  {
+    intro: {
+      title: Q('“Sabía mucho… pero no lo conocía”', '“I knew so much… but I didn’t know him”'),
+      body: Q(
+        '<p><b>La escena:</b> Frieren, una elfa que vive miles de años, viajó 10 años con el héroe Himmel. En su funeral se quiebra en llanto al darse cuenta de que nunca se esforzó por conocerlo de verdad. Desde ese día empieza un viaje para entender a las personas con el corazón.</p><p><i>¿Hay algo del Evangelio que sabés de memoria pero todavía no sentiste en el corazón?</i></p><div class="inst">🧭 Empezá tu propio viaje: recorré el campo de flores y juntá los 4 recuerdos.</div>',
+        '<p><b>The scene:</b> Frieren, an elf who lives for thousands of years, traveled 10 years with the hero Himmel. At his funeral she breaks down in tears when she realizes she never truly tried to get to know him. From that day she begins a journey to understand people with her heart.</p><p><i>Is there something in the gospel you know by heart but haven’t yet felt in your heart?</i></p><div class="inst">🧭 Begin your own journey: walk through the flower field and collect the 4 memories.</div>')
+    },
+    game: gameJourney,
+    q: { q: Q('¿De qué se dio cuenta Frieren en el funeral de Himmel?', 'What did Frieren realize at Himmel’s funeral?'),
+      a: [Q('De que nunca se había esforzado por conocerlo de verdad', 'That she had never truly tried to get to know him'), Q('De que era más poderosa que él', 'That she was more powerful than him'), Q('De que el viaje había sido una pérdida de tiempo', 'That the journey had been a waste of time'), Q('De que ya no necesitaba a nadie', 'That she no longer needed anyone')] },
+    heart: { title: Q('¡Un corazón de carne!', 'A heart of flesh!'), text: Q('La conversión es un viaje: el Señor escribe Su ley en vos día a día.', 'Conversion is a journey: the Lord writes His law in you day by day.') }
+  }
+];
+const REFLECT = [
+  { q: Q('¿Qué señales te muestran que el Señor está escribiendo Su ley en tu corazón?', 'What signs show you the Lord is writing His law in your heart?'),
+    chips: S => (S.lang === 'es' ? ['Deseo de orar', 'Paz al leer', 'Ganas de servir', 'Arrepentirme rápido', 'Obedecer porque quiero'] : ['Desire to pray', 'Peace when reading', 'Wanting to serve', 'Repenting quickly', 'Obeying because I want to']) },
+  { q: Q('¿Qué vas a hacer esta semana para invitarlo a escribirla?', 'What will you do this week to invite Him to write it?') },
+  { q: Q('¿Hay algo del Evangelio que sabés de memoria pero todavía no sentiste en el corazón?', 'Is there something in the gospel you know by heart but haven’t felt in your heart yet?') }
+];
+
+// =====================================================================
+//  FLUJO
+// =====================================================================
+function label() { return T(UI.level) + ' ' + (S.li + 1) + '/4'; }
+function startLevel() {
+  const L = LEVELS[S.li];
+  sendRank(S.li + 1, 'jugando');
+  show('s-intro'); bgAnim = null;
+  $('#in-badge').textContent = label();
+  $('#in-title').textContent = T(L.intro.title);
+  $('#in-body').innerHTML = T(L.intro.body);
+  $('#in-btn').onclick = () => { sfx.click(); playLevel(L); };
+}
+function playLevel(L) {
+  show('s-game'); $('#g-label').textContent = label();
+  const area = $('#g-area'); area.innerHTML = ''; active = null;
+  let finished = false;
+  const finish = pts => {
+    if (finished) return; finished = true; active = null;
+    S.score += Math.max(0, Math.round(pts || 0));
+    showMC(L.q, () => showHeart(L));
+  };
+  if (TEST) window.__skip = () => finish(100);
+  L.game(area, finish);
+}
+function showMC(q, next) {
+  show('s-mc');
+  $('#mc-label').textContent = label() + ' · ' + T(UI.question);
+  $('#mc-q').textContent = T(q.q);
+  const box = $('#mc-opts'); box.innerHTML = '';
+  const fb = $('#mc-fb'); fb.textContent = ''; fb.className = 'fb';
+  const nb = $('#mc-next'); nb.style.display = 'none';
+  let tries = 0, solved = false;
+  const btns = shuffle(q.a.map((t, i) => ({ t, ok: i === 0 }))).map(o => {
+    const b = el('button', 'opt', T(o.t)); b.dataset.ok = o.ok ? '1' : '0';
+    b.onclick = () => {
+      if (solved || b.disabled) return;
+      if (o.ok) {
+        solved = true; sfx.ok(); b.classList.add('ok'); btns.forEach(x => x.disabled = true);
+        S.score += tries === 0 ? 150 : 50;
+        fb.textContent = T(UI.correct); fb.className = 'fb ok';
+        nb.style.display = ''; nb.onclick = () => { sfx.click(); next(); };
+      } else { tries++; sfx.bad(); buzz(90); b.classList.add('bad'); b.disabled = true; fb.textContent = T(UI.tryAgain); fb.className = 'fb bad'; }
+    };
+    box.appendChild(b); return b;
+  });
+}
+function showHeart(L) {
+  const stage = S.li + 1;
+  show('s-heart'); sfx.beat();
+  $('#ht-badge').textContent = label() + ' ✔';
+  $('#ht-title').textContent = T(L.heart.title);
+  $('#ht-text').textContent = T(L.heart.text);
+  let s = stage - 1;
+  animHeart('#heart-cv2', () => { s = Math.min(stage, s + .02); return s; });
+  $('#ht-btn').onclick = () => {
+    sfx.click(); S.li++;
+    if (S.li < LEVELS.length) startLevel(); else showReflect();
+  };
+}
+function showReflect() {
+  bgAnim = null; sendRank(5, 'jugando');
+  show('s-reflect');
+  const box = $('#rf-box'); box.innerHTML = '';
+  const tas = REFLECT.map((r, i) => {
+    const w = el('div', 'rq'); w.appendChild(el('label', '', (i + 1) + '. ' + T(r.q)));
+    const ta = el('textarea'); ta.maxLength = 250; ta.dataset.i = i;
+    if (r.chips) {
+      const ch = el('div', 'chips');
+      r.chips(S).forEach(c => { const b = el('button', 'chip', '+ ' + c); b.onclick = () => { sfx.click(); ta.value = (ta.value ? ta.value.trim() + ', ' : '') + c; upd(); }; ch.appendChild(b); });
+      w.appendChild(ch);
+    }
+    w.appendChild(ta); const cnt = el('div', 'counter', ''); w.appendChild(cnt);
+    ta.oninput = () => upd();
+    box.appendChild(w); return { ta, cnt };
+  });
+  const btn = $('#rf-btn');
+  function upd() {
+    let ok = true;
+    tas.forEach(o => { const n = cleanText(o.ta.value).length; o.cnt.textContent = n + ' ' + T(UI.chars); if (n < 10) ok = false; });
+    btn.disabled = !ok;
+  }
+  upd();
+  btn.onclick = () => {
+    if (btn.disabled) return;
+    S.answers = tas.map(o => cleanText(o.ta.value));
+    S.score += S.answers.reduce((a, s) => a + s.length * 4, 0);
+    S.done = true; sendRank(5, 'terminado');
+    sfx.win(); showEnd();
+  };
+}
+function showEnd() {
+  show('s-end');
+  $('#end-title').textContent = T(UI.endTitle).replace('{n}', S.name);
+  animHeart('#heart-cv3', () => 4);
+  $('#end-share').onclick = shareCard;
+}
+
+// ---------------- Tarjeta PNG ----------------
+function makeCard() {
+  const W = 1080, H = 1720; const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d');
+  const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#0A0E1A'); bg.addColorStop(.5, '#1d1233'); bg.addColorStop(1, '#0A0E1A');
+  g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  g.strokeStyle = '#E8B24D'; g.lineWidth = 4; rr(g, 30, 30, W - 60, H - 60, 40); g.stroke();
+  g.textAlign = 'center'; g.fillStyle = '#2DD4E8'; g.font = 'bold 34px system-ui,Arial'; g.fillText(T(UI.cardTop), W / 2, 100);
+  drawHeart(g, W / 2, 255, 110, 4, 0);
+  g.fillStyle = '#E8B24D'; g.font = 'bold 66px system-ui,Arial'; g.fillText(T(UI.appTitle), W / 2, 450);
+  g.fillStyle = '#ffffff'; g.font = 'bold 52px system-ui,Arial'; g.fillText(S.name, W / 2, 530, W - 140);
+  g.fillStyle = '#B8C2D9'; g.font = 'bold 28px system-ui,Arial'; g.fillText(T(UI.score), W / 2, 590);
+  g.fillStyle = '#fb7185'; g.font = 'bold 130px system-ui,Arial'; g.fillText(String(S.score), W / 2, 710);
+  let y = 770; const blockH = 285;
+  g.textAlign = 'left';
+  REFLECT.forEach((r, i) => {
+    g.fillStyle = 'rgba(255,255,255,.06)'; rr(g, 80, y, W - 160, blockH - 20, 24); g.fill();
+    g.fillStyle = '#E8B24D'; g.font = 'italic bold 26px system-ui,Arial';
+    const ql = wrapLines(g, (i + 1) + '. ' + T(r.q), W - 230).slice(0, 2);
+    ql.forEach((l, k) => g.fillText(l, 110, y + 42 + k * 32));
+    const y0 = y + 42 + ql.length * 32 + 6, avail = y + blockH - 40 - y0;
+    let fs = 32, lines;
+    for (; fs >= 18; fs -= 2) { g.font = fs + 'px system-ui,Arial'; lines = wrapLines(g, '“' + (S.answers[i] || '') + '”', W - 230); if (lines.length * fs * 1.25 <= avail) break; }
+    g.fillStyle = '#ffffff';
+    lines.slice(0, Math.max(1, Math.floor(avail / (fs * 1.25)))).forEach((l, k) => g.fillText(l, 110, y0 + fs + k * fs * 1.25));
+    y += blockH;
+  });
+  g.textAlign = 'center'; g.fillStyle = '#B8C2D9'; g.font = '26px system-ui,Arial';
+  g.fillText(new Date().toLocaleDateString(S.lang === 'es' ? 'es-AR' : 'en-US') + ' · ' + T(Q('Jeremías 31 · Seminario 2026', 'Jeremiah 31 · Seminary 2026')), W / 2, H - 60);
+  return cv;
+}
+// ---------------- Ranking en el celular (al final) ----------------
+let rankTimer = null;
+function todayStr() { const d = new Date(), p = n => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
+function renderRank(lista) {
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  // asegurar que el propio jugador aparezca aunque la planilla todavía no lo devuelva
+  if (!lista.some(r => r.estado === 'terminado' && r.nombre === S.name && Number(r.puntaje) === S.score)) lista = lista.concat([{ nombre: S.name, estado: 'terminado', puntaje: S.score, nivel: 5 }]);
+  const done = lista.filter(r => r.estado === 'terminado').sort((a, b) => b.puntaje - a.puntaje);
+  const play = lista.filter(r => r.estado !== 'terminado').sort((a, b) => b.nivel - a.nivel);
+  const medal = ['🥇', '🥈', '🥉'];
+  let html = '', meMarked = false;
+  done.forEach((r, i) => {
+    const me = !meMarked && r.nombre === S.name && Number(r.puntaje) === S.score; if (me) meMarked = true;
+    html += '<div class="rk' + (me ? ' me' : '') + '"><div class="p">' + (medal[i] || (i + 1)) + '</div><div class="n">' + esc(r.nombre) + (me ? ' ' + T(UI.you) : '') + '</div><div class="v">' + Number(r.puntaje).toLocaleString('es-AR') + '</div></div>';
+  });
+  play.forEach(r => {
+    const n = Number(r.nivel) || 1;
+    html += '<div class="rk"><div class="p">⏳</div><div class="n">' + esc(r.nombre) + '</div><div class="s">' + (n > 4 ? T(UI.rankReflect) : T(UI.rankLevel) + ' ' + n + '/4') + '</div></div>';
+  });
+  $('#rank-list').innerHTML = html || '<p class="hint">' + T(UI.rankEmpty) + '</p>';
+}
+async function refreshRank() {
+  try {
+    if (TEST) throw new Error('test');
+    const r = await fetch(RANKING_URL + '?juego=' + JUEGO_ID + '&fecha=' + todayStr() + '&t=' + Date.now());
+    const d = await r.json(); if (!d.ok) throw new Error('bad');
+    renderRank(d.lista || []);
+    $('#rank-upd').textContent = T(UI.rankUpd);
+  } catch (e) {
+    renderRank(window.__mockRank || []);
+    $('#rank-upd').textContent = TEST ? '' : T(UI.rankOff);
+  }
+}
+function showRanking() {
+  if (!RANKING_URL) return;
+  $('#end-rank').style.display = '';
+  refreshRank();
+  if (!rankTimer) rankTimer = setInterval(refreshRank, 5000);
+}
+
+async function shareCard() {
+  sfx.click();
+  showRanking();
+  const cv = makeCard(); const url = cv.toDataURL('image/png');
+  const img = $('#end-img'); img.src = url; img.style.display = 'block';
+  const fname = 'tablas-en-el-corazon-' + (S.name.replace(/\s+/g, '-').toLowerCase() || 'alumno') + '.png';
+  try {
+    const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
+    const file = new File([blob], fname, { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: T(UI.appTitle), text: T(UI.appTitle) + ' · ' + S.name });
+      $('#end-msg').textContent = T(UI.shared); return;
+    }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  const a = document.createElement('a'); a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove();
+  $('#end-msg').textContent = T(UI.downloaded);
+}
+
+// ---------------- Inicio ----------------
+function init() {
+  S.id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID().slice(0, 18) : ('p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
+  document.querySelectorAll('.lang button').forEach(b => b.onclick = () => { S.lang = b.dataset.lang; sfx.click(); applyLang(); });
+  const inp = $('#in-name'), bs = $('#btn-start');
+  inp.oninput = () => { bs.disabled = cleanText(inp.value).length < 2; };
+  bs.onclick = () => { S.name = cleanText(inp.value).slice(0, 24); ac(); sfx.ok(); S.li = 0; S.score = 0; startLevel(); };
+  animHeart('#heart-cv', () => 0);
+  applyLang();
+}
+init();
+
+</script>
+</body>
+</html>

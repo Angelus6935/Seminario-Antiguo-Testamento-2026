@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#000000">
+<title>La Píldora Roja: Hackea la Verdad</title>
+<style>
+:root{
+  --bg:#000;
+  --panel:#03140b;
+  --green:#39ff7a;
+  --green-dim:#1f8f48;
+  --green-faint:#0b3a1e;
+  --red:#ff3355;
+  --blue:#3d8bff;
+  --text:#d9ffe6;
+  --muted:#7fbf95;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);overscroll-behavior:none}
+body{display:flex;justify-content:center}
+#app{position:relative;width:100%;max-width:520px;height:100vh;height:100dvh;overflow:hidden;
+  padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+#bgrain{position:absolute;inset:0;width:100%;height:100%;opacity:.35;pointer-events:none}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;padding:calc(env(safe-area-inset-top,0px) + 18px) 18px calc(env(safe-area-inset-bottom,0px) + 18px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.screen.active{display:flex}
+.screen.game{padding:calc(env(safe-area-inset-top,0px) + 10px) 10px calc(env(safe-area-inset-bottom,0px) + 10px);overflow:hidden;touch-action:none}
+h1{font-family:var(--mono);font-size:2rem;line-height:1.05;color:var(--green);text-shadow:0 0 12px rgba(57,255,122,.55);letter-spacing:-.5px}
+h2{font-family:var(--mono);font-size:1.25rem;color:var(--green);margin-bottom:10px}
+p{line-height:1.5;margin-bottom:12px}
+.small{font-size:.85rem;color:var(--muted)}
+.code{font-family:var(--mono);color:var(--green)}
+.box{background:rgba(3,20,11,.88);border:1px solid var(--green-dim);border-radius:10px;padding:16px;margin-bottom:14px}
+.verse{font-family:Georgia,"Times New Roman",serif;font-size:1.08rem;line-height:1.65;color:#f2fff6}
+.verse .ref{display:block;font-family:var(--mono);font-size:.85rem;color:var(--green);margin-bottom:8px}
+.key{border-left:3px solid var(--red);padding:8px 12px;background:rgba(255,51,85,.08);border-radius:0 8px 8px 0;font-family:Georgia,serif;font-size:1.05rem;line-height:1.5}
+.key span{display:block;font-family:var(--mono);font-size:.75rem;color:var(--red);margin-bottom:4px}
+button{font:inherit;cursor:pointer;touch-action:manipulation;border:none}
+.btn{display:block;width:100%;padding:15px 16px;border-radius:10px;font-family:var(--mono);font-size:1rem;font-weight:700;
+  background:var(--green);color:#002810;margin-top:10px;transition:transform .08s}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:transparent;color:var(--green);border:1px solid var(--green-dim)}
+.btn.red{background:var(--red);color:#fff}
+.btn.blue{background:var(--blue);color:#fff}
+.btn:disabled{opacity:.45}
+input[type=text],textarea{width:100%;padding:13px;border-radius:9px;border:1px solid var(--green-dim);background:#010d06;color:var(--text);font-size:16px;font-family:var(--sans)}
+textarea{min-height:96px;resize:vertical;line-height:1.45}
+label{display:block;font-size:.95rem;margin:12px 0 6px;line-height:1.4}
+.row{display:flex;gap:10px}
+.row .btn{flex:1}
+.lang{display:flex;gap:8px;margin:6px 0 16px}
+.lang button{flex:1;padding:9px;border-radius:8px;background:transparent;border:1px solid var(--green-dim);color:var(--muted);font-family:var(--mono)}
+.lang button.on{background:var(--green-faint);color:var(--green);border-color:var(--green)}
+.warn{display:none;border:1px solid var(--red);color:#ffd2da;background:rgba(255,51,85,.1);border-radius:9px;padding:10px 12px;font-size:.88rem;margin-bottom:12px;line-height:1.4}
+.spacer{flex:1}
+.pills{display:flex;gap:14px;margin:18px 0 6px}
+.pill{flex:1;height:84px;border-radius:42px;font-family:var(--mono);font-weight:700;font-size:1rem;color:#fff}
+.pill.r{background:radial-gradient(circle at 30% 30%,#ff8094,var(--red) 60%,#8a0b22);box-shadow:0 0 22px rgba(255,51,85,.5)}
+.pill.b{background:radial-gradient(circle at 30% 30%,#9cc3ff,var(--blue) 60%,#0b2f7a);box-shadow:0 0 22px rgba(61,139,255,.45)}
+/* HUD */
+.hud{display:flex;align-items:center;justify-content:space-between;font-family:var(--mono);font-size:.8rem;color:var(--muted);margin-bottom:6px;gap:8px}
+.hud b{color:var(--green)}
+.phrase{font-family:var(--mono);font-size:.95rem;line-height:1.5;min-height:3em;padding:8px 10px;border:1px solid var(--green-dim);border-radius:8px;background:rgba(3,20,11,.9);margin-bottom:8px}
+.phrase .ok{color:var(--green)}
+.phrase .no{color:#2e5a3d}
+.cv{flex:1;width:100%;min-height:0;border-radius:10px;border:1px solid var(--green-faint);display:block;touch-action:none}
+.flash{position:absolute;inset:0;background:var(--red);opacity:0;pointer-events:none;transition:opacity .25s}
+/* Feed */
+.feedwrap{position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+.post{position:absolute;width:100%;max-width:440px;background:#06180d;border:1px solid var(--green-dim);border-radius:14px;padding:18px;
+  touch-action:none;user-select:none;-webkit-user-select:none;transition:transform .25s,opacity .25s}
+.post .user{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.post .av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;background:var(--green-faint)}
+.post .nm{font-weight:700;font-size:.95rem}
+.post .hd{font-size:.78rem;color:var(--muted)}
+.post .tx{font-size:1.08rem;line-height:1.5;min-height:5em}
+.post .ft{display:flex;gap:16px;margin-top:14px;font-size:.8rem;color:var(--muted)}
+.stamp{position:absolute;top:16px;padding:4px 10px;border-radius:6px;font-family:var(--mono);font-weight:800;opacity:0;border:2px solid}
+.stamp.l{left:14px;color:var(--red);border-color:var(--red);transform:rotate(-10deg)}
+.stamp.r{right:14px;color:var(--green);border-color:var(--green);transform:rotate(10deg)}
+.fb{min-height:3.2em;font-size:.9rem;line-height:1.4;text-align:center;padding:6px 4px}
+.fb.good{color:var(--green)}.fb.bad{color:#ff8094}
+/* Disappear */
+.dverse{font-family:Georgia,serif;font-size:1.12rem;line-height:2.1;padding:14px;flex:0 0 auto}
+.blank{display:inline-block;min-width:3.2em;border-bottom:2px solid var(--green-dim);color:var(--green);text-align:center;font-family:var(--mono);font-size:.95rem;padding:0 4px;line-height:1.4}
+.blank.cur{border-color:var(--red);background:rgba(255,51,85,.12);border-radius:4px 4px 0 0}
+.blank.done{border-color:var(--green);color:var(--green)}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.opt{padding:13px 8px;border-radius:9px;background:#062113;border:1px solid var(--green-dim);color:var(--text);font-family:var(--mono);font-size:.95rem}
+.opt:active{background:var(--green-faint)}
+.opt.wrong{border-color:var(--red);color:#ff8094}
+.timer{height:6px;background:var(--green-faint);border-radius:3px;overflow:hidden;margin:6px 0 10px}
+.timer i{display:block;height:100%;background:var(--green);width:100%}
+/* L4 overlay */
+.l4panel{padding-top:8px}
+.l4prompt{font-family:var(--mono);font-size:.92rem;line-height:1.4;min-height:2.8em;margin-bottom:8px;color:var(--text);text-align:center}
+.l4panel .opt{font-size:.82rem;padding:11px 6px;min-height:46px}
+/* Quiz */
+.q{font-size:1.08rem;line-height:1.5;margin-bottom:12px}
+.qopt{display:block;width:100%;text-align:left;padding:14px;margin-bottom:9px;border-radius:10px;background:#062113;border:1px solid var(--green-dim);color:var(--text);font-size:.98rem;line-height:1.4}
+.qopt.wrong{border-color:var(--red);color:#ff8094;opacity:.7}
+.qopt.right{border-color:var(--green);background:var(--green-faint)}
+.explain{display:none}
+#cardimg{width:100%;border-radius:10px;border:1px solid var(--green-dim);margin-top:12px;display:none}
+.toast{position:absolute;left:50%;top:14%;transform:translateX(-50%);font-family:var(--mono);font-weight:800;font-size:1.1rem;pointer-events:none;opacity:0;transition:opacity .2s;text-shadow:0 0 10px currentColor;z-index:5;white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.post{transition:none}}
+</style>
+</head>
+<body>
+<div id="app">
+<canvas id="bgrain"></canvas>
+
+<!-- INICIO -->
+<section class="screen active" id="s-start">
+  <div class="spacer"></div>
+  <p class="code small" data-t="kicker"></p>
+  <h1 data-t="title"></h1>
+  <p class="small" style="margin-top:10px" data-t="subtitle"></p>
+  <div class="lang"><button id="lang-es" class="on">Español</button><button id="lang-en">English</button></div>
+  <div class="warn" id="inapp" data-t="inapp"></div>
+  <label for="nm" data-t="nameLabel"></label>
+  <input type="text" id="nm" maxlength="24" autocomplete="off">
+  <button class="btn" id="b-start" data-t="start"></button>
+  <div class="spacer"></div>
+</section>
+
+<!-- HISTORIA / PÍLDORAS -->
+<section class="screen" id="s-story">
+  <div class="spacer"></div>
+  <div class="box">
+    <h2 data-t="storyTitle"></h2>
+    <p data-t="story1"></p>
+    <p data-t="story2"></p>
+    <p data-t="story3"></p>
+  </div>
+  <p class="code" style="text-align:center" data-t="pillQ"></p>
+  <div class="pills"><button class="pill r" id="b-red" data-t="redPill"></button><button class="pill b" id="b-blue" data-t="bluePill"></button></div>
+  <p class="small" id="blueMsg" style="text-align:center;min-height:3em;margin-top:8px"></p>
+  <div class="spacer"></div>
+</section>
+
+<!-- LECTURA ANTES DE CADA NIVEL -->
+<section class="screen" id="s-read">
+  <p class="code small" id="r-kicker"></p>
+  <h2 id="r-title"></h2>
+  <div class="box verse"><span class="ref" id="r-ref"></span><span id="r-text"></span></div>
+  <div class="key"><span data-t="keyLabel"></span><div id="r-key"></div></div>
+  <div class="box" style="margin-top:14px"><p class="small" style="margin:0" id="r-how"></p></div>
+  <div class="spacer"></div>
+  <button class="btn" id="b-read" data-t="readDone"></button>
+</section>
+
+<!-- NIVEL 1: LLUVIA DE CÓDIGO -->
+<section class="screen game" id="s-l1">
+  <div class="hud"><span data-t="l1name"></span><span id="l1round"></span></div>
+  <div class="phrase" id="l1phrase"></div>
+  <canvas class="cv" id="c1"></canvas>
+</section>
+
+<!-- NIVEL 2: FEED -->
+<section class="screen game" id="s-l2">
+  <div class="hud"><span data-t="l2name"></span><span id="l2count"></span></div>
+  <p class="small" style="text-align:center;margin:2px 0 6px" data-t="l2help"></p>
+  <div class="feedwrap" id="feed"></div>
+  <div class="fb" id="l2fb"></div>
+  <div class="row"><button class="btn red" id="b-op" data-t="opinion"></button><button class="btn" id="b-tr" data-t="truth"></button></div>
+</section>
+
+<!-- NIVEL 3: DESAPARICIÓN -->
+<section class="screen game" id="s-l3" style="overflow-y:auto">
+  <div class="hud"><span data-t="l3name"></span><span id="l3round"></span></div>
+  <div class="timer"><i id="l3timer"></i></div>
+  <div class="box dverse" id="l3verse"></div>
+  <div class="spacer"></div>
+  <div class="opts" id="l3opts"></div>
+  <div id="l3between" style="display:none">
+    <p class="small" style="text-align:center" id="l3msg"></p>
+    <button class="btn" id="b-l3next"></button>
+  </div>
+</section>
+
+<!-- NIVEL 4: TIEMPO BALA -->
+<section class="screen game" id="s-l4">
+  <div class="hud"><span data-t="l4name"></span><span id="l4count"></span></div>
+  <canvas class="cv" id="c4"></canvas>
+  <div class="l4panel">
+    <div class="l4prompt" id="l4prompt"></div>
+    <div class="opts" id="l4opts"></div>
+  </div>
+</section>
+
+<!-- PREGUNTA (GATE) -->
+<section class="screen" id="s-quiz">
+  <p class="code small" data-t="gateKicker"></p>
+  <div class="box"><p class="q" id="q-text"></p></div>
+  <div id="q-opts"></div>
+  <div class="box explain" id="q-exp"><p style="margin:0" id="q-exptext"></p></div>
+  <div class="spacer"></div>
+  <button class="btn" id="b-qnext" style="display:none" data-t="continue"></button>
+</section>
+
+<!-- REFLEXIÓN -->
+<section class="screen" id="s-refl">
+  <h2 data-t="reflTitle"></h2>
+  <p class="small" data-t="reflHelp"></p>
+  <label for="a1" data-t="r1"></label><textarea id="a1"></textarea>
+  <label for="a2" data-t="r2"></label><textarea id="a2"></textarea>
+  <label for="a3" data-t="r3"></label><textarea id="a3"></textarea>
+  <button class="btn" id="b-refl" data-t="reflDone"></button>
+</section>
+
+<!-- FINAL -->
+<section class="screen" id="s-end">
+  <div class="spacer"></div>
+  <h1 data-t="endTitle"></h1>
+  <p style="margin-top:12px" data-t="endText"></p>
+  <button class="btn red" id="b-share" data-t="share"></button>
+  <p class="small" id="shareMsg" style="text-align:center;margin-top:10px"></p>
+  <img id="cardimg" alt="">
+  <div class="spacer"></div>
+</section>
+
+<div class="flash" id="flash"></div>
+<div class="toast" id="toast"></div>
+</div>
+
+<script>
+'use strict';
+/* ====== CONFIGURACIÓN ====== */
+const JUEGO_ID = 'pildora-roja';
+const GAME_NAME = 'La Píldora Roja: Hackea la Verdad';
+const RANKING_URL = 'https://script.google.com/macros/s/AKfycbwTCdA6fbDs97164sMVTaIkBkyGA8gv94w-vY2nYSFgcfo9pbblG2UWhlgh7Cuiotgx9g/exec';
+const PTS_PER_CHAR = 4;
+
+/* ====== TEXTOS (ES / EN) ====== */
+const TXT = {
+es:{
+  kicker:'Seminario 2026 · Práctica 9 del Dominio de la doctrina',
+  title:'La Píldora Roja: Hackea la Verdad',
+  subtitle:'Pedrito quedó atrapado en el feed. Cuatro pasajes del Dominio de la doctrina son los códigos para sacarlo.',
+  inapp:'Estás dentro de una app (WhatsApp o Instagram). Para que el botón de compartir funcione, tocá ⋯ y elegí «Abrir en el navegador».',
+  nameLabel:'Tu nombre', start:'Comenzar', needName:'Escribí tu nombre para comenzar.',
+  storyTitle:'El problema de Pedrito',
+  story1:'Pedrito pasa horas viendo videos. Últimamente aparecen publicaciones que cuestionan la existencia de Dios, las Escrituras y los profetas.',
+  story2:'Tantas opiniones contradictorias lo dejaron confundido. El sistema lo tiene atrapado en un ciclo infinito de scroll.',
+  story3:'Para liberarlo vas a necesitar cuatro códigos: pasajes del Dominio de la doctrina que tendrás que leer y memorizar.',
+  pillQ:'Como Neo, tenés que decidir.',
+  redPill:'Roja', bluePill:'Azul',
+  blueMsg:'La píldora azul te deja cómodo en el feed… y Pedrito sigue atrapado. Encontrar la verdad requiere una decisión.',
+  keyLabel:'Frase clave para memorizar', readDone:'Lo leí. Entrar al nivel',
+  levelWord:'Nivel', roundWord:'Ronda',
+  l1name:'Lluvia de Código', l2name:'El Feed de Pedrito', l3name:'Desaparición', l4name:'Tiempo Bala',
+  l1how:'Las palabras de la frase caen entre el código. Tocalas en el orden correcto antes de que lleguen al piso. Las palabras falsas te restan.',
+  l2how:'Pasan publicaciones como en una red social. Deslizá a la derecha si es verdad de una fuente divinamente señalada, o a la izquierda si es opinión o una cita alterada. Ojo: algunas publicaciones citan mal un pasaje.',
+  l3how:'El versículo completo aparece y en cada ronda se borran más palabras. Desde la ronda 3 solo queda la primera letra. Completalo contra reloj.',
+  l4how:'Llegan balas de duda. Mové tu señal arrastrando el dedo. Cuando aparezca un desafío, uní la frase clave con su referencia (o al revés) para activar el tiempo bala.',
+  l2help:'Deslizá la publicación o usá los botones',
+  opinion:'✕ Opinión', truth:'✓ Verdad',
+  l3next:'Siguiente ronda', l3finish:'Terminar nivel', l3review:'Repasá el versículo completo antes de seguir.',
+  l3timeout:'Se acabó el tiempo. Mirá cómo era:',
+  l4choosRef:'¿De qué pasaje es esta frase?', l4choosPhr:'¿Qué frase clave corresponde a',
+  bulletTime:'TIEMPO BALA',
+  gateKicker:'Pregunta de la clase', continue:'Continuar',
+  correct:'¡Correcto!', tryAgain:'No es esa. Probá de nuevo.',
+  reflTitle:'Antes de salir de la Matrix',
+  reflHelp:'Respondé con sinceridad. Lo que escribas es parte de tu resultado.',
+  r1:'Si mañana te surge una duda espiritual como a Pedrito, ¿qué harías primero?',
+  r2:'¿Cuál de los cuatro pasajes que memorizaste te sirve más y por qué?',
+  r3:'¿Conocés a alguien que se sienta como Pedrito? ¿Cómo podrías ayudarle?',
+  reflDone:'Terminar', reflNeed:'Respondé las tres preguntas para terminar.',
+  endTitle:'Pedrito está libre',
+  endText:'Usaste cuatro códigos de la verdad. Tocá el botón para ver tu puntaje y enviárselo al maestro.',
+  share:'Compartir con el Maestro',
+  shareOk:'¡Listo! Si no se abrió el menú, mantené apretada la imagen para guardarla.',
+  shareDl:'La imagen se descargó. Adjuntala en WhatsApp para enviarla al maestro.',
+  cardScore:'PUNTAJE', cardPass:'Pasajes dominados: 4 de 4', cardR:['Mi primer paso ante una duda','El pasaje que más me sirve','A quién puedo ayudar']
+},
+en:{
+  kicker:'Seminary 2026 · Doctrinal Mastery Practice 9',
+  title:'The Red Pill: Hack the Truth',
+  subtitle:'Pedrito is stuck in the feed. Four Doctrinal Mastery passages are the codes to get him out.',
+  inapp:'You are inside an app (WhatsApp or Instagram). For the share button to work, tap ⋯ and choose “Open in browser”.',
+  nameLabel:'Your name', start:'Start', needName:'Type your name to start.',
+  storyTitle:'Pedrito’s problem',
+  story1:'Pedrito spends hours watching videos. Lately he keeps seeing posts that question the existence of God, the scriptures and the prophets.',
+  story2:'So many conflicting opinions left him confused. The system has him stuck in an endless scroll.',
+  story3:'To free him you will need four codes: Doctrinal Mastery passages you will read and memorize.',
+  pillQ:'Like Neo, you have to decide.',
+  redPill:'Red', bluePill:'Blue',
+  blueMsg:'The blue pill keeps you comfortable in the feed… and Pedrito stays stuck. Finding truth requires a decision.',
+  keyLabel:'Key phrase to memorize', readDone:'I read it. Enter the level',
+  levelWord:'Level', roundWord:'Round',
+  l1name:'Code Rain', l2name:'Pedrito’s Feed', l3name:'Fade Out', l4name:'Bullet Time',
+  l1how:'The words of the phrase fall through the code. Tap them in the right order before they hit the floor. Fake words cost you.',
+  l2how:'Posts scroll by like on social media. Swipe right if it is truth from a divinely appointed source, or left if it is opinion or a twisted quote. Careful: some posts misquote a passage.',
+  l3how:'The full verse appears and each round erases more words. From round 3 only the first letter is left. Fill it in against the clock.',
+  l4how:'Bullets of doubt are coming. Drag your finger to move your signal. When a challenge appears, match the key phrase with its reference (or the other way around) to trigger bullet time.',
+  l2help:'Swipe the post or use the buttons',
+  opinion:'✕ Opinion', truth:'✓ Truth',
+  l3next:'Next round', l3finish:'Finish level', l3review:'Review the full verse before you continue.',
+  l3timeout:'Time is up. Here is how it goes:',
+  l4choosRef:'Which passage is this phrase from?', l4choosPhr:'Which key phrase matches',
+  bulletTime:'BULLET TIME',
+  gateKicker:'Class question', continue:'Continue',
+  correct:'Correct!', tryAgain:'Not that one. Try again.',
+  reflTitle:'Before leaving the Matrix',
+  reflHelp:'Answer honestly. What you write is part of your result.',
+  r1:'If tomorrow you have a spiritual question like Pedrito, what would you do first?',
+  r2:'Which of the four passages you memorized helps you most, and why?',
+  r3:'Do you know someone who feels like Pedrito? How could you help them?',
+  reflDone:'Finish', reflNeed:'Answer the three questions to finish.',
+  endTitle:'Pedrito is free',
+  endText:'You used four codes of truth. Tap the button to see your score and send it to your teacher.',
+  share:'Share with my Teacher',
+  shareOk:'Done! If the menu did not open, press and hold the image to save it.',
+  shareDl:'The image was downloaded. Attach it in WhatsApp to send it to your teacher.',
+  cardScore:'SCORE', cardPass:'Passages mastered: 4 of 4', cardR:['My first step with a question','The passage that helps me most','Who I can help']
+}};
+
+/* ====== PASAJES (texto oficial de las Escrituras de la Iglesia) ====== */
+const P = {
+ josue:{ ref:{es:'Josué 24:15',en:'Joshua 24:15'},
+   text:{es:'Y si mal os parece servir a Jehová, escogeos hoy a quién sirváis; si a los dioses a quienes sirvieron vuestros padres, cuando estuvieron al otro lado del río, o a los dioses de los amorreos en cuya tierra habitáis; pero yo y mi casa serviremos a Jehová.',
+         en:'And if it seem evil unto you to serve the Lord, choose you this day whom ye will serve; whether the gods which your fathers served that were on the other side of the flood, or the gods of the Amorites, in whose land ye dwell: but as for me and my house, we will serve the Lord.'},
+   key:{es:'“Escogeos hoy a quién sirváis”.',en:'“Choose you this day whom ye will serve.”'},
+   short:{es:'Escogeos hoy a quién sirváis',en:'Choose you this day whom ye will serve'} },
+ isaias:{ ref:{es:'Isaías 5:20',en:'Isaiah 5:20'},
+   text:{es:'¡Ay de los que a lo malo llaman bueno, y a lo bueno, malo; que hacen de la luz tinieblas y de las tinieblas luz; que ponen lo amargo por dulce y lo dulce por amargo!',
+         en:'Woe unto them that call evil good, and good evil; that put darkness for light, and light for darkness; that put bitter for sweet, and sweet for bitter!'},
+   key:{es:'“Ay de los que a lo malo llaman bueno, y a lo bueno, malo”.',en:'“Woe unto them that call evil good, and good evil.”'},
+   short:{es:'Ay de los que a lo malo llaman bueno, y a lo bueno, malo',en:'Woe unto them that call evil good, and good evil'} },
+ prov:{ ref:{es:'Proverbios 3:5–6',en:'Proverbs 3:5–6'},
+   text:{es:'Confía en Jehová con todo tu corazón, y no te apoyes en tu propia prudencia. Reconócelo en todos tus caminos, y él enderezará tus veredas.',
+         en:'Trust in the Lord with all thine heart; and lean not unto thine own understanding. In all thy ways acknowledge him, and he shall direct thy paths.'},
+   key:{es:'“Confía en Jehová con todo tu corazón […] y él enderezará tus veredas”.',en:'“Trust in the Lord with all thine heart … and he shall direct thy paths.”'},
+   short:{es:'Confía en Jehová con todo tu corazón […] y él enderezará tus veredas',en:'Trust in the Lord with all thine heart … and he shall direct thy paths'} },
+ amos:{ ref:{es:'Amós 3:7',en:'Amos 3:7'},
+   text:{es:'Porque no hará nada Jehová el Señor sin que revele su secreto a sus siervos los profetas.',
+         en:'Surely the Lord God will do nothing, but he revealeth his secret unto his servants the prophets.'},
+   key:{es:'“Jehová el Señor […] revel[a] su secreto a sus siervos los profetas”.',en:'“The Lord God … revealeth his secret unto his servants the prophets.”'},
+   short:{es:'Jehová el Señor […] revel[a] su secreto a sus siervos los profetas',en:'The Lord God … revealeth his secret unto his servants the prophets'} }
+};
+
+/* Orden de niveles */
+const LEVELS = [
+ {id:1, p:'josue', name:'l1name', how:'l1how', screen:'s-l1'},
+ {id:2, p:'isaias', name:'l2name', how:'l2how', screen:'s-l2'},
+ {id:3, p:'prov', name:'l3name', how:'l3how', screen:'s-l3'},
+ {id:4, p:'amos', name:'l4name', how:'l4how', screen:'s-l4'}
+];
+
+/* Preguntas de la clase (una por nivel) — la primera opción es la correcta; se mezclan al mostrar */
+const GATES = {
+es:[
+ {q:'Neo tuvo que elegir entre la píldora roja y la azul. Según la clase, ¿qué requiere encontrar la verdad?',
+  o:['Una decisión: actuar con fe aunque no tengamos todas las respuestas','Esperar a que todas las dudas desaparezcan solas','Seguir lo que piensa la mayoría'],
+  e:'Actuar con fe significa avanzar aunque no tengamos todas las respuestas: orar con sinceridad, estudiar las Escrituras y confiar en Dios.'},
+ {q:'Pedrito ve publicaciones que cuestionan a Dios y a los profetas. ¿Qué principio le ayuda a evaluarlas?',
+  o:['Buscar entendimiento en fuentes divinamente señaladas','Creer lo que tenga más vistas y comentarios','Dejar de pensar en el tema para no confundirse'],
+  e:'Las Escrituras, los profetas, el Espíritu Santo y padres y líderes inspirados son fuentes que Dios señaló para guiarnos a la verdad.'},
+ {q:'Isaías 55:8–9 enseña que los pensamientos de Dios son más altos que los nuestros. ¿Qué significa examinar una pregunta con perspectiva eterna?',
+  o:['Mirarla a la luz del plan de Dios y de las verdades que ya conocemos','Decidir solo con lo que yo entiendo en este momento','Ignorar la pregunta para no sentir dudas'],
+  e:'Nosotros vemos una pieza del rompecabezas; Dios ve la imagen completa. La perspectiva eterna nos ayuda a ver la pregunta como Él la ve.'},
+ {q:'En Mateo 4:2–4 el Salvador citó de memoria Deuteronomio 8:3. ¿Para qué sirve memorizar frases clave de las Escrituras?',
+  o:['Para usarlas al enfrentar tentaciones, responder preguntas o enseñar','Para ganarles a los demás en competencias','Porque reemplazan la oración y el estudio'],
+  e:'Jesucristo usó pasajes memorizados para vencer la tentación, responder preguntas y enseñar. Cuando memorizamos, seguimos Su ejemplo.'}
+],
+en:[
+ {q:'Neo had to choose between the red pill and the blue pill. According to the lesson, what does finding truth require?',
+  o:['A decision: acting in faith even without all the answers','Waiting for every doubt to go away on its own','Following what most people think'],
+  e:'Acting in faith means moving forward without all the answers: praying sincerely, studying the scriptures and trusting God.'},
+ {q:'Pedrito sees posts questioning God and the prophets. Which principle helps him evaluate them?',
+  o:['Seeking understanding through divinely appointed sources','Believing whatever has the most views and comments','Not thinking about it so he won’t get confused'],
+  e:'The scriptures, prophets, the Holy Ghost, and inspired parents and leaders are sources God appointed to guide us to truth.'},
+ {q:'Isaiah 55:8–9 teaches that God’s thoughts are higher than ours. What does examining a question with an eternal perspective mean?',
+  o:['Looking at it in light of God’s plan and the truths we already know','Deciding only with what I understand right now','Ignoring the question so I don’t feel doubt'],
+  e:'We see one piece of the puzzle; God sees the whole picture. An eternal perspective helps us see the question as He does.'},
+ {q:'In Matthew 4:2–4 the Savior quoted Deuteronomy 8:3 from memory. Why memorize scripture key phrases?',
+  o:['To use them when facing temptation, answering questions or teaching','To beat others in competitions','Because they replace prayer and study'],
+  e:'Jesus Christ used memorized passages to resist temptation, answer questions and teach. When we memorize, we follow His example.'}
+]};
+
+/* Nivel 2: publicaciones (v = true si es verdad / fuente divinamente señalada) */
+const POSTS = {
+es:[
+ {u:'escrituras.diarias',a:'📖',v:true,t:'Isaías 5:20: «¡Ay de los que a lo malo llaman bueno, y a lo bueno, malo!»',e:'Cita exacta de Isaías 5:20.'},
+ {u:'vibes_sin_filtro',a:'😎',v:false,t:'Lo que tiene más likes es lo que es verdad. La mayoría nunca se equivoca.',e:'La popularidad no define la verdad.'},
+ {u:'citas.random',a:'🌀',v:false,t:'Isaías 5:20: «¡Ay de los que a lo bueno llaman bueno, y a lo malo, malo!»',e:'¡Cita alterada! El pasaje advierte contra llamar bueno a lo malo.'},
+ {u:'familia.unida',a:'🏠',v:true,t:'Cuando tengo una duda, hablo con mis padres o líderes inspirados y oro al respecto.',e:'Padres y líderes inspirados son fuentes divinamente señaladas.'},
+ {u:'dudas.everywhere',a:'❓',v:false,t:'Si tenés una sola duda, es señal de que todo lo que creés es mentira.',e:'Tener preguntas es normal; las buscamos responder con fe.'},
+ {u:'profetas.hoy',a:'📜',v:true,t:'Amós 3:7: Jehová el Señor revela su secreto a sus siervos los profetas.',e:'Dios sigue hablando por medio de profetas.'},
+ {u:'antiguo.ya.fue',a:'🙄',v:false,t:'Los profetas eran para la antigüedad. Hoy Dios ya no habla con nadie.',e:'Contradice Amós 3:7: el Señor revela Su voluntad a Sus profetas.'},
+ {u:'proverbio.del.dia',a:'💬',v:false,t:'Proverbios 3:5: «Confía en tu propia prudencia con todo tu corazón».',e:'¡Cita alterada! Dice: «no te apoyes en tu propia prudencia».'},
+ {u:'seminario.bsas',a:'✨',v:true,t:'Proverbios 3:5–6: «Confía en Jehová con todo tu corazón […] y él enderezará tus veredas».',e:'Frase clave exacta de Proverbios 3:5–6.'},
+ {u:'si.se.siente.bien',a:'🎉',v:false,t:'Si algo te hace sentir bien un rato, entonces es bueno. No hay más que pensar.',e:'Es justo lo que advierte Isaías 5:20: llamar bueno a lo malo.'}
+],
+en:[
+ {u:'daily.scriptures',a:'📖',v:true,t:'Isaiah 5:20: “Woe unto them that call evil good, and good evil.”',e:'Exact quote of Isaiah 5:20.'},
+ {u:'no_filter_vibes',a:'😎',v:false,t:'Whatever has the most likes is the truth. The majority is never wrong.',e:'Popularity does not define truth.'},
+ {u:'random.quotes',a:'🌀',v:false,t:'Isaiah 5:20: “Woe unto them that call good good, and evil evil.”',e:'Twisted quote! The verse warns against calling evil good.'},
+ {u:'family.first',a:'🏠',v:true,t:'When I have a question, I talk to my inspired parents or leaders and pray about it.',e:'Inspired parents and leaders are divinely appointed sources.'},
+ {u:'doubts.everywhere',a:'❓',v:false,t:'If you have even one doubt, it means everything you believe is a lie.',e:'Having questions is normal; we seek answers in faith.'},
+ {u:'prophets.today',a:'📜',v:true,t:'Amos 3:7: The Lord God reveals his secret unto his servants the prophets.',e:'God still speaks through prophets.'},
+ {u:'old.news',a:'🙄',v:false,t:'Prophets were for ancient times. Today God doesn’t talk to anyone.',e:'This contradicts Amos 3:7.'},
+ {u:'proverb.of.the.day',a:'💬',v:false,t:'Proverbs 3:5: “Trust in thine own understanding with all thine heart.”',e:'Twisted quote! It says “lean not unto thine own understanding.”'},
+ {u:'seminary.bsas',a:'✨',v:true,t:'Proverbs 3:5–6: “Trust in the Lord with all thine heart … and he shall direct thy paths.”',e:'Exact key phrase of Proverbs 3:5–6.'},
+ {u:'if.it.feels.good',a:'🎉',v:false,t:'If something feels good for a while, then it’s good. Nothing else to think about.',e:'That is exactly what Isaiah 5:20 warns about.'}
+]};
+
+/* Nivel 1: frases por ronda + palabras falsas */
+const L1 = {
+ es:{rounds:[['Escogeos','hoy','a','quién','sirváis'],['pero','yo','y','mi','casa','serviremos','a','Jehová']],
+     decoys:['mañana','nunca','quizás','solo','nadie','después','ellos','temed']},
+ en:{rounds:[['choose','you','this','day','whom','ye','will','serve'],['but','as','for','me','and','my','house','we','will','serve','the','Lord']],
+     decoys:['tomorrow','never','maybe','alone','nobody','later','them','fear']}
+};
+/* Nivel 3: distractores extra */
+const L3DEC = {es:['fuerza','mente','sendas','ojos','camino','verdad','sabiduría','pasos','alma','luz'],
+               en:['strength','mind','roads','eyes','way','truth','wisdom','steps','soul','light']};
+
+/* ====== ESTADO ====== */
+let lang='es';
+const S = {id:'',name:'',lvl:0,score:{l1:0,l2:0,l3:0,l4:0,gates:0,refl:0},answers:['','',''],revealed:false};
+const t = k => TXT[lang][k];
+const $ = id => document.getElementById(id);
+const rnd = (a,b)=>a+Math.random()*(b-a);
+const shuffle = a => {a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const clean = s => (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w\s.,;:¿?¡!'-]/g,'').replace(/\s+/g,' ').trim();
+const bare = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w]/g,'');
+
+function applyTexts(){
+  document.documentElement.lang=lang;
+  document.querySelectorAll('[data-t]').forEach(el=>{el.textContent=t(el.dataset.t);});
+  document.title=t('title');
+}
+let current='s-start';
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active'); current=id;
+  const sc=$(id); sc.scrollTop=0;
+  requestAnimationFrame(resizeAll);
+}
+
+/* ====== AUDIO (Web Audio, se activa con el primer toque) ====== */
+let AC=null;
+function audioInit(){ if(!AC){ try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){} } if(AC&&AC.state==='suspended')AC.resume(); }
+function beep(f=440,d=.09,type='square',v=.05,slide=0){
+  if(!AC)return; const o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.frequency.setValueAtTime(f,AC.currentTime);
+  if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(40,f+slide),AC.currentTime+d);
+  g.gain.setValueAtTime(v,AC.currentTime);g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);
+  o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d+.02);
+}
+const sOk=()=>{beep(660,.07);setTimeout(()=>beep(990,.09),70);};
+const sBad=()=>beep(160,.18,'sawtooth',.06,-60);
+const sWin=()=>{[523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.12,'triangle',.06),i*110));};
+function flash(){const f=$('flash');f.style.opacity=.35;setTimeout(()=>f.style.opacity=0,140);}
+let toastT=0;
+function toast(msg,color){const el=$('toast');el.textContent=msg;el.style.color=color||'var(--green)';el.style.opacity=1;clearTimeout(toastT);toastT=setTimeout(()=>el.style.opacity=0,900);}
+
+/* ====== CANVAS ====== */
+const cvs={bg:$('bgrain'),c1:$('c1'),c4:$('c4')};
+const ctx={bg:cvs.bg.getContext('2d'),c1:cvs.c1.getContext('2d'),c4:cvs.c4.getContext('2d')};
+const dim={};
+function fit(key){
+  const c=cvs[key],r=c.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2);
+  if(r.width<2||r.height<2)return;
+  const w=Math.round(r.width*dpr),h=Math.round(r.height*dpr);
+  if(c.width!==w||c.height!==h){c.width=w;c.height=h;}
+  ctx[key].setTransform(dpr,0,0,dpr,0,0);
+  dim[key]={w:r.width,h:r.height};
+}
+function resizeAll(){['bg','c1','c4'].forEach(fit);}
+window.addEventListener('resize',resizeAll);
+
+/* Lluvia Matrix reutilizable */
+const GLYPHS='アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789ΣΔΨ<>{}';
+function makeRain(){return {cols:[],size:16};}
+function drawRain(rain,g,w,h,speed,alpha){
+  const n=Math.ceil(w/rain.size);
+  while(rain.cols.length<n)rain.cols.push({y:rnd(-h,0),v:rnd(40,110)});
+  g.fillStyle=`rgba(0,0,0,${alpha})`;g.fillRect(0,0,w,h);
+  g.font=`${rain.size-2}px monospace`;
+  for(let i=0;i<n;i++){
+    const c=rain.cols[i];c.y+=c.v*speed;
+    if(c.y>h+40){c.y=rnd(-200,0);c.v=rnd(40,110);}
+    g.fillStyle='#b8ffd0';g.fillText(GLYPHS[(Math.random()*GLYPHS.length)|0],i*rain.size,c.y);
+    g.fillStyle='rgba(57,255,122,.55)';g.fillText(GLYPHS[(Math.random()*GLYPHS.length)|0],i*rain.size,c.y-rain.size);
+  }
+}
+const bgRain=makeRain();
+/* Lluvia en capa aparte para que las fichas y balas no dejen estela */
+function rainLayer(rain,g,w,h,speed,alpha){
+  if(!rain.cv){rain.cv=document.createElement('canvas');rain.g=rain.cv.getContext('2d');}
+  if(rain.cv.width!==Math.round(w)||rain.cv.height!==Math.round(h)){rain.cv.width=Math.round(w);rain.cv.height=Math.round(h);}
+  drawRain(rain,rain.g,w,h,speed,alpha);
+  g.clearRect(0,0,w,h);g.fillStyle='#000';g.fillRect(0,0,w,h);
+  g.drawImage(rain.cv,0,0,w,h);
+}
+
+/* ====== FLUJO GENERAL ====== */
+function openRead(i){
+  S.lvl=i; const L=LEVELS[i],pp=P[L.p];
+  $('r-kicker').textContent=`${t('levelWord')} ${i+1}/4`;
+  $('r-title').textContent=t(L.name);
+  $('r-ref').textContent=pp.ref[lang];
+  $('r-text').textContent=pp.text[lang];
+  $('r-key').textContent=pp.key[lang];
+  $('r-how').textContent=t(L.how);
+  show('s-read');
+}
+$('b-read').onclick=()=>{audioInit();const i=S.lvl;sendRank(i+1,'jugando');show(LEVELS[i].screen);[startL1,startL2,startL3,startL4][i]();};
+function levelDone(){ sWin(); setTimeout(()=>openGate(S.lvl),600); }
+
+/* ====== NIVEL 1: LLUVIA DE CÓDIGO ====== */
+const L1S={on:false,rain:makeRain(),tiles:[],round:0,idx:0,spawn:0,t:0,wrong:0,right:0,pause:0,parts:[]};
+function startL1(){
+  Object.assign(L1S,{on:true,tiles:[],round:0,idx:0,spawn:0,t:0,wrong:0,right:0,pause:0,parts:[]});
+  updL1Phrase();
+}
+function l1Words(){return L1[lang].rounds[L1S.round];}
+function updL1Phrase(){
+  const w=l1Words();
+  $('l1round').textContent=`${t('roundWord')} ${L1S.round+1}/2`;
+  $('l1phrase').innerHTML=w.map((x,i)=>i<L1S.idx?`<span class="ok">${x}</span>`:`<span class="no">${'_'.repeat(Math.max(3,x.length))}</span>`).join(' ');
+}
+function l1Spawn(){
+  const d=dim.c1; if(!d)return;
+  const words=l1Words(),need=words[L1S.idx];
+  const present=L1S.tiles.some(tl=>tl.text===need);
+  let text;
+  if(!present&&Math.random()<.65)text=need;
+  else if(Math.random()<.5){const rest=words.slice(L1S.idx+1);text=rest.length?rest[(Math.random()*rest.length)|0]:need;}
+  else {const dec=L1[lang].decoys;text=dec[(Math.random()*dec.length)|0];}
+  const g=ctx.c1;g.font='bold 17px ui-monospace,Menlo,monospace';
+  const tw=g.measureText(text).width+24,th=36;
+  const x=rnd(6,Math.max(8,d.w-tw-6));
+  const speed=(d.h/7.5)*(1+0.07*(L1S.right));
+  L1S.tiles.push({text,x,y:-th,w:tw,h:th,v:speed*rnd(.85,1.15),shake:0});
+}
+function updL1(dt){
+  const d=dim.c1;if(!d)return;
+  L1S.t+=dt;
+  if(L1S.pause>0){L1S.pause-=dt;if(L1S.pause<=0)nextL1Round();return;}
+  L1S.spawn-=dt;
+  if(L1S.spawn<=0){l1Spawn();L1S.spawn=Math.max(.55,1.05-L1S.right*0.02);}
+  L1S.tiles.forEach(tl=>{tl.y+=tl.v*dt;if(tl.shake>0)tl.shake-=dt;});
+  L1S.tiles=L1S.tiles.filter(tl=>tl.y<d.h+10);
+  L1S.parts.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.l-=dt;});
+  L1S.parts=L1S.parts.filter(p=>p.l>0);
+}
+function drawL1(){
+  const d=dim.c1;if(!d)return;const g=ctx.c1;
+  rainLayer(L1S.rain,g,d.w,d.h,1/60,.18);
+  g.font='bold 17px ui-monospace,Menlo,monospace';g.textBaseline='middle';
+  L1S.tiles.forEach(tl=>{
+    const ox=tl.shake>0?Math.sin(tl.shake*60)*4:0;
+    g.fillStyle='rgba(0,25,10,.92)';g.strokeStyle=tl.shake>0?'#ff3355':'#39ff7a';g.lineWidth=1.5;
+    roundRect(g,tl.x+ox,tl.y,tl.w,tl.h,7);g.fill();g.stroke();
+    g.fillStyle='#e6ffef';g.fillText(tl.text,tl.x+12+ox,tl.y+tl.h/2+1);
+  });
+  L1S.parts.forEach(p=>{g.fillStyle=`rgba(57,255,122,${p.l*2})`;g.fillRect(p.x,p.y,3,3);});
+  if(L1S.pause>0){
+    g.fillStyle='rgba(0,0,0,.75)';g.fillRect(0,0,d.w,d.h);
+    g.fillStyle='#39ff7a';g.textAlign='center';g.font='bold 18px ui-monospace,Menlo,monospace';
+    wrapText(g,l1Words().join(' '),d.w/2,d.h/2-20,d.w-40,26);g.textAlign='left';
+  }
+}
+function l1Tap(x,y){
+  if(L1S.pause>0)return;
+  for(let i=L1S.tiles.length-1;i>=0;i--){
+    const tl=L1S.tiles[i];
+    if(x>=tl.x-6&&x<=tl.x+tl.w+6&&y>=tl.y-6&&y<=tl.y+tl.h+6){
+      const need=l1Words()[L1S.idx];
+      if(tl.text===need){
+        L1S.idx++;L1S.right++;sOk();
+        for(let k=0;k<14;k++)L1S.parts.push({x:tl.x+tl.w/2,y:tl.y+tl.h/2,vx:rnd(-120,120),vy:rnd(-120,120),l:.5});
+        L1S.tiles.splice(i,1);updL1Phrase();
+        if(L1S.idx>=l1Words().length){L1S.pause=1.8;L1S.tiles=[];sWin();}
+      } else {L1S.wrong++;tl.shake=.35;sBad();flash();}
+      return;
+    }
+  }
+}
+function nextL1Round(){
+  if(L1S.round<L1[lang].rounds.length-1){L1S.round++;L1S.idx=0;L1S.tiles=[];updL1Phrase();}
+  else{
+    L1S.on=false;
+    S.score.l1=Math.max(0,L1S.right*20-L1S.wrong*10+Math.max(0,Math.round(150-L1S.t)));
+    levelDone();
+  }
+}
+cvs.c1.addEventListener('pointerdown',e=>{e.preventDefault();const r=cvs.c1.getBoundingClientRect();l1Tap(e.clientX-r.left,e.clientY-r.top);});
+
+/* ====== NIVEL 2: FEED ====== */
+const L2S={i:0,list:[],right:0,wrong:0,busy:false};
+function startL2(){
+  L2S.list=shuffle(POSTS[lang]);L2S.i=0;L2S.right=0;L2S.wrong=0;L2S.busy=false;
+  $('l2fb').textContent='';$('l2fb').className='fb';
+  renderPost();
+}
+function renderPost(){
+  const feed=$('feed');feed.innerHTML='';
+  $('l2count').textContent=`${Math.min(L2S.i+1,L2S.list.length)}/${L2S.list.length}`;
+  const p=L2S.list[L2S.i];if(!p)return;
+  const el=document.createElement('div');el.className='post';
+  el.innerHTML=`<div class="stamp l">${lang==='es'?'OPINIÓN':'OPINION'}</div><div class="stamp r">${lang==='es'?'VERDAD':'TRUTH'}</div>
+   <div class="user"><div class="av">${p.a}</div><div><div class="nm">@${p.u}</div><div class="hd">${(Math.random()*20+1)|0} min</div></div></div>
+   <div class="tx"></div><div class="ft"><span>♥ ${(Math.random()*9000+200)|0}</span><span>💬 ${(Math.random()*400+5)|0}</span><span>↗</span></div>`;
+  el.querySelector('.tx').textContent=p.t;
+  feed.appendChild(el);
+  let sx=0,dx=0,drag=false;
+  el.addEventListener('pointerdown',e=>{if(L2S.busy)return;drag=true;sx=e.clientX;dx=0;el.style.transition='none';el.setPointerCapture(e.pointerId);});
+  el.addEventListener('pointermove',e=>{if(!drag)return;dx=e.clientX-sx;el.style.transform=`translateX(${dx}px) rotate(${dx/18}deg)`;
+    el.querySelector('.stamp.l').style.opacity=Math.min(1,Math.max(0,-dx/90));el.querySelector('.stamp.r').style.opacity=Math.min(1,Math.max(0,dx/90));});
+  const end=()=>{if(!drag)return;drag=false;el.style.transition='';
+    if(dx>90)judge(true);else if(dx<-90)judge(false);
+    else{el.style.transform='';el.querySelectorAll('.stamp').forEach(s=>s.style.opacity=0);}};
+  el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);
+}
+function judge(saysTrue){
+  if(L2S.busy)return;L2S.busy=true;
+  const p=L2S.list[L2S.i],el=document.querySelector('#feed .post'),ok=(saysTrue===p.v);
+  if(el){el.style.transform=`translateX(${saysTrue?520:-520}px) rotate(${saysTrue?20:-20}deg)`;el.style.opacity=0;}
+  const fb=$('l2fb');
+  if(ok){L2S.right++;sOk();fb.className='fb good';fb.textContent='✓ '+p.e;}
+  else{L2S.wrong++;sBad();flash();fb.className='fb bad';fb.textContent='✕ '+p.e;}
+  setTimeout(()=>{
+    L2S.i++;L2S.busy=false;
+    if(L2S.i>=L2S.list.length){S.score.l2=Math.max(0,L2S.right*25-L2S.wrong*10);levelDone();}
+    else renderPost();
+  },1500);
+}
+$('b-op').onclick=()=>judge(false);
+$('b-tr').onclick=()=>judge(true);
+
+/* ====== NIVEL 3: DESAPARICIÓN ====== */
+const L3S={words:[],order:[],round:0,hidden:[],cur:0,time:0,max:40,on:false,right:0,wrong:0,bonus:0};
+const L3COUNTS=[4,7,10,13];
+function startL3(){
+  L3S.words=P.prov.text[lang].split(' ');
+  const cand=L3S.words.map((w,i)=>({i,b:bare(w)})).filter(o=>o.b.length>=3).map(o=>o.i);
+  L3S.order=shuffle(cand);
+  Object.assign(L3S,{round:0,right:0,wrong:0,bonus:0});
+  beginL3Round();
+}
+function beginL3Round(){
+  const n=Math.min(L3COUNTS[L3S.round],L3S.order.length);
+  L3S.hidden=L3S.order.slice(0,n).sort((a,b)=>a-b);
+  L3S.cur=0;L3S.time=L3S.max;L3S.on=true;
+  $('l3between').style.display='none';$('l3opts').style.display='grid';
+  $('l3round').textContent=`${t('roundWord')} ${L3S.round+1}/4`;
+  renderL3();
+}
+function renderL3(reveal){
+  const firstLetter=L3S.round>=2;
+  $('l3verse').innerHTML=L3S.words.map((w,i)=>{
+    const h=L3S.hidden.indexOf(i);
+    if(h===-1||reveal)return esc(w);
+    const m=w.match(/^([¡¿"“]*)(.*?)([.,;:!?"”]*)$/);
+    if(h<L3S.cur)return `${m[1]}<span class="blank done">${esc(m[2])}</span>${m[3]}`;
+    const hint=firstLetter?esc(m[2][0])+'…':'&nbsp;';
+    return `${m[1]}<span class="blank${h===L3S.cur?' cur':''}">${hint}</span>${m[3]}`;
+  }).join(' ');
+  if(reveal){$('l3opts').innerHTML='';return;}
+  const target=L3S.words[L3S.hidden[L3S.cur]].replace(/[.,;:!?¡¿"“”]/g,'');
+  const pool=L3S.words.map(w=>w.replace(/[.,;:!?¡¿"“”]/g,'')).filter(w=>bare(w)!==bare(target)&&bare(w).length>=3).concat(L3DEC[lang]);
+  const uniq=[...new Set(pool.map(w=>w.toLowerCase()))].filter(w=>bare(w)!==bare(target));
+  const opts=shuffle([target].concat(shuffle(uniq).slice(0,3)));
+  const box=$('l3opts');box.innerHTML='';
+  opts.forEach(o=>{const b=document.createElement('button');b.className='opt';b.textContent=o;
+    b.onclick=()=>l3Pick(o,target,b);box.appendChild(b);});
+}
+function l3Pick(o,target,btn){
+  if(!L3S.on)return;
+  if(bare(o)===bare(target)){L3S.right++;sOk();L3S.cur++;
+    if(L3S.cur>=L3S.hidden.length)endL3Round(false);else renderL3();}
+  else{L3S.wrong++;sBad();flash();btn.classList.add('wrong');btn.disabled=true;}
+}
+function updL3(dt){
+  if(!L3S.on)return;
+  L3S.time-=dt;$('l3timer').style.width=Math.max(0,L3S.time/L3S.max*100)+'%';
+  if(L3S.time<=0)endL3Round(true);
+}
+function endL3Round(timeout){
+  L3S.on=false;
+  if(!timeout){L3S.bonus+=Math.round(Math.max(0,L3S.time));sWin();}
+  renderL3(true);
+  $('l3opts').style.display='none';$('l3between').style.display='block';
+  $('l3msg').textContent=timeout?t('l3timeout'):t('l3review');
+  const last=L3S.round>=L3COUNTS.length-1;
+  $('b-l3next').textContent=last?t('l3finish'):t('l3next');
+}
+$('b-l3next').onclick=()=>{
+  if(L3S.round>=L3COUNTS.length-1){S.score.l3=Math.max(0,L3S.right*10-L3S.wrong*5+L3S.bonus);levelDone();}
+  else{L3S.round++;beginL3Round();}
+};
+
+/* ====== NIVEL 4: TIEMPO BALA ====== */
+const L4S={on:false,rain:makeRain(),px:0,tx:0,bullets:[],spawn:0,ch:null,chIdx:0,list:[],wait:2.5,bt:0,surge:0,inv:0,hits:0,right:0,tries:0,shock:0,started:false};
+function startL4(){
+  const keys=['josue','isaias','prov','amos'];
+  const l=[];shuffle(keys).forEach((k,i)=>l.push({k,type:i%2?'r2p':'p2r'}));
+  shuffle(keys).forEach((k,i)=>l.push({k,type:i%2?'p2r':'r2p'}));
+  Object.assign(L4S,{on:true,bullets:[],spawn:0,ch:null,chIdx:0,list:l,wait:2.5,bt:0,surge:0,inv:0,hits:0,right:0,tries:0,shock:0,started:false});
+  $('l4prompt').textContent='';$('l4opts').innerHTML='';
+  $('l4count').textContent=`0/${l.length}`;
+}
+function l4Challenge(){
+  const c=L4S.list[L4S.chIdx];L4S.ch=c;L4S.tries=0;
+  const keys=['josue','isaias','prov','amos'];
+  const box=$('l4opts');box.innerHTML='';
+  if(c.type==='p2r'){
+    $('l4prompt').innerHTML=`${t('l4choosRef')}<br><span style="color:var(--green)">“${esc(P[c.k].short[lang])}”</span>`;
+    shuffle(keys).forEach(k=>addL4Opt(P[k].ref[lang],k===c.k));
+  } else {
+    $('l4prompt').innerHTML=`${t('l4choosPhr')} <span style="color:var(--green)">${P[c.k].ref[lang]}</span>?`;
+    shuffle(keys).forEach(k=>addL4Opt(P[k].short[lang],k===c.k));
+  }
+}
+function addL4Opt(label,ok){
+  const b=document.createElement('button');b.className='opt';b.textContent=label;
+  b.onclick=()=>{
+    if(!L4S.ch)return;
+    if(ok){
+      L4S.right+=L4S.tries===0?30:10;sOk();L4S.bt=4;L4S.shock=1;L4S.bullets=[];
+      toast(t('bulletTime'),'#3d8bff');
+      L4S.ch=null;L4S.chIdx++;$('l4count').textContent=`${L4S.chIdx}/${L4S.list.length}`;
+      $('l4prompt').textContent='';$('l4opts').innerHTML='';L4S.wait=4.5;
+      if(L4S.chIdx>=L4S.list.length){L4S.on=false;S.score.l4=Math.max(0,L4S.right-L4S.hits*10);setTimeout(levelDone,900);}
+    } else {L4S.tries++;sBad();flash();b.classList.add('wrong');b.disabled=true;L4S.surge=1.5;}
+  };
+  $('l4opts').appendChild(b);
+}
+function updL4(dt){
+  const d=dim.c4;if(!d)return;
+  if(!L4S.started){L4S.px=L4S.tx=d.w/2;L4S.started=true;}
+  let ts=1;
+  if(L4S.ch)ts=.4;
+  if(L4S.bt>0){L4S.bt-=dt;ts=.18;}
+  if(L4S.surge>0){L4S.surge-=dt;ts=1.5;}
+  if(L4S.shock>0)L4S.shock-=dt*1.5;
+  L4S.px+=(L4S.tx-L4S.px)*Math.min(1,dt*12);
+  if(!L4S.on)return;
+  if(!L4S.ch){L4S.wait-=dt;if(L4S.wait<=0)l4Challenge();}
+  L4S.spawn-=dt*ts;
+  const lvl=Math.min(1,L4S.chIdx/8);
+  if(L4S.spawn<=0){L4S.bullets.push({x:rnd(14,d.w-14),y:-16,v:rnd(110,170)*(1+lvl*.8),r:11,g:'?'});L4S.spawn=.55-lvl*.25;}
+  const py=d.h-34;
+  L4S.bullets.forEach(b=>b.y+=b.v*dt*ts);
+  L4S.bullets=L4S.bullets.filter(b=>{
+    if(L4S.inv<=0&&Math.hypot(b.x-L4S.px,b.y-py)<b.r+14){L4S.hits++;L4S.inv=1.2;sBad();flash();return false;}
+    return b.y<d.h+20;});
+  if(L4S.inv>0)L4S.inv-=dt;
+}
+function drawL4(){
+  const d=dim.c4;if(!d)return;const g=ctx.c4;
+  const slow=L4S.bt>0;
+  rainLayer(L4S.rain,g,d.w,d.h,slow?1/300:1/60,slow?.08:.18);
+  if(slow){g.fillStyle='rgba(61,139,255,.10)';g.fillRect(0,0,d.w,d.h);}
+  g.textAlign='center';g.textBaseline='middle';g.font='bold 15px ui-monospace,Menlo,monospace';
+  L4S.bullets.forEach(b=>{
+    g.fillStyle='rgba(255,51,85,.18)';g.beginPath();g.arc(b.x,b.y-8,b.r+2,0,7);g.fill();
+    g.fillStyle='#ff3355';g.beginPath();g.arc(b.x,b.y,b.r,0,7);g.fill();
+    g.fillStyle='#fff';g.fillText(b.g,b.x,b.y+1);
+  });
+  const py=d.h-34;
+  if(L4S.shock>0){g.strokeStyle=`rgba(61,139,255,${L4S.shock})`;g.lineWidth=3;g.beginPath();g.arc(L4S.px,py,(1-L4S.shock)*d.h,0,7);g.stroke();}
+  const blink=L4S.inv>0&&((L4S.inv*10)|0)%2===0;
+  if(!blink){
+    g.fillStyle='rgba(57,255,122,.18)';g.beginPath();g.arc(L4S.px,py,24,0,7);g.fill();
+    g.strokeStyle='#39ff7a';g.lineWidth=2;g.beginPath();g.arc(L4S.px,py,15,0,7);g.stroke();
+    g.fillStyle='#39ff7a';g.beginPath();g.arc(L4S.px,py,6,0,7);g.fill();
+  }
+  if(slow){g.fillStyle='#9cc3ff';g.font='bold 16px ui-monospace,Menlo,monospace';g.fillText(t('bulletTime'),d.w/2,22);}
+  g.textAlign='left';
+}
+function l4Move(e){const r=cvs.c4.getBoundingClientRect();L4S.tx=Math.max(16,Math.min(r.width-16,e.clientX-r.left));}
+cvs.c4.addEventListener('pointerdown',e=>{e.preventDefault();cvs.c4.setPointerCapture(e.pointerId);l4Move(e);});
+cvs.c4.addEventListener('pointermove',e=>{if(e.buttons||e.pointerType==='touch')l4Move(e);});
+
+/* ====== PREGUNTAS DE LA CLASE ====== */
+let gateFirst=true;
+function openGate(i){
+  const G=GATES[lang][i];gateFirst=true;
+  $('q-text').textContent=G.q;$('q-exp').style.display='none';$('b-qnext').style.display='none';
+  const box=$('q-opts');box.innerHTML='';
+  shuffle(G.o.map((o,k)=>({o,ok:k===0}))).forEach(x=>{
+    const b=document.createElement('button');b.className='qopt';b.textContent=x.o;
+    b.onclick=()=>{
+      if(x.ok){
+        S.score.gates+=gateFirst?150:50;sOk();b.classList.add('right');
+        box.querySelectorAll('button').forEach(z=>z.disabled=true);
+        $('q-exptext').textContent=t('correct')+' '+G.e;$('q-exp').style.display='block';$('b-qnext').style.display='block';
+      } else {gateFirst=false;sBad();b.classList.add('wrong');b.disabled=true;toast(t('tryAgain'),'#ff8094');}
+    };
+    box.appendChild(b);
+  });
+  show('s-quiz');
+}
+$('b-qnext').onclick=()=>{ if(S.lvl<LEVELS.length-1)openRead(S.lvl+1); else {sendRank(LEVELS.length+1,'jugando');show('s-refl');} };
+
+/* ====== REFLEXIÓN Y RESULTADO ====== */
+$('b-refl').onclick=()=>{
+  const a=['a1','a2','a3'].map(id=>clean($(id).value));
+  if(a.some(x=>x.length<3)){toast(t('reflNeed'),'#ff8094');return;}
+  S.answers=a;
+  S.score.refl=a.reduce((s,x)=>s+x.length*PTS_PER_CHAR,0);
+  show('s-end');
+};
+function total(){const s=S.score;return s.l1+s.l2+s.l3+s.l4+s.gates+s.refl;}
+
+function buildCard(){
+  const W=1080,H=1350,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+  g.fillStyle='#000';g.fillRect(0,0,W,H);
+  g.font='22px monospace';
+  for(let x=0;x<W;x+=26)for(let y=0;y<H;y+=30){if(Math.random()<.22){g.fillStyle=`rgba(57,255,122,${rnd(.04,.16)})`;g.fillText(GLYPHS[(Math.random()*GLYPHS.length)|0],x,y);}}
+  g.strokeStyle='#39ff7a';g.lineWidth=3;roundRect(g,40,40,W-80,H-80,28);g.stroke();
+  g.fillStyle='#39ff7a';g.font='bold 30px monospace';g.fillText(lang==='es'?'SEMINARIO 2026':'SEMINARY 2026',90,120);
+  g.fillStyle='#ffffff';g.font='bold 58px monospace';
+  wrapText(g,t('title'),90,195,W-180,64);
+  g.fillStyle='#d9ffe6';g.font='bold 46px sans-serif';g.fillText(S.name,90,360);
+  g.fillStyle='#ff3355';g.font='bold 30px monospace';g.fillText(t('cardScore'),90,440);
+  g.fillStyle='#39ff7a';g.font='bold 120px monospace';g.fillText(String(total()),90,560);
+  g.fillStyle='#9ad9ad';g.font='28px sans-serif';g.fillText(t('cardPass'),90,615);
+  let y=690;
+  S.answers.forEach((a,i)=>{
+    g.fillStyle='#ff3355';g.font='bold 26px monospace';g.fillText(t('cardR')[i],90,y);y+=40;
+    g.fillStyle='#f2fff6';g.font='28px sans-serif';
+    y=wrapText(g,a,90,y,W-180,38,4)+30;
+  });
+  g.fillStyle='#5f9f75';g.font='24px monospace';
+  g.fillText(new Date().toLocaleDateString(lang==='es'?'es-AR':'en-US'),90,H-90);
+  return c;
+}
+$('b-share').onclick=async()=>{
+  audioInit();
+  const c=buildCard();
+  const url=c.toDataURL('image/png');
+  const img=$('cardimg');img.src=url;img.style.display='block';
+  if(!S.revealed){S.revealed=true;sendRank(LEVELS.length+1,'terminado');}
+  const blob=await new Promise(r=>c.toBlob(r,'image/png'));
+  const file=new File([blob],`pildora-roja-${bare(S.name)||'alumno'}.png`,{type:'image/png'});
+  try{
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:t('title'),text:`${S.name} · ${t('title')}`});
+      $('shareMsg').textContent=t('shareOk');return;
+    }
+  }catch(e){ if(e&&e.name==='AbortError'){$('shareMsg').textContent=t('shareOk');return;} }
+  const a=document.createElement('a');a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove();
+  $('shareMsg').textContent=t('shareDl');
+};
+function sendRank(nivel,estado){
+  if(!RANKING_URL)return;
+  const data={id:S.id,juego:JUEGO_ID,nombre:S.name,nivel,estado,puntaje:estado==='terminado'?total():0};
+  try{fetch(RANKING_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(data)}).catch(()=>{});}catch(e){}
+}
+
+/* ====== INICIO ====== */
+function setLang(l){lang=l;$('lang-es').classList.toggle('on',l==='es');$('lang-en').classList.toggle('on',l==='en');applyTexts();}
+$('lang-es').onclick=()=>setLang('es');
+$('lang-en').onclick=()=>setLang('en');
+$('b-start').onclick=()=>{
+  audioInit();
+  const n=clean($('nm').value);
+  if(n.length<2){toast(t('needName'),'#ff8094');return;}
+  S.name=n;S.id=(window.crypto&&crypto.randomUUID)?crypto.randomUUID().slice(0,18):('p'+Date.now().toString(36)+Math.random().toString(36).slice(2,8));show('s-story');
+};
+$('b-red').onclick=()=>{audioInit();sOk();openRead(0);};
+$('b-blue').onclick=()=>{audioInit();sBad();$('blueMsg').textContent=t('blueMsg');};
+if(/FBAN|FBAV|Instagram|WhatsApp|Line\//i.test(navigator.userAgent))$('inapp').style.display='block';
+
+/* ====== UTILIDADES ====== */
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function roundRect(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();}
+function wrapText(g,text,x,y,maxW,lh,maxLines){
+  const words=String(text).split(' ');let line='',lines=0;
+  for(let i=0;i<words.length;i++){
+    const test=line?line+' '+words[i]:words[i];
+    if(g.measureText(test).width>maxW&&line){
+      lines++;
+      if(maxLines&&lines>=maxLines){g.fillText(line+'…',x,y);return y+lh;}
+      g.fillText(line,x,y);line=words[i];y+=lh;
+    } else line=test;
+  }
+  if(line){g.fillText(line,x,y);y+=lh;}
+  return y;
+}
+document.addEventListener('gesturestart',e=>e.preventDefault());
+document.addEventListener('dblclick',e=>e.preventDefault());
+
+/* ====== BUCLE PRINCIPAL (nunca se detiene) ====== */
+let last=performance.now();
+function loop(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  if(dim.bg)drawRain(bgRain,ctx.bg,dim.bg.w,dim.bg.h,1/60,.12);
+  if(current==='s-l1'&&L1S.on){updL1(dt);drawL1();}
+  if(current==='s-l3')updL3(dt);
+  if(current==='s-l4'){updL4(dt);drawL4();}
+  requestAnimationFrame(loop);
+}
+applyTexts();resizeAll();requestAnimationFrame(loop);
+</script>
+</body>
+</html>

@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>La Palabra que Nadie Pudo Quemar · Jeremías 36</title>
+<style>
+:root{--bg:#0A0E1A;--card:#141B2E;--gold:#E8B24D;--cyan:#2DD4E8;--flesh:#e11d48;--text:#ffffff;--muted:#B8C2D9;--ok:#34d399;--bad:#f87171;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:radial-gradient(circle at 50% -10%,#24163f 0%,var(--bg) 55%) fixed;color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;min-height:100vh}
+#app{max-width:480px;margin:0 auto;padding:16px 16px 40px}
+.screen{display:none;animation:fade .35s ease}
+.screen.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+h1{font-size:32px;line-height:1.1;margin:6px 0;background:linear-gradient(90deg,var(--gold),#ffd98a,var(--flesh));-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font-size:22px;margin:6px 0 10px;color:var(--gold)}
+p{line-height:1.5}
+.muted{color:var(--muted)}
+.btn{display:block;width:100%;border:0;border-radius:14px;padding:14px 16px;margin:12px 0 0;font-size:17px;font-weight:700;color:#0A0E1A;background:linear-gradient(90deg,var(--gold),#ffd98a);cursor:pointer;box-shadow:0 6px 22px rgba(232,178,77,.25)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.cyan{background:linear-gradient(90deg,var(--cyan),#8beefa)}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid #2c3656;box-shadow:none}
+.lang{display:flex;gap:6px;justify-content:flex-end}
+.lang button{border:1px solid #2c3656;background:transparent;color:var(--muted);border-radius:10px;padding:6px 12px;font-weight:700;cursor:pointer}
+.lang button.on{background:var(--gold);color:#0A0E1A;border-color:var(--gold)}
+input[type=text],textarea{width:100%;border-radius:12px;border:1px solid #2c3656;background:#0d1324;color:var(--text);padding:12px;font-size:16px;font-family:inherit}
+textarea{min-height:96px;resize:vertical}
+.card{background:var(--card);border-radius:18px;padding:16px;margin:12px 0}
+.badge{display:inline-block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--cyan);border:1px solid rgba(45,212,232,.4);border-radius:999px;padding:4px 10px}
+.quote{border-left:3px solid var(--gold);padding:8px 12px;margin:10px 0;background:rgba(232,178,77,.07);border-radius:0 10px 10px 0;font-style:italic}
+.quote small{display:block;font-style:normal;color:var(--gold);margin-top:6px}
+.inst{background:rgba(45,212,232,.08);border:1px dashed rgba(45,212,232,.45);border-radius:12px;padding:10px 12px;margin-top:12px}
+.trio{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.trio div{background:#0d1324;border-radius:12px;padding:8px;text-align:center;font-size:13px}
+.trio b{display:block;color:var(--gold);font-size:11px;letter-spacing:.06em}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.cols div{background:#0d1324;border-radius:12px;padding:10px;font-size:13.5px}
+.cols div b{display:block;margin-bottom:4px}
+.cols .stone b{color:#9ca3af}.cols .flesh b{color:#fb7185}
+ul.tight{padding-left:20px;margin:6px 0} ul.tight li{margin:4px 0}
+canvas.gc{width:100%;height:auto;display:block;border-radius:16px;touch-action:none;background:#0d1324}
+.hint{color:var(--muted);font-size:14px;text-align:center;margin:8px 0}
+.pad{display:flex;gap:12px;margin-top:10px}
+.pad button,.dpad button{font-size:26px;border-radius:14px;border:1px solid #2c3656;background:var(--card);color:var(--cyan);touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer}
+.pad button{flex:1;padding:14px 0}
+.pad button:active,.dpad button:active{background:#22305a}
+.dpad{display:grid;grid-template-columns:repeat(3,64px);grid-template-rows:repeat(2,56px);gap:6px;justify-content:center;margin-top:10px}
+.dpad .u{grid-column:2;grid-row:1}.dpad .l{grid-column:1;grid-row:2}.dpad .d{grid-column:2;grid-row:2}.dpad .r{grid-column:3;grid-row:2}
+.hitbtn{display:block;width:100%;margin-top:10px;padding:18px;font-size:22px;font-weight:800;border:0;border-radius:16px;color:#0A0E1A;background:linear-gradient(90deg,var(--gold),#ffd98a);touch-action:manipulation;cursor:pointer}
+.opt{display:block;width:100%;text-align:left;border:1px solid #2c3656;background:#0f1628;color:var(--text);border-radius:14px;padding:14px;margin:10px 0;font-size:16px;cursor:pointer;line-height:1.35}
+.opt.ok{border-color:var(--ok);background:rgba(52,211,153,.15)}
+.opt.bad{border-color:var(--bad);background:rgba(248,113,113,.12);opacity:.7}
+.fb{min-height:24px;font-weight:700;text-align:center;margin-top:6px}
+.fb.ok{color:var(--ok)}.fb.bad{color:var(--bad)}
+.overlay{position:fixed;inset:0;background:rgba(5,8,16,.82);display:none;align-items:center;justify-content:center;padding:16px;z-index:10}
+.overlay.active{display:flex}
+.overlay .card{max-width:440px;width:100%;max-height:90vh;overflow:auto;border:1px solid rgba(232,178,77,.35);animation:fade .3s}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chip{border:1px solid #2c3656;background:#0f1628;color:var(--text);border-radius:999px;padding:7px 11px;font-size:13px;cursor:pointer}
+.chip:active{background:#22305a}
+.counter{font-size:12px;color:var(--muted);text-align:right;margin-top:2px}
+.rq{margin:14px 0}
+.rq label{display:block;font-weight:700;margin-bottom:6px}
+.center{text-align:center}
+#heart-cv{width:220px;height:220px;display:block;margin:6px auto}
+#end-img{width:100%;border-radius:16px;margin-top:14px;display:none}
+.rk{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:12px;padding:10px 12px;margin:6px 0;font-size:15px}
+.rk.me{border:2px solid var(--gold);box-shadow:0 0 14px rgba(232,178,77,.3)}
+.rk .p{width:30px;text-align:center;font-weight:800;color:var(--muted)}
+.rk .n{flex:1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rk .s{font-size:12px;color:var(--muted)}
+.rk .v{font-weight:800;color:#fb7185}
+.chat{background:#0b141a;border-radius:16px;overflow:hidden;border:1px solid #1f2c34}
+.chat-head{display:flex;align-items:center;gap:10px;background:#1f2c34;padding:10px 12px}
+.chat-head .av{font-size:26px}.chat-head b{flex:1}.chat-head small{color:#34d399;font-size:12px}
+.chat-log{height:300px;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:radial-gradient(circle at 30% 20%,#122028,#0b141a)}
+.bub{max-width:82%;padding:9px 12px;border-radius:12px;font-size:15px;line-height:1.35;animation:fade .25s}
+.bub.them{background:#202c33;align-self:flex-start;border-top-left-radius:2px}
+.bub.me{background:#005c4b;align-self:flex-end;border-top-right-radius:2px}
+.bub.sys{align-self:center;background:rgba(232,178,77,.1);color:#ffd98a;font-size:13px;text-align:center;max-width:95%}
+.bub.sys.warn{background:rgba(248,113,113,.12);color:#fecaca}
+.bub.sys.gold{background:rgba(232,178,77,.2);color:#ffe3a3;font-weight:700}
+.chat-opts .opt{font-size:15px}
+.dict{background:var(--card);border-radius:14px;padding:12px;text-align:center;margin-bottom:10px}
+.dict small{display:block;color:var(--muted);font-size:12px}.dict b{font-size:28px;letter-spacing:.12em;color:var(--gold)}
+.parch{background:linear-gradient(#f6e7c1,#e3c98f);color:#3b2410;border-radius:10px;padding:16px 8px;text-align:center;font:bold 28px Georgia,serif;letter-spacing:.18em;min-height:70px;transition:.3s}
+.parch span.cur{color:#c2410c;text-decoration:underline}
+.parch.done{box-shadow:0 0 24px rgba(232,178,77,.8)}
+.inkbar{height:10px;background:#1a2340;border-radius:5px;margin:10px 0;overflow:hidden}
+.inkbar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#1e3a8a,#2DD4E8)}
+.kb{display:flex;flex-direction:column;gap:6px;margin-top:6px;user-select:none;-webkit-user-select:none}
+.kbr{display:flex;gap:4px;justify-content:center}
+.k{flex:1;max-width:36px;height:46px;border:0;border-radius:8px;background:#1f2a44;color:#fff;font:bold 17px system-ui;touch-action:manipulation;cursor:pointer;padding:0}
+.k:active{background:#2DD4E8;color:#0A0E1A}
+.k.bad{background:#b91c1c;animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+input.dial{width:100%;margin:14px 0 4px;accent-color:#E8B24D;height:34px}
+.station{min-height:10px}
+.station .st-n{color:var(--cyan);font-size:13px;text-align:center;margin-top:8px}
+.station .st-a,.station .st-b{background:var(--card);border-radius:12px;padding:12px;margin:6px 0;text-align:center;font-weight:700}
+.station .st-b{background:rgba(232,178,77,.12);color:#ffe3a3}
+.station .st-arrow{text-align:center;color:var(--gold)}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;background:#05070d;padding:10px;border-radius:16px}
+.tile{min-height:64px;border:1px solid #1f2a44;border-radius:12px;background:#0d1324;color:#7c86a2;font:bold 14px system-ui;cursor:pointer;padding:6px;transition:.2s}
+.tile.lit{background:#E8B24D;color:#0A0E1A;box-shadow:0 0 22px #E8B24D;transform:scale(1.05)}
+.tile.ok{background:rgba(52,211,153,.2);color:#d1fae5;border-color:#34d399}
+.tile.bad{background:#7f1d1d;animation:shake .3s}
+.said{min-height:48px;text-align:center;font:italic bold 17px Georgia,serif;color:#ffd98a;margin:12px 0 0}
+.big-phrase{font-size:22px;font-weight:800;text-align:center;line-height:1.35;color:var(--gold);margin:16px 0}
+</style>
+</head>
+<body>
+<div id="app">
+
+<section class="screen active" id="s-start">
+  <div class="lang"><button data-lang="es" class="on">ES</button><button data-lang="en">EN</button></div>
+  <canvas id="heart-cv" width="440" height="440"></canvas>
+  <h1 data-i18n="appTitle"></h1>
+  <p class="muted" data-i18n="appSub"></p>
+  <div class="card">
+    <label for="in-name" data-i18n="askName"></label>
+    <input type="text" id="in-name" maxlength="24" autocomplete="off">
+    <button class="btn" id="btn-start" disabled data-i18n="start"></button>
+  </div>
+</section>
+
+<section class="screen" id="s-heart">
+  <span class="badge" id="ht-badge"></span>
+  <canvas id="heart-cv2" class="" width="440" height="440" style="width:220px;height:220px;display:block;margin:10px auto"></canvas>
+  <h2 class="center" id="ht-title"></h2>
+  <p class="center muted" id="ht-text"></p>
+  <button class="btn" id="ht-btn" data-i18n="continue"></button>
+</section>
+
+<section class="screen" id="s-intro">
+  <span class="badge" id="in-badge"></span>
+  <h2 id="in-title"></h2>
+  <div class="card" id="in-body"></div>
+  <button class="btn" id="in-btn" data-i18n="play"></button>
+</section>
+
+<section class="screen" id="s-game">
+  <span class="badge" id="g-label"></span>
+  <div id="g-area" style="margin-top:8px"></div>
+</section>
+
+<section class="screen" id="s-mc">
+  <span class="badge" id="mc-label"></span>
+  <h2 id="mc-q"></h2>
+  <div id="mc-opts"></div>
+  <div class="fb" id="mc-fb"></div>
+  <button class="btn" id="mc-next" style="display:none" data-i18n="continue"></button>
+</section>
+
+<section class="screen" id="s-reflect">
+  <span class="badge" data-i18n="reflectBadge"></span>
+  <h2 data-i18n="reflectTitle"></h2>
+  <p class="muted" data-i18n="reflectHint"></p>
+  <div id="rf-box"></div>
+  <button class="btn" id="rf-btn" disabled data-i18n="send"></button>
+</section>
+
+<section class="screen" id="s-end">
+  <canvas id="heart-cv3" width="440" height="440" style="width:200px;height:200px;display:block;margin:6px auto"></canvas>
+  <h1 class="center" id="end-title"></h1>
+  <div class="big-phrase" data-i18n="finalPhrase"></div>
+  <p class="muted center" data-i18n="endSub"></p>
+  <button class="btn" id="end-share" data-i18n="share"></button>
+  <p class="hint" id="end-msg"></p>
+  <div id="end-rank" style="display:none">
+    <h2 class="center" style="margin-top:22px">🏆 <span data-i18n="rankTitle"></span></h2>
+    <div id="rank-list"></div>
+    <p class="hint" id="rank-upd"></p>
+  </div>
+  <img id="end-img" alt="">
+</section>
+
+</div>
+
+<div class="overlay" id="memo"><div class="card" id="memo-card"></div></div>
+
+<script>
+'use strict';
+// =====================================================================
+//  LA PALABRA QUE NADIE PUDO QUEMAR · Jeremías 36 · Seminario 2026
+// =====================================================================
+const RANKING_URL = 'https://script.google.com/macros/s/AKfycbwTCdA6fbDs97164sMVTaIkBkyGA8gv94w-vY2nYSFgcfo9pbblG2UWhlgh7Cuiotgx9g/exec';
+const JUEGO_ID = 'la-palabra';
+const TEST = /[?&]test/.test(location.search);
+
+const S = { name: '', lang: 'es', id: '', li: 0, score: 0, answers: [], done: false };
+const $ = s => document.querySelector(s);
+const Q = (es, en) => ({ es, en });
+function T(o) { if (o == null) return ''; if (typeof o === 'string') return o; return o[S.lang] != null ? o[S.lang] : o.es; }
+function el(tag, cls, html) { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function rnd(n) { return Math.floor(Math.random() * n); }
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function show(id) { document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id)); window.scrollTo(0, 0); }
+function mulberry(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function cleanText(s) {
+  return String(s).replace(/ñ/g, '\u0001').replace(/Ñ/g, '\u0002').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Za-z0-9.,;:?!¿¡()'"\- \n\u0001\u0002]/g, '').replace(/\u0001/g, 'ñ').replace(/\u0002/g, 'Ñ').replace(/\s+/g, ' ').trim();
+}
+
+// ---------------- Textos de interfaz ----------------
+const UI = {
+  appTitle: Q('La Palabra que Nadie Pudo Quemar', 'The Word No One Could Burn'),
+  appSub: Q('Jeremías 36 · El rey quemó el rollo… pero Dios volvió a escribirlo. Sé como Baruc: recuperá el rollo en 5 niveles.', 'Jeremiah 36 · The king burned the scroll… but God had it written again. Be like Baruch: restore the scroll in 5 levels.'),
+  askName: Q('¿Cómo te llamás?', "What's your name?"),
+  start: Q('Comenzar', 'Start'),
+  play: Q('Entendido, ¡a jugar!', 'Got it, let’s play!'),
+  continue: Q('Continuar', 'Continue'),
+  level: Q('Nivel', 'Level'),
+  question: Q('Pregunta', 'Question'),
+  correct: Q('✔ ¡Correcto!', '✔ Correct!'),
+  tryAgain: Q('✖ Intentá de nuevo', '✖ Try again'),
+  reflectBadge: Q('Reflexión final', 'Final reflection'),
+  reflectTitle: Q('La palabra de Dios en mi vida', 'God’s word in my life'),
+  reflectHint: Q('Respondé con tus palabras (mínimo 10 caracteres cada una). Tus respuestas se enviarán al maestro.', 'Answer in your own words (at least 10 characters each). Your answers will be sent to the teacher.'),
+  send: Q('Enviar mis respuestas', 'Submit my answers'),
+  chars: Q('caracteres', 'characters'),
+  endTitle: Q('¡Rollo restaurado, {n}!', 'Scroll restored, {n}!'),
+  finalPhrase: Q('El rey quemó el rollo… pero Dios volvió a escribirlo. Su palabra sigue esperándote.', 'The king burned the scroll… but God had it written again. His word is still waiting for you.'),
+  endSub: Q('Tu puntaje es secreto hasta que lo compartas. Tocá el botón para generar tu tarjeta y enviarla al maestro.', 'Your score is secret until you share it. Tap the button to create your card and send it to the teacher.'),
+  share: Q('📤 Compartir con el Maestro', '📤 Share with the Teacher'),
+  downloaded: Q('Se descargó la imagen. Adjuntala en WhatsApp y enviásela al maestro.', 'The image was downloaded. Attach it in WhatsApp and send it to the teacher.'),
+  shared: Q('¡Listo! Gracias por compartir.', 'Done! Thanks for sharing.'),
+  score: Q('PUNTAJE', 'SCORE'),
+  cardTop: Q('SEMINARIO · JEREMÍAS 36', 'SEMINARY · JEREMIAH 36'),
+  saveMemory: Q('Seguir ✨', 'Continue ✨'),
+  rankTitle: Q('Ranking de la clase', 'Class ranking'),
+  rankDone: Q('✔ Terminó', '✔ Finished'),
+  rankLevel: Q('Nivel', 'Level'),
+  rankReflect: Q('Reflexión', 'Reflection'),
+  rankUpd: Q('Se actualiza cada 5 segundos', 'Updates every 5 seconds'),
+  rankOff: Q('Sin conexión, reintentando…', 'Offline, retrying…'),
+  rankEmpty: Q('Todavía no hay resultados…', 'No results yet…'),
+  you: Q('(vos)', '(you)')
+};
+function applyLang() {
+  document.documentElement.lang = S.lang;
+  document.querySelectorAll('[data-i18n]').forEach(e => { e.textContent = T(UI[e.dataset.i18n]); });
+  document.querySelectorAll('.lang button').forEach(b => b.classList.toggle('on', b.dataset.lang === S.lang));
+  $('#in-name').placeholder = S.lang === 'es' ? 'Tu nombre' : 'Your name';
+}
+
+// ---------------- Audio sintético ----------------
+let AC = null;
+function ac() { if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { AC = null; } } if (AC && AC.state === 'suspended') AC.resume(); return AC; }
+function tone(f, d, type, v, delay) {
+  const a = ac(); if (!a) return;
+  const o = a.createOscillator(), g = a.createGain(); o.type = type || 'sine'; o.frequency.value = f;
+  const t = a.currentTime + (delay || 0); g.gain.setValueAtTime(v || .12, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
+  o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + d + .03);
+}
+const sfx = {
+  ok() { tone(660, .12, 'triangle', .14); tone(990, .2, 'triangle', .14, .1); },
+  bad() { tone(160, .28, 'sawtooth', .1); },
+  click() { tone(540, .05, 'square', .05); },
+  hit() { tone(120, .12, 'square', .14); tone(80, .2, 'triangle', .12, .03); },
+  chime() { [784, 988, 1175].forEach((f, i) => tone(f, .25, 'sine', .1, i * .08)); },
+  win() { [523, 659, 784, 1047].forEach((f, i) => tone(f, .22, 'triangle', .14, i * .12)); },
+  beat() { tone(70, .12, 'sine', .25); tone(60, .14, 'sine', .2, .16); },
+  key() { tone(900 + Math.random() * 200, .04, 'square', .04); },
+  fire() { tone(90, .35, 'sawtooth', .08); tone(140, .25, 'sawtooth', .05, .05); },
+  msg() { tone(880, .06, 'sine', .08); tone(1320, .08, 'sine', .06, .06); }
+};
+function buzz(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { } }
+
+// ---------------- Ranking en vivo (Google Sheets) ----------------
+window.__rankLog = [];
+function sendRank(nivel, estado) {
+  const data = { id: S.id, juego: JUEGO_ID, nombre: S.name, nivel, estado, puntaje: S.score };
+  window.__rankLog.push(data);
+  if (TEST || !RANKING_URL) return;
+  try {
+    fetch(RANKING_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(data) }).catch(() => { });
+  } catch (e) { }
+}
+
+// ---------------- Loop (nunca se detiene) ----------------
+let active = null, bgAnim = null, lastT = 0, TT = 0;
+const KEY = {};
+window.addEventListener('keydown', e => { KEY[e.key] = true; if (active && active.onKey) active.onKey(e.key); });
+window.addEventListener('keyup', e => { KEY[e.key] = false; });
+function loop(t) {
+  const dt = Math.min(.05, ((t - lastT) / 1000) || 0); lastT = t; TT += dt;
+  try {
+    if (active) { if (active.update) active.update(dt); if (active.draw) active.draw(); }
+    if (bgAnim) bgAnim(dt);
+  } catch (err) { console.error(err); active = null; }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// ---------------- Helpers de canvas ----------------
+function makeCanvas(area, w, h) { const cv = el('canvas', 'gc'); cv.width = w; cv.height = h; cv.style.aspectRatio = w + '/' + h; area.appendChild(cv); return { cv, ctx: cv.getContext('2d') }; }
+function cvPos(cv, e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * cv.width / r.width, y: (e.clientY - r.top) * cv.height / r.height }; }
+function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function wrapLines(ctx, text, maxW) {
+  const words = String(text).split(' '); const lines = []; let line = '';
+  for (const w of words) { const t = line ? line + ' ' + w : w; if (ctx.measureText(t).width > maxW && line) { lines.push(line); line = w; } else line = t; }
+  if (line) lines.push(line); return lines;
+}
+function hex2rgb(h) { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+function mix(a, b, k) { const A = hex2rgb(a), B = hex2rgb(b); return 'rgb(' + A.map((v, i) => Math.round(v + (B[i] - v) * k)).join(',') + ')'; }
+
+
+// ---------------- EL ROLLO (quemado → restaurado) ----------------
+const HOLES = (() => { const r = mulberry(36); return Array.from({ length: 9 }, () => [(r() - .5) * .8, (r() - .5) * .7, .06 + r() * .1]); })();
+function drawScroll(ctx, cx, cy, w, stage, t) {
+  stage = clamp(stage, 0, 5); const k = stage / 5; const h = w * .62, rw = w * .07;
+  const x0 = cx - w / 2 + rw, x1 = cx + w / 2 - rw, y0 = cy - h / 2;
+  ctx.save();
+  if (stage >= 5) { ctx.shadowColor = 'rgba(232,178,77,.7)'; ctx.shadowBlur = w * .12; }
+  const g = ctx.createLinearGradient(0, y0, 0, y0 + h);
+  g.addColorStop(0, mix('#2a1d14', '#f6e7c1', k)); g.addColorStop(1, mix('#120c08', '#e3c98f', k));
+  ctx.fillStyle = g; ctx.fillRect(x0, y0, x1 - x0, h);
+  ctx.shadowBlur = 0;
+  // agujeros quemados (desaparecen a medida que se restaura)
+  if (k < 1) {
+    HOLES.forEach((p, i) => {
+      if (i < stage * 2) return;
+      const hx = cx + p[0] * w, hy = cy + p[1] * h, hr = p[2] * w * (1 - k * .5);
+      ctx.fillStyle = 'rgba(5,4,3,.95)'; ctx.beginPath(); ctx.arc(hx, hy, hr, 0, 6.28); ctx.fill();
+      ctx.strokeStyle = 'rgba(249,115,22,' + (.5 + .4 * Math.sin(t * 6 + i)) * (1 - k) + ')'; ctx.lineWidth = Math.max(1.5, w / 120); ctx.stroke();
+    });
+  }
+  // líneas de texto escritas
+  const nl = Math.round(k * 6);
+  ctx.strokeStyle = stage >= 5 ? 'rgba(120,70,20,.85)' : 'rgba(90,55,25,.75)'; ctx.lineWidth = Math.max(1.5, w / 110); ctx.lineCap = 'round';
+  for (let i = 0; i < nl; i++) {
+    const ly = y0 + h * .2 + i * h * .12; ctx.beginPath();
+    for (let x = x0 + w * .08; x < x1 - w * .08; x += w * .02) { const yy = ly + Math.sin(x * .3 + i) * w * .004; if (x === x0 + w * .08) ctx.moveTo(x, yy); else ctx.lineTo(x, yy); }
+    ctx.stroke();
+  }
+  if (stage >= 5) {
+    ctx.fillStyle = '#7c4a12'; ctx.textAlign = 'center'; ctx.font = 'italic bold ' + Math.round(w * .085) + 'px Georgia,serif';
+    ctx.fillText(T(Q('La palabra de Dios', 'The word of God')), cx, cy + w * .03);
+  }
+  // rodillos
+  [x0, x1].forEach(x => {
+    const rg = ctx.createLinearGradient(x - rw, 0, x + rw, 0); rg.addColorStop(0, '#5b3415'); rg.addColorStop(.5, '#a8692e'); rg.addColorStop(1, '#4a2a10');
+    ctx.fillStyle = rg; rr(ctx, x - rw, y0 - h * .08, rw * 2, h * 1.16, rw); ctx.fill();
+    ctx.fillStyle = '#E8B24D'; ctx.beginPath(); ctx.arc(x, y0 - h * .1, rw * .55, 0, 6.28); ctx.fill(); ctx.beginPath(); ctx.arc(x, y0 + h * 1.1, rw * .55, 0, 6.28); ctx.fill();
+  });
+  // brasas cuando está quemado
+  if (k < .4) {
+    for (let i = 0; i < 10; i++) {
+      const ex = cx + Math.sin(i * 7.1 + t) * w * .4, ey = y0 + h - ((t * 40 + i * 37) % (h * 1.2));
+      ctx.fillStyle = 'rgba(249,115,22,' + (.6 - k) + ')'; ctx.beginPath(); ctx.arc(ex, ey, w / 100 + 1, 0, 6.28); ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+function animScroll(cvId, getStage) {
+  const cv = $(cvId), ctx = cv.getContext('2d');
+  bgAnim = () => { ctx.clearRect(0, 0, cv.width, cv.height); drawScroll(ctx, cv.width / 2, cv.height / 2, cv.width * .82, getStage(), TT); };
+}
+
+// =====================================================================
+//  NIVEL 1 · CHAT: ¿ME LO DECÍS DE VERDAD?
+// =====================================================================
+function gameChat(area, done) {
+  const scenes = [
+    { who: 'Martín', av: '🧑🏻', ctx: Q('Ves que Martín tiene restos de comida entre los dientes.', 'You notice Martín has food stuck in his teeth.'),
+      npc: [Q('¡Me toca pasar al frente a exponer! 😬', 'It’s my turn to present in front of the class! 😬'), Q('¿Estoy bien? ¿Me veo bien?', 'Am I okay? Do I look okay?')],
+      opts: [
+        { t: Q('¡Sí, re bien! Andá tranquilo 👍', 'Yeah, you look great! Go for it 👍'), good: false, fb: Q('Martín pasó al frente y algunos se rieron. Después te preguntó: “¿Por qué no me avisaste?” Probá otra respuesta.', 'Martín went up and some kids laughed. Later he asked: “Why didn’t you tell me?” Try another answer.') },
+        { t: Q('Ojo, tenés algo en los dientes 😅 Fijate antes de pasar', 'Heads up, you’ve got something in your teeth 😅 Check before you go'), good: true, r: Q('¡Uh, gracias! Me salvaste 🙌 Por eso sos mi amigo.', 'Oh, thanks! You saved me 🙌 That’s why you’re my friend.') },
+        { t: Q('(No decir nada)', '(Say nothing)'), good: false, fb: Q('Quedarte callado no lo ayudó. Un amigo que se preocupa habla, aunque sea incómodo. Probá otra respuesta.', 'Staying quiet didn’t help him. A friend who cares speaks up, even if it’s awkward. Try another answer.') }
+      ] },
+    { who: 'Sofi', av: '👧🏽', ctx: Q('Sabés que en esa fiesta va a haber actividades inapropiadas.', 'You know there will be inappropriate activities at that party.'),
+      npc: [Q('¿Vamos el sábado a la fiesta de Nico? 🎉', 'Are we going to Nico’s party on Saturday? 🎉'), Q('Va a ir toda la escuela', 'The whole school is going')],
+      opts: [
+        { t: Q('Dale, vamos 😎', 'Sure, let’s go 😎'), good: false, fb: Q('Sofi fue confiando en vos… y la pasó mal. Un amigo de verdad avisa. Probá otra respuesta.', 'Sofi went trusting you… and had a bad time. A true friend warns. Try another answer.') },
+        { t: Q('Sofi, sé que ahí va a haber cosas que no están bien. ¿Y si hacemos algo nosotros ese día? 🍕🎮', 'Sofi, I know there will be things that aren’t right there. What if we do something ourselves that day? 🍕🎮'), good: true, r: Q('Mmm… tenés razón. ¡Gracias por decírmelo! Organicemos algo 💛', 'Hmm… you’re right. Thanks for telling me! Let’s plan something 💛') },
+        { t: Q('Mmm… no sé 🤷', 'Hmm… I don’t know 🤷'), good: false, fb: Q('Sofi no entendió el peligro. Hablar con amor y claridad puede proteger a alguien. Probá otra respuesta.', 'Sofi didn’t understand the danger. Speaking with love and clarity can protect someone. Try another answer.') }
+      ] }
+  ];
+  const box = el('div', 'chat'); area.appendChild(box);
+  const head = el('div', 'chat-head'); box.appendChild(head);
+  const log = el('div', 'chat-log'); box.appendChild(log);
+  const opts = el('div', 'chat-opts'); area.appendChild(opts);
+  let si = 0, pts = 100, fin = false;
+  const bubble = (cls, html) => { const b = el('div', 'bub ' + cls, html); log.appendChild(b); log.scrollTop = log.scrollHeight; return b; };
+  const later = (ms, fn) => setTimeout(() => { if (!fin || fn.force) fn(); }, ms);
+  function scene() {
+    const sc = scenes[si]; opts.innerHTML = ''; log.innerHTML = '';
+    head.innerHTML = '<span class="av">' + sc.av + '</span><b>' + sc.who + '</b><small>' + T(Q('en línea', 'online')) + '</small>';
+    bubble('sys', '👀 ' + T(sc.ctx));
+    sc.npc.forEach((m, i) => later(500 + i * 900, () => { sfx.msg(); bubble('them', T(m)); if (i === sc.npc.length - 1) later(400, showOpts); }));
+    let tries = 0;
+    function showOpts() {
+      opts.innerHTML = '';
+      opts.appendChild(el('p', 'hint', T(Q('Elegí qué responder:', 'Choose your reply:'))));
+      sc.opts.forEach(o => {
+        if (o.used) return;
+        const b = el('button', 'opt', T(o.t)); b.dataset.good = o.good ? '1' : '0';
+        b.onclick = () => {
+          opts.innerHTML = ''; sfx.click(); bubble('me', T(o.t));
+          if (o.good) {
+            later(700, () => {
+              sfx.msg(); bubble('them', T(o.r)); sfx.ok();
+              if (tries === 0) pts += 30;
+              later(1300, () => {
+                si++;
+                if (si < scenes.length) scene();
+                else {
+                  bubble('sys gold', '💡 ' + T(Q('El Padre Celestial y Jesucristo ven lo que nosotros no vemos… y nos hablan por medio de las Escrituras. (2 Nefi 32:3 · DyC 1:37–38)', 'Heavenly Father and Jesus Christ see what we cannot see… and they speak to us through the scriptures. (2 Nephi 32:3 · D&C 1:37–38)')));
+                  const nb = el('button', 'btn', T(UI.continue)); nb.onclick = () => { fin = true; sfx.win(); done(pts); }; opts.appendChild(nb);
+                }
+              });
+            });
+          } else {
+            o.used = true; tries++;
+            later(700, () => { sfx.bad(); bubble('sys warn', '🤔 ' + T(o.fb)); later(600, showOpts); });
+          }
+        };
+        opts.appendChild(b);
+      });
+    }
+  }
+  scene();
+}
+
+// =====================================================================
+//  NIVEL 2 · EL ESCRIBA VELOZ (teclado en pantalla)
+// =====================================================================
+function baseLetter(c) { return c === 'Ñ' ? 'Ñ' : c.normalize('NFD')[0]; }
+function gameScribe(area, done) {
+  const words = S.lang === 'es' ? ['ESCRITURAS', 'VOLVERSE', 'PERDÓN', 'SEÑOR'] : ['SCRIPTURES', 'RETURN', 'FORGIVE', 'LORD'];
+  const INK = 15;
+  let wi = 0, pos = 0, ink = INK, errors = 0, fin = false, pause = 0;
+  const dict = el('div', 'dict'); area.appendChild(dict);
+  const parch = el('div', 'parch'); area.appendChild(parch);
+  const inkBar = el('div', 'inkbar', '<i></i>'); area.appendChild(inkBar);
+  const msg = el('p', 'hint', T(Q('Tocá las letras en orden antes de que se acabe la tinta ✒️', 'Tap the letters in order before the ink runs out ✒️'))); area.appendChild(msg);
+  const kb = el('div', 'kb'); area.appendChild(kb);
+  const rows = S.lang === 'es' ? ['QWERTYUIOP', 'ASDFGHJKLÑ', 'ZXCVBNM'] : ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
+  const keys = {};
+  rows.forEach(r => { const row = el('div', 'kbr'); [...r].forEach(c => { const b = el('button', 'k', c); b.addEventListener('pointerdown', e => { e.preventDefault(); press(c); }); keys[c] = b; row.appendChild(b); }); kb.appendChild(row); });
+  function render() {
+    const w = words[wi];
+    dict.innerHTML = '<small>' + T(Q('📜 Jeremías dicta · palabra ', '📜 Jeremiah dictates · word ')) + (wi + 1) + '/' + words.length + '</small><b>' + w + '</b>';
+    parch.innerHTML = [...w].map((c, i) => '<span class="' + (i < pos ? 'w' : (i === pos ? 'cur' : '')) + '">' + (i < pos ? c : '_') + '</span>').join('');
+  }
+  function press(c) {
+    if (fin || pause > 0) return;
+    const w = words[wi];
+    if (c === baseLetter(w[pos])) {
+      sfx.key(); pos++; render();
+      if (pos >= w.length) { sfx.chime(); pause = .9; parch.classList.add('done'); }
+    } else {
+      errors++; sfx.bad(); buzz(60);
+      const b = keys[c]; if (b) { b.classList.add('bad'); setTimeout(() => b.classList.remove('bad'), 300); }
+    }
+  }
+  render();
+  active = {
+    onKey(k) { const c = k.length === 1 ? k.toUpperCase() : ''; if (c && /[A-ZÑ]/.test(c)) press(c); },
+    update(dt) {
+      if (fin) return;
+      if (pause > 0) {
+        pause -= dt;
+        if (pause <= 0) {
+          parch.classList.remove('done'); wi++; pos = 0; ink = INK;
+          if (wi >= words.length) { fin = true; sfx.win(); msg.textContent = T(Q('¡Baruc estaría orgulloso! ✍️', 'Baruch would be proud! ✍️')); setTimeout(() => done(100 + Math.max(0, 60 - errors * 5)), 900); return; }
+          render();
+        }
+        return;
+      }
+      ink -= dt;
+      if (ink <= 0) { ink = INK; pos = 0; sfx.bad(); msg.textContent = T(Q('Se secó la tinta… ¡empezá la palabra otra vez!', 'The ink dried… start the word again!')); render(); }
+      inkBar.firstChild.style.width = (ink / INK * 100) + '%';
+    }
+  };
+}
+
+// =====================================================================
+//  NIVEL 3 · RESCATÁ EL ROLLO DEL FUEGO
+// =====================================================================
+function gameRescue(area, done) {
+  const W = 360, H = 480, FIRE = 420;
+  const { cv, ctx } = makeCanvas(area, W, H);
+  area.appendChild(el('p', 'hint', T(Q('¡Tocá los pedazos del rollo antes de que caigan al fuego del rey!', 'Tap the pieces of the scroll before they fall into the king’s fire!'))));
+  const items = S.lang === 'es'
+    ? ['📜 Jeremías dicta', '✍️ Baruc escribe', '🔥 El rey quema', '📜 Se escribe otra vez', 'Vuelve', 'a tomar', 'otro rollo', 'y escribe…']
+    : ['📜 Jeremiah dictates', '✍️ Baruch writes', '🔥 The king burns', '📜 Written again', 'Take thee', 'again', 'another roll', 'and write…'];
+  const saved = new Array(items.length).fill(false);
+  let falling = [], spawn = .3, burned = 0, fin = false, parts = [], t = 0;
+  cv.addEventListener('pointerdown', e => {
+    if (fin) return; const p = cvPos(cv, e);
+    for (const f of falling) {
+      if (!f.gone && Math.abs(p.x - f.x) < f.w / 2 + 12 && Math.abs(p.y - f.y) < 26) {
+        f.gone = true; saved[f.i] = true; sfx.ok();
+        for (let k = 0; k < 10; k++) parts.push({ x: f.x, y: f.y, vx: (Math.random() - .5) * 160, vy: -Math.random() * 160, a: 1, c: '#ffd98a' });
+        if (saved.every(Boolean)) { fin = true; sfx.win(); setTimeout(() => done(100 + Math.max(0, 60 - burned * 8)), 1500); }
+        break;
+      }
+    }
+  });
+  ctx.font = 'bold 14px system-ui';
+  if (TEST) window.__rescue = { get falling() { return falling; } };
+  active = {
+    update(dt) {
+      t += dt; if (fin) { parts.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.a -= dt; }); return; }
+      spawn -= dt;
+      const pending = items.map((_, i) => i).filter(i => !saved[i] && !falling.some(f => !f.gone && f.i === i));
+      if (spawn <= 0 && pending.length && falling.filter(f => !f.gone).length < 3) {
+        spawn = Math.max(.6, 1.2 - saved.filter(Boolean).length * .07);
+        const i = pending[rnd(pending.length)]; ctx.font = 'bold 14px system-ui';
+        const w = ctx.measureText(items[i]).width + 26;
+        falling.push({ i, x: clamp(40 + Math.random() * (W - 80), w / 2 + 6, W - w / 2 - 6), y: 50, vy: 55 + Math.random() * 25 + saved.filter(Boolean).length * 6, w, ph: Math.random() * 6 });
+      }
+      for (const f of falling) {
+        if (f.gone) continue;
+        f.y += f.vy * dt; f.x += Math.sin(t * 2 + f.ph) * 20 * dt;
+        if (f.y > FIRE) { f.gone = true; burned++; sfx.fire(); for (let k = 0; k < 14; k++) parts.push({ x: f.x, y: FIRE, vx: (Math.random() - .5) * 120, vy: -Math.random() * 200, a: 1, c: '#f97316' }); }
+      }
+      falling = falling.filter(f => !f.gone);
+      parts.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 200 * dt; p.a -= dt * 1.3; }); parts = parts.filter(p => p.a > 0);
+    },
+    draw() {
+      const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#120c1c'); g.addColorStop(1, '#2a1208');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      // estante de piezas rescatadas
+      ctx.fillStyle = 'rgba(232,178,77,.12)'; rr(ctx, 8, 6, W - 16, 34, 10); ctx.fill();
+      const n = saved.filter(Boolean).length;
+      ctx.fillStyle = '#E8B24D'; ctx.font = 'bold 13px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('📜 ' + T(Q('Rescatados ', 'Rescued ')) + n + '/' + items.length, W / 2, 28);
+      // piezas cayendo
+      ctx.font = 'bold 14px system-ui';
+      for (const f of falling) {
+        const heat = clamp((f.y - 250) / 170, 0, 1);
+        ctx.fillStyle = mix('#f6e7c1', '#c2410c', heat); rr(ctx, f.x - f.w / 2, f.y - 16, f.w, 32, 6); ctx.fill();
+        ctx.fillStyle = '#5b3415'; ctx.fillRect(f.x - f.w / 2 - 4, f.y - 18, 6, 36); ctx.fillRect(f.x + f.w / 2 - 2, f.y - 18, 6, 36);
+        ctx.fillStyle = '#3b2410'; ctx.fillText(items[f.i], f.x, f.y + 5);
+      }
+      // fuego del brasero
+      for (let i = 0; i < 26; i++) {
+        const fx = 20 + i * 12.8, fh = 34 + Math.sin(t * 9 + i * 1.7) * 12 + Math.sin(t * 5 + i) * 8;
+        const fg = ctx.createLinearGradient(0, FIRE + 30 - fh, 0, FIRE + 30); fg.addColorStop(0, 'rgba(253,224,71,0)'); fg.addColorStop(.4, 'rgba(249,115,22,.85)'); fg.addColorStop(1, 'rgba(220,38,38,.95)');
+        ctx.fillStyle = fg; ctx.beginPath(); ctx.moveTo(fx - 9, FIRE + 30); ctx.quadraticCurveTo(fx, FIRE + 30 - fh * 1.2, fx + 9, FIRE + 30); ctx.fill();
+      }
+      ctx.fillStyle = '#3f3f46'; rr(ctx, 10, FIRE + 28, W - 20, 30, 8); ctx.fill();
+      ctx.fillStyle = '#a1a1aa'; ctx.font = 'bold 11px system-ui'; ctx.fillText(T(Q('👑 BRASERO DEL REY JOACIM', '👑 KING JEHOIAKIM’S BRAZIER')), W / 2, FIRE + 48);
+      parts.forEach(p => { ctx.globalAlpha = Math.max(0, p.a); ctx.fillStyle = p.c; ctx.fillRect(p.x, p.y, 4, 4); }); ctx.globalAlpha = 1;
+      if (fin) {
+        ctx.fillStyle = 'rgba(10,8,6,.82)'; ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#E8B24D'; ctx.font = 'bold 22px system-ui'; ctx.fillText(T(Q('¡La palabra no se pudo destruir!', 'The word could not be destroyed!')), W / 2, 150);
+        ctx.fillStyle = '#f6e7c1'; ctx.font = 'bold 15px system-ui';
+        items.slice(0, 4).forEach((s, i) => ctx.fillText(s, W / 2, 200 + i * 28));
+        ctx.font = 'italic bold 16px Georgia,serif'; ctx.fillStyle = '#ffd98a';
+        ctx.fillText('“' + items.slice(4).join(' ') + '”', W / 2, 340);
+        ctx.font = '13px system-ui'; ctx.fillText(T(Q('Jeremías 36:28', 'Jeremiah 36:28')), W / 2, 362);
+      }
+    }
+  };
+}
+
+// =====================================================================
+//  NIVEL 4 · ¿OÍS O ESCUCHÁS? (sintonizar la radio)
+// =====================================================================
+function gameRadio(area, done) {
+  const W = 360, H = 260, FMIN = 88, FMAX = 108;
+  const { cv, ctx } = makeCanvas(area, W, H);
+  const slider = el('input'); slider.type = 'range'; slider.min = FMIN; slider.max = FMAX; slider.step = .05; slider.value = 98; slider.className = 'dial';
+  area.appendChild(slider);
+  area.appendChild(el('p', 'hint', T(Q('Mové la perilla despacio. Cuando la señal esté clara, quedate quieto un segundo para sintonizarla. 🎧 Con sonido es más fácil.', 'Move the dial slowly. When the signal is clear, hold still for a second to tune it in. 🎧 Sound makes it easier.'))));
+  const card = el('div', 'station', ''); area.appendChild(card);
+  const ST = [
+    { a: Q('Oyen pero no escuchan', 'They hear but don’t listen'), b: Q('El rey oyó la palabra y no se conmovió (36:24)', 'The king heard the word and was not moved (36:24)') },
+    { a: Q('Un mensaje que nadie atiende', 'A message no one heeds'), b: Q('Las advertencias del Señor por medio de Jeremías', 'The Lord’s warnings through Jeremiah') },
+    { a: Q('Adoran lo que ellos mismos hicieron', 'They worship what they made themselves'), b: Q('Judá adoraba ídolos en vez de volverse al Señor', 'Judah worshipped idols instead of turning to the Lord') },
+    { a: Q('Escuchar de verdad', 'Truly listening'), b: Q('Leer las Escrituras con el deseo de volvernos al Señor', 'Reading the scriptures with the desire to turn to the Lord') }
+  ];
+  // frecuencias separadas
+  const freqs = []; while (freqs.length < ST.length) { const f = 89.5 + Math.random() * 17; if (freqs.every(x => Math.abs(x - f) > 3.2) && Math.abs(f - 98) > 1.5) freqs.push(f); }
+  const st = ST.map((s, i) => ({ ...s, f: freqs[i], got: false }));
+  if (TEST) window.__radio = { st, slider };
+  let lock = 0, paused = false, found = 0, fin = false, t0 = TT;
+  // audio: estática + tono
+  let noiseGain = null, toneGain = null, nodes = [];
+  try {
+    const a = ac();
+    if (a) {
+      const buf = a.createBuffer(1, a.sampleRate * 2, a.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      const src = a.createBufferSource(); src.buffer = buf; src.loop = true;
+      noiseGain = a.createGain(); noiseGain.gain.value = 0; src.connect(noiseGain); noiseGain.connect(a.destination); src.start();
+      const osc = a.createOscillator(); osc.type = 'sine'; osc.frequency.value = 523;
+      toneGain = a.createGain(); toneGain.gain.value = 0; osc.connect(toneGain); toneGain.connect(a.destination); osc.start();
+      nodes = [src, osc];
+    }
+  } catch (e) { }
+  const stopAudio = () => { nodes.forEach(n => { try { n.stop(); } catch (e) { } }); nodes = []; };
+  const signal = () => { const f = +slider.value; let best = 0, bi = -1; st.forEach((s, i) => { if (s.got) return; const v = Math.max(0, 1 - Math.abs(f - s.f) / 1.3); if (v > best) { best = v; bi = i; } }); return { v: best, i: bi }; };
+  function reveal(i) {
+    paused = true; const s = st[i]; s.got = true; found++; sfx.chime();
+    card.innerHTML = '<div class="st-n">📻 ' + T(Q('Estación ', 'Station ')) + found + '/' + st.length + ' · ' + s.f.toFixed(1) + ' FM</div><div class="st-a">🎵 ' + T(s.a) + '</div><div class="st-arrow">⬇</div><div class="st-b">📜 ' + T(s.b) + '</div>';
+    const b = el('button', 'btn', found < st.length ? T(Q('Seguir sintonizando 📻', 'Keep tuning 📻')) : T(UI.continue));
+    b.onclick = () => {
+      sfx.click(); card.innerHTML = ''; paused = false; lock = 0;
+      if (found >= st.length) { fin = true; stopAudio(); done(100 + Math.max(0, Math.round(80 - (TT - t0)))); }
+    };
+    card.appendChild(b);
+  }
+  active = {
+    onKey(k) { if (k === 'ArrowLeft') slider.value = +slider.value - .1; if (k === 'ArrowRight') slider.value = +slider.value + .1; },
+    update(dt) {
+      const sg = signal();
+      if (noiseGain) noiseGain.gain.value = (paused || fin) ? 0 : .05 * (1 - sg.v) + .005;
+      if (toneGain) toneGain.gain.value = (paused || fin) ? 0 : .06 * Math.pow(sg.v, 3);
+      if (paused || fin) return;
+      if (sg.v > .82) { lock += dt; if (lock > 1) reveal(sg.i); } else lock = 0;
+    },
+    draw() {
+      const sg = signal(), f = +slider.value;
+      ctx.fillStyle = '#2b1d14'; rr(ctx, 0, 0, W, H, 18); ctx.fill();
+      ctx.fillStyle = '#0d1324'; rr(ctx, 16, 16, W - 32, 120, 12); ctx.fill();
+      // estática
+      const dots = Math.round(260 * (1 - sg.v));
+      for (let i = 0; i < dots; i++) { ctx.fillStyle = 'rgba(200,210,230,' + Math.random() * .6 + ')'; ctx.fillRect(18 + Math.random() * (W - 36), 18 + Math.random() * 116, 2, 2); }
+      // onda clara
+      ctx.strokeStyle = 'rgba(45,212,232,' + sg.v + ')'; ctx.lineWidth = 3; ctx.beginPath();
+      for (let x = 20; x < W - 20; x += 3) { const y = 76 + Math.sin(x * .08 + TT * 8) * 30 * sg.v; if (x === 20) ctx.moveTo(x, y); else ctx.lineTo(x, y); } ctx.stroke();
+      ctx.fillStyle = '#E8B24D'; ctx.font = 'bold 26px system-ui'; ctx.textAlign = 'center'; ctx.fillText(f.toFixed(1) + ' FM', W / 2, 60);
+      // escala
+      ctx.fillStyle = '#f6e7c1'; rr(ctx, 16, 150, W - 32, 44, 8); ctx.fill();
+      ctx.fillStyle = '#5b3415'; ctx.font = '10px system-ui';
+      for (let v = FMIN; v <= FMAX; v += 2) { const x = 26 + (v - FMIN) / (FMAX - FMIN) * (W - 52); ctx.fillRect(x, 150, 1.5, 12); ctx.fillText(v, x, 186); }
+      st.forEach(s => { if (s.got) { const x = 26 + (s.f - FMIN) / (FMAX - FMIN) * (W - 52); ctx.fillStyle = '#16a34a'; ctx.beginPath(); ctx.arc(x, 170, 5, 0, 6.28); ctx.fill(); } });
+      const nx = 26 + (f - FMIN) / (FMAX - FMIN) * (W - 52); ctx.fillStyle = '#dc2626'; ctx.fillRect(nx - 1.5, 146, 3, 52);
+      // barras de señal
+      for (let i = 0; i < 5; i++) { ctx.fillStyle = sg.v > i / 5 ? '#34d399' : 'rgba(255,255,255,.15)'; ctx.fillRect(30 + i * 14, 240 - i * 6 - 10, 10, 10 + i * 6); }
+      ctx.fillStyle = '#B8C2D9'; ctx.font = 'bold 13px system-ui'; ctx.textAlign = 'right';
+      ctx.fillText(T(Q('Estaciones ', 'Stations ')) + found + '/' + st.length, W - 24, 236);
+      if (lock > 0) { ctx.fillStyle = '#34d399'; ctx.fillRect(120, 226, 100 * Math.min(1, lock), 8); }
+    }
+  };
+}
+
+// =====================================================================
+//  NIVEL 5 · EL DICTADO DE ELI (memoria de secuencia)
+// =====================================================================
+function gameEli(area, done) {
+  const rounds = S.lang === 'es' ? [
+    { seq: ['Vuelve', 'a tomar', 'otro rollo'], extra: ['fuego', 'silencio', 'rey', 'brasero', 'ruido', 'olvido'], phrase: '“Vuelve a tomar otro rollo y escribe…” (Jeremías 36:28)' },
+    { seq: ['Escribiré', 'Mi ley', 'en su', 'corazón'], extra: ['piedra', 'tinta', 'ceniza', 'temor', 'olvido'], phrase: '“Escribiré Mi ley en su corazón” (Jeremías 31:33)' },
+    { seq: ['El rey', 'quemó', 'el rollo', 'Dios', 'volvió a escribirlo'], extra: ['silencio', 'ruido', 'ceniza', 'olvido'], phrase: 'El rey quemó el rollo… pero Dios volvió a escribirlo.' }
+  ] : [
+    { seq: ['Take thee', 'again', 'another roll'], extra: ['fire', 'silence', 'king', 'brazier', 'noise', 'forget'], phrase: '“Take thee again another roll, and write…” (Jeremiah 36:28)' },
+    { seq: ['I will', 'write', 'my law', 'in their hearts'], extra: ['stone', 'ink', 'ashes', 'fear', 'forget'], phrase: '“I will write my law in their hearts” (Jeremiah 31:33)' },
+    { seq: ['The king', 'burned', 'the scroll', 'God', 'had it written again'], extra: ['silence', 'noise', 'ashes', 'forget'], phrase: 'The king burned the scroll… but God had it written again.' }
+  ];
+  let ri = 0, step = 0, errors = 0, showing = false, fin = false;
+  const info = el('p', 'hint', ''); area.appendChild(info);
+  const grid = el('div', 'tiles'); area.appendChild(grid);
+  const said = el('div', 'said'); area.appendChild(said);
+  const btn = el('button', 'btn', ''); area.appendChild(btn);
+  let tiles = [];
+  if (TEST) window.__eli = { get seq() { return rounds[ri].seq; }, get showing() { return showing; } };
+  function setup() {
+    const R = rounds[ri]; step = 0; said.textContent = '';
+    info.innerHTML = '🕶️ ' + T(Q('Ronda ', 'Round ')) + (ri + 1) + '/' + rounds.length + ' · ' + T(Q('Mirá el orden en que se iluminan las palabras y repetilo de memoria, como Eli.', 'Watch the order in which the words light up and repeat it from memory, like Eli.'));
+    grid.innerHTML = '';
+    tiles = shuffle(R.seq.concat(R.extra).slice(0, 9)).map(w => {
+      const b = el('button', 'tile', w); b.dataset.w = w;
+      b.onclick = () => tap(b); grid.appendChild(b); return b;
+    });
+    btn.textContent = '▶ ' + T(Q('Escuchar el dictado', 'Hear the dictation')); btn.disabled = false; btn.style.display = '';
+    btn.onclick = play;
+  }
+  function play() {
+    const R = rounds[ri]; showing = true; btn.disabled = true; step = 0; said.textContent = '';
+    tiles.forEach(t => t.classList.remove('ok', 'lit'));
+    R.seq.forEach((w, i) => {
+      setTimeout(() => { const t = tiles.find(x => x.dataset.w === w); t.classList.add('lit'); tone(440 + i * 110, .25, 'sine', .1); }, 400 + i * 850);
+      setTimeout(() => { const t = tiles.find(x => x.dataset.w === w); t.classList.remove('lit'); }, 400 + i * 850 + 650);
+    });
+    setTimeout(() => { showing = false; btn.textContent = '🔁 ' + T(Q('Repetir dictado', 'Replay dictation')); btn.disabled = false; info.innerHTML = '✍️ ' + T(Q('Ahora tocá las palabras en el mismo orden.', 'Now tap the words in the same order.')); }, 400 + R.seq.length * 850);
+  }
+  function tap(b) {
+    if (showing || fin || b.classList.contains('ok')) return;
+    const R = rounds[ri];
+    if (b.dataset.w === R.seq[step]) {
+      sfx.click(); b.classList.add('ok'); step++; said.textContent = R.seq.slice(0, step).join(' ') + '…';
+      if (step >= R.seq.length) {
+        sfx.chime(); said.textContent = R.phrase; btn.style.display = 'none';
+        setTimeout(() => {
+          ri++;
+          if (ri >= rounds.length) { fin = true; sfx.win(); info.textContent = T(Q('¡Llevás la palabra en el corazón! 💛', 'You carry the word in your heart! 💛')); setTimeout(() => done(100 + Math.max(0, 60 - errors * 10)), 1200); }
+          else setup();
+        }, 1800);
+      }
+    } else {
+      errors++; sfx.bad(); buzz(80); b.classList.add('bad'); setTimeout(() => b.classList.remove('bad'), 400);
+      step = 0; tiles.forEach(t => t.classList.remove('ok')); said.textContent = T(Q('Casi… volvé a empezar la frase (podés repetir el dictado).', 'Almost… start the phrase again (you can replay the dictation).'));
+    }
+  }
+  setup();
+}
+
+// =====================================================================
+//  CONTENIDO (textos del PowerPoint de la Lección 135)
+// =====================================================================
+const LEVELS = [
+  {
+    intro: {
+      title: Q('¿Me lo decís de verdad?', 'Will you tell me the truth?'),
+      body: Q(
+        '<div class="cols"><div><b>🦷 Caso 1</b>Tenés restos de comida entre los dientes… y un amigo lo ve.</div><div><b>🎉 Caso 2</b>Te invitaron a una fiesta… y tu amigo sabe que va a haber actividades inapropiadas.</div></div><p><b>Para pensar juntos:</b> ¿Qué haría alguien que de verdad se preocupa por vos? ¿Qué pasa si te lo dice… y qué pasa si se queda callado?</p><div class="quote">El Padre Celestial y Jesucristo ven lo que nosotros no vemos… y nos hablan por medio de las Escrituras.<small>2 Nefi 32:3 · Doctrina y Convenios 1:37–38</small></div><div class="inst">💬 Respondé los mensajes como lo haría un amigo de verdad.</div>',
+        '<div class="cols"><div><b>🦷 Case 1</b>You have food stuck in your teeth… and a friend sees it.</div><div><b>🎉 Case 2</b>You were invited to a party… and your friend knows there will be inappropriate activities.</div></div><p><b>Think together:</b> What would someone who truly cares about you do? What happens if they tell you… and what happens if they stay quiet?</p><div class="quote">Heavenly Father and Jesus Christ see what we cannot see… and they speak to us through the scriptures.<small>2 Nephi 32:3 · Doctrine and Covenants 1:37–38</small></div><div class="inst">💬 Answer the messages the way a true friend would.</div>')
+    },
+    game: gameChat,
+    q: { q: Q('¿Por qué el Señor nos habla por medio de las Escrituras?', 'Why does the Lord speak to us through the scriptures?'),
+      a: [Q('Porque ve lo que nosotros no vemos y nos ama, como un amigo de verdad', 'Because He sees what we cannot see and loves us, like a true friend'), Q('Para que tengamos algo que leer los domingos', 'So we have something to read on Sundays'), Q('Porque no le importa lo que nos pase', 'Because He doesn’t care what happens to us'), Q('Solo para contar historias antiguas', 'Only to tell old stories')] },
+    heart: { title: Q('¡Primera parte del rollo recuperada!', 'First part of the scroll restored!'), text: Q('Un amigo de verdad te dice la verdad… y el Señor también.', 'A true friend tells you the truth… and so does the Lord.') }
+  },
+  {
+    intro: {
+      title: Q('¿Para qué escribió Dios Su palabra?', 'Why did God have His word written?'),
+      body: Q(
+        '<p>En Jeremías 36:2–3 el Señor manda escribir Sus palabras en un rollo para que el pueblo de Judá se vuelva de su mal camino y Él perdone su maldad y su pecado.</p><div class="quote"><b>Las Escrituras nos ayudan a volvernos al Señor y recibir Su perdón.</b><small>Jeremías 36:2–3 · 2 Timoteo 3:16 · Alma 37:8 · Helamán 15:7</small></div><p>• ¿Qué quería el Señor para el pueblo de Judá?<br>• ¿Cómo te ayudan hoy las Escrituras a volverte a Él?</p><div class="inst">✍️ Sos Baruc: escribí las palabras que dicta Jeremías antes de que se seque la tinta.</div>',
+        '<p>In Jeremiah 36:2–3 the Lord commands that His words be written in a scroll so the people of Judah would turn from their evil way and He could forgive their iniquity and their sin.</p><div class="quote"><b>The scriptures help us turn to the Lord and receive His forgiveness.</b><small>Jeremiah 36:2–3 · 2 Timothy 3:16 · Alma 37:8 · Helaman 15:7</small></div><p>• What did the Lord want for the people of Judah?<br>• How do the scriptures help you turn to Him today?</p><div class="inst">✍️ You are Baruch: write the words Jeremiah dictates before the ink dries.</div>')
+    },
+    game: gameScribe,
+    q: { q: Q('Según Jeremías 36:3, ¿para qué mandó el Señor escribir Sus palabras?', 'According to Jeremiah 36:3, why did the Lord command that His words be written?'),
+      a: [Q('Para que el pueblo se volviera a Él y recibiera Su perdón', 'So the people would turn to Him and receive His forgiveness'), Q('Para castigar al pueblo', 'To punish the people'), Q('Para que el rey tuviera un libro más', 'So the king would have one more book'), Q('Para que solo los profetas lo leyeran', 'So only the prophets would read it')] },
+    heart: { title: Q('Las palabras vuelven al rollo', 'The words return to the scroll'), text: Q('Las Escrituras nos ayudan a volvernos al Señor y recibir Su perdón.', 'The scriptures help us turn to the Lord and receive His forgiveness.') }
+  },
+  {
+    intro: {
+      title: Q('El rey y el rollo', 'The king and the scroll'),
+      body: Q(
+        '<div class="trio"><div>📜<b>1. JEREMÍAS DICTA</b>Las palabras del Señor (36:4)</div><div>✍️<b>2. BARUC ESCRIBE</b>Lee al pueblo con valor (36:8–10)</div><div>🔥<b>3. EL REY QUEMA</b>Corta y quema el rollo (36:23–24)</div></div><div class="trio" style="grid-template-columns:1fr"><div>📜<b>4. SE ESCRIBE OTRA VEZ</b>Mandato de Dios (36:28, 32)</div></div><div class="cols"><div class="stone"><b>👑 REY JOACIM</b>• Oyó la palabra y la quemó (36:23)<br>• No tuvo temor (36:24)<br>• Terminó cautivo (22:18–19)</div><div class="flesh"><b>✍️ BARUC</b>• Escribió y leyó con valor (36:8)<br>• Fue fiel aunque era peligroso<br>• Fue protegido y bendecido (45:5)</div></div><p class="center"><b>La palabra de Dios no se puede destruir.</b></p><div class="inst">🔥 Rescatá los pedazos del rollo antes de que caigan al fuego del rey.</div>',
+        '<div class="trio"><div>📜<b>1. JEREMIAH DICTATES</b>The words of the Lord (36:4)</div><div>✍️<b>2. BARUCH WRITES</b>Reads to the people with courage (36:8–10)</div><div>🔥<b>3. THE KING BURNS</b>Cuts and burns the scroll (36:23–24)</div></div><div class="trio" style="grid-template-columns:1fr"><div>📜<b>4. WRITTEN AGAIN</b>God’s command (36:28, 32)</div></div><div class="cols"><div class="stone"><b>👑 KING JEHOIAKIM</b>• Heard the word and burned it (36:23)<br>• Was not afraid (36:24)<br>• Ended up captive (22:18–19)</div><div class="flesh"><b>✍️ BARUCH</b>• Wrote and read with courage (36:8)<br>• Was faithful even though it was dangerous<br>• Was protected and blessed (45:5)</div></div><p class="center"><b>The word of God cannot be destroyed.</b></p><div class="inst">🔥 Rescue the pieces of the scroll before they fall into the king’s fire.</div>')
+    },
+    game: gameRescue,
+    q: { q: Q('¿Qué hizo el Señor después de que el rey quemó el rollo?', 'What did the Lord do after the king burned the scroll?'),
+      a: [Q('Mandó a Jeremías tomar otro rollo y escribir de nuevo todas las palabras', 'He told Jeremiah to take another roll and write all the words again'), Q('Dejó que la palabra se perdiera para siempre', 'He let the word be lost forever'), Q('Le pidió perdón al rey', 'He asked the king for forgiveness'), Q('No hizo nada', 'He did nothing')] },
+    heart: { title: Q('El fuego no pudo destruirla', 'The fire could not destroy it'), text: Q('La palabra de Dios no se puede destruir.', 'The word of God cannot be destroyed.') }
+  },
+  {
+    intro: {
+      title: Q('¿Oís… o escuchás?', 'Do you hear… or listen?'),
+      body: Q(
+        '<p>🎵 <b>“The Sound of Silence” · Disturbed (2015)</b></p><p><b>De qué habla:</b> gente que oye pero no escucha, que ignora un mensaje importante y que adora lo que fabricó con sus propias manos.</p><div class="cols"><div><b>LA CANCIÓN</b>• Oyen pero no escuchan<br>• Un mensaje que nadie atiende<br>• Adoran lo que ellos mismos hicieron</div><div><b>JEREMÍAS 36</b>• El rey oyó la palabra y no se conmovió (36:24)<br>• Las advertencias del Señor por medio de Jeremías<br>• Judá adoraba ídolos en vez de volverse al Señor</div></div><p><i>“¿Hay momentos en que leés las Escrituras… pero no las escuchás de verdad?”</i></p><div class="inst">📻 Sintonizá la radio: buscá la señal clara entre el ruido.</div>',
+        '<p>🎵 <b>“The Sound of Silence” · Disturbed (2015)</b></p><p><b>What it’s about:</b> people who hear but don’t listen, who ignore an important message and worship what they made with their own hands.</p><div class="cols"><div><b>THE SONG</b>• They hear but don’t listen<br>• A message no one heeds<br>• They worship what they made</div><div><b>JEREMIAH 36</b>• The king heard the word and was not moved (36:24)<br>• The Lord’s warnings through Jeremiah<br>• Judah worshipped idols instead of turning to the Lord</div></div><p><i>“Are there times when you read the scriptures… but don’t truly listen?”</i></p><div class="inst">📻 Tune the radio: find the clear signal through the noise.</div>')
+    },
+    game: gameRadio,
+    q: { q: Q('Según Jeremías 36:24, ¿cómo reaccionaron el rey y sus siervos al oír la palabra?', 'According to Jeremiah 36:24, how did the king and his servants react when they heard the word?'),
+      a: [Q('No tuvieron temor ni se conmovieron', 'They were not afraid and were not moved'), Q('Se arrepintieron enseguida', 'They repented right away'), Q('Lloraron y pidieron perdón', 'They wept and asked forgiveness'), Q('Agradecieron a Jeremías', 'They thanked Jeremiah')] },
+    heart: { title: Q('Ahora escuchás de verdad', 'Now you truly listen'), text: Q('La diferencia está en leer con el deseo de volvernos al Señor.', 'The difference is reading with the desire to turn to the Lord.') }
+  },
+  {
+    intro: {
+      title: Q('La palabra que nadie pudo quemar', 'The word no one could burn'),
+      body: Q(
+        '<p>🎬 <b>El libro de Eli · escena final</b></p><p><b>La escena:</b> Eli llega a Alcatraz, donde reconstruyen la biblioteca de la humanidad. Ahí se revela que es ciego y que había memorizado la Biblia entera. La dicta palabra por palabra mientras un hombre la escribe para volver a imprimirla.</p><div class="cols"><div><b>EL LIBRO DE ELI</b>• Eli dicta y otro escribe<br>• El villano tenía el libro y no podía leerlo<br>• La Biblia se vuelve a escribir<br>• Eli llevaba la palabra en el corazón</div><div><b>JEREMÍAS</b>• Jeremías dictaba y Baruc escribía (36:4, 32)<br>• El rey tuvo el rollo y no lo recibió<br>• “Vuelve a tomar otro rollo y escribe…” (36:28)<br>• “Escribiré Mi ley en su corazón” (Jeremías 31:33)</div></div><p><i>“Si te quitaran tus Escrituras, ¿cuánto de la palabra de Dios llevarías en el corazón?”</i></p><div class="inst">🕶️ Como Eli: memorizá el orden de las palabras y dictalo de memoria.</div>',
+        '<p>🎬 <b>The Book of Eli · final scene</b></p><p><b>The scene:</b> Eli arrives at Alcatraz, where they are rebuilding humanity’s library. There it’s revealed that he is blind and had memorized the entire Bible. He dictates it word by word while a man writes it down to print it again.</p><div class="cols"><div><b>THE BOOK OF ELI</b>• Eli dictates and another writes<br>• The villain had the book and couldn’t read it<br>• The Bible is written again<br>• Eli carried the word in his heart</div><div><b>JEREMIAH</b>• Jeremiah dictated and Baruch wrote (36:4, 32)<br>• The king had the scroll and didn’t receive it<br>• “Take thee again another roll, and write…” (36:28)<br>• “I will write my law in their hearts” (Jeremiah 31:33)</div></div><p><i>“If your scriptures were taken away, how much of God’s word would you carry in your heart?”</i></p><div class="inst">🕶️ Like Eli: memorize the order of the words and dictate it from memory.</div>')
+    },
+    game: gameEli,
+    q: { q: Q('¿Cómo pudo Eli volver a dictar la Biblia?', 'How was Eli able to dictate the Bible again?'),
+      a: [Q('La había memorizado: la llevaba escrita en el corazón', 'He had memorized it: he carried it written in his heart'), Q('La copió de otro libro', 'He copied it from another book'), Q('La leyó en una pantalla', 'He read it on a screen'), Q('Se la dictó el villano', 'The villain dictated it to him')] },
+    heart: { title: Q('¡El rollo está completo!', 'The scroll is complete!'), text: Q('La palabra de Dios no se pudo quemar… y ahora la llevás en el corazón.', 'God’s word could not be burned… and now you carry it in your heart.') }
+  }
+];
+const REFLECT = [
+  { q: Q('¿Qué escritura o enseñanza te ayudó a sentirte más cerca de Jesucristo?', 'What scripture or teaching helped you feel closer to Jesus Christ?') },
+  { q: Q('¿Qué forma concreta vas a elegir esta semana para estudiar la palabra de Dios?', 'What specific way will you choose this week to study God’s word?'),
+    chips: S => (S.lang === 'es' ? ['Leer 10 minutos cada mañana', 'Marcar un versículo por día', 'Estudiar con mi familia', 'Escuchar las Escrituras en audio', 'Escribir en mi diario de estudio'] : ['Read 10 minutes every morning', 'Mark one verse a day', 'Study with my family', 'Listen to scripture audio', 'Write in my study journal']) },
+  { q: Q('¿Qué parte de la palabra de Dios querés llevar escrita en tu corazón?', 'What part of God’s word do you want to carry written in your heart?') }
+];
+
+// =====================================================================
+//  FLUJO
+// =====================================================================
+function label() { return T(UI.level) + ' ' + (S.li + 1) + '/' + LEVELS.length; }
+function startLevel() {
+  const L = LEVELS[S.li];
+  sendRank(S.li + 1, 'jugando');
+  show('s-intro'); bgAnim = null;
+  $('#in-badge').textContent = label();
+  $('#in-title').textContent = T(L.intro.title);
+  $('#in-body').innerHTML = T(L.intro.body);
+  $('#in-btn').onclick = () => { sfx.click(); playLevel(L); };
+}
+function playLevel(L) {
+  show('s-game'); $('#g-label').textContent = label();
+  const area = $('#g-area'); area.innerHTML = ''; active = null;
+  let finished = false;
+  const finish = pts => {
+    if (finished) return; finished = true; active = null;
+    S.score += Math.max(0, Math.round(pts || 0));
+    showMC(L.q, () => showHeart(L));
+  };
+  if (TEST) window.__skip = () => finish(100);
+  L.game(area, finish);
+}
+function showMC(q, next) {
+  show('s-mc');
+  $('#mc-label').textContent = label() + ' · ' + T(UI.question);
+  $('#mc-q').textContent = T(q.q);
+  const box = $('#mc-opts'); box.innerHTML = '';
+  const fb = $('#mc-fb'); fb.textContent = ''; fb.className = 'fb';
+  const nb = $('#mc-next'); nb.style.display = 'none';
+  let tries = 0, solved = false;
+  const btns = shuffle(q.a.map((t, i) => ({ t, ok: i === 0 }))).map(o => {
+    const b = el('button', 'opt', T(o.t)); b.dataset.ok = o.ok ? '1' : '0';
+    b.onclick = () => {
+      if (solved || b.disabled) return;
+      if (o.ok) {
+        solved = true; sfx.ok(); b.classList.add('ok'); btns.forEach(x => x.disabled = true);
+        S.score += tries === 0 ? 150 : 50;
+        fb.textContent = T(UI.correct); fb.className = 'fb ok';
+        nb.style.display = ''; nb.onclick = () => { sfx.click(); next(); };
+      } else { tries++; sfx.bad(); buzz(90); b.classList.add('bad'); b.disabled = true; fb.textContent = T(UI.tryAgain); fb.className = 'fb bad'; }
+    };
+    box.appendChild(b); return b;
+  });
+}
+function showHeart(L) {
+  const stage = S.li + 1;
+  show('s-heart'); sfx.chime();
+  $('#ht-badge').textContent = label() + ' ✔';
+  $('#ht-title').textContent = T(L.heart.title);
+  $('#ht-text').textContent = T(L.heart.text);
+  let s = stage - 1;
+  animScroll('#heart-cv2', () => { s = Math.min(stage, s + .02); return s; });
+  $('#ht-btn').onclick = () => {
+    sfx.click(); S.li++;
+    if (S.li < LEVELS.length) startLevel(); else showReflect();
+  };
+}
+function showReflect() {
+  bgAnim = null; sendRank(LEVELS.length + 1, 'jugando');
+  show('s-reflect');
+  const box = $('#rf-box'); box.innerHTML = '';
+  const tas = REFLECT.map((r, i) => {
+    const w = el('div', 'rq'); w.appendChild(el('label', '', (i + 1) + '. ' + T(r.q)));
+    const ta = el('textarea'); ta.maxLength = 250; ta.dataset.i = i;
+    if (r.chips) {
+      const ch = el('div', 'chips');
+      r.chips(S).forEach(c => { const b = el('button', 'chip', '+ ' + c); b.onclick = () => { sfx.click(); ta.value = (ta.value ? ta.value.trim() + ', ' : '') + c; upd(); }; ch.appendChild(b); });
+      w.appendChild(ch);
+    }
+    w.appendChild(ta); const cnt = el('div', 'counter', ''); w.appendChild(cnt);
+    ta.oninput = () => upd();
+    box.appendChild(w); return { ta, cnt };
+  });
+  const btn = $('#rf-btn');
+  function upd() {
+    let ok = true;
+    tas.forEach(o => { const n = cleanText(o.ta.value).length; o.cnt.textContent = n + ' ' + T(UI.chars); if (n < 10) ok = false; });
+    btn.disabled = !ok;
+  }
+  upd();
+  btn.onclick = () => {
+    if (btn.disabled) return;
+    S.answers = tas.map(o => cleanText(o.ta.value));
+    S.score += S.answers.reduce((a, s) => a + s.length * 4, 0);
+    S.done = true; sendRank(LEVELS.length + 1, 'terminado');
+    sfx.win(); showEnd();
+  };
+}
+function showEnd() {
+  show('s-end');
+  $('#end-title').textContent = T(UI.endTitle).replace('{n}', S.name);
+  animScroll('#heart-cv3', () => 5);
+  $('#end-share').onclick = shareCard;
+}
+
+// ---------------- Tarjeta PNG ----------------
+function makeCard() {
+  const W = 1080, H = 1720; const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d');
+  const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#0A0E1A'); bg.addColorStop(.5, '#1d1233'); bg.addColorStop(1, '#0A0E1A');
+  g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  g.strokeStyle = '#E8B24D'; g.lineWidth = 4; rr(g, 30, 30, W - 60, H - 60, 40); g.stroke();
+  g.textAlign = 'center'; g.fillStyle = '#2DD4E8'; g.font = 'bold 34px system-ui,Arial'; g.fillText(T(UI.cardTop), W / 2, 100);
+  drawScroll(g, W / 2, 275, 380, 5, 0);
+  g.fillStyle = '#E8B24D'; g.font = 'bold 56px system-ui,Arial'; g.fillText(T(UI.appTitle), W / 2, 470, W - 140);
+  g.fillStyle = '#ffffff'; g.font = 'bold 52px system-ui,Arial'; g.fillText(S.name, W / 2, 540, W - 140);
+  g.fillStyle = '#B8C2D9'; g.font = 'bold 28px system-ui,Arial'; g.fillText(T(UI.score), W / 2, 590);
+  g.fillStyle = '#fb7185'; g.font = 'bold 130px system-ui,Arial'; g.fillText(String(S.score), W / 2, 710);
+  let y = 770; const blockH = 285;
+  g.textAlign = 'left';
+  REFLECT.forEach((r, i) => {
+    g.fillStyle = 'rgba(255,255,255,.06)'; rr(g, 80, y, W - 160, blockH - 20, 24); g.fill();
+    g.fillStyle = '#E8B24D'; g.font = 'italic bold 26px system-ui,Arial';
+    const ql = wrapLines(g, (i + 1) + '. ' + T(r.q), W - 230).slice(0, 2);
+    ql.forEach((l, k) => g.fillText(l, 110, y + 42 + k * 32));
+    const y0 = y + 42 + ql.length * 32 + 6, avail = y + blockH - 40 - y0;
+    let fs = 32, lines;
+    for (; fs >= 18; fs -= 2) { g.font = fs + 'px system-ui,Arial'; lines = wrapLines(g, '“' + (S.answers[i] || '') + '”', W - 230); if (lines.length * fs * 1.25 <= avail) break; }
+    g.fillStyle = '#ffffff';
+    lines.slice(0, Math.max(1, Math.floor(avail / (fs * 1.25)))).forEach((l, k) => g.fillText(l, 110, y0 + fs + k * fs * 1.25));
+    y += blockH;
+  });
+  g.textAlign = 'center'; g.fillStyle = '#B8C2D9'; g.font = '26px system-ui,Arial';
+  g.fillText(new Date().toLocaleDateString(S.lang === 'es' ? 'es-AR' : 'en-US') + ' · ' + T(Q('Jeremías 36 · Seminario 2026', 'Jeremiah 36 · Seminary 2026')), W / 2, H - 60);
+  return cv;
+}
+// ---------------- Ranking en el celular (al final) ----------------
+let rankTimer = null;
+function todayStr() { const d = new Date(), p = n => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
+function renderRank(lista) {
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  // asegurar que el propio jugador aparezca aunque la planilla todavía no lo devuelva
+  if (!lista.some(r => r.estado === 'terminado' && r.nombre === S.name && Number(r.puntaje) === S.score)) lista = lista.concat([{ nombre: S.name, estado: 'terminado', puntaje: S.score, nivel: LEVELS.length + 1 }]);
+  const done = lista.filter(r => r.estado === 'terminado').sort((a, b) => b.puntaje - a.puntaje);
+  const play = lista.filter(r => r.estado !== 'terminado').sort((a, b) => b.nivel - a.nivel);
+  const medal = ['🥇', '🥈', '🥉'];
+  let html = '', meMarked = false;
+  done.forEach((r, i) => {
+    const me = !meMarked && r.nombre === S.name && Number(r.puntaje) === S.score; if (me) meMarked = true;
+    html += '<div class="rk' + (me ? ' me' : '') + '"><div class="p">' + (medal[i] || (i + 1)) + '</div><div class="n">' + esc(r.nombre) + (me ? ' ' + T(UI.you) : '') + '</div><div class="v">' + Number(r.puntaje).toLocaleString('es-AR') + '</div></div>';
+  });
+  play.forEach(r => {
+    const n = Number(r.nivel) || 1;
+    html += '<div class="rk"><div class="p">⏳</div><div class="n">' + esc(r.nombre) + '</div><div class="s">' + (n > LEVELS.length ? T(UI.rankReflect) : T(UI.rankLevel) + ' ' + n + '/' + LEVELS.length) + '</div></div>';
+  });
+  $('#rank-list').innerHTML = html || '<p class="hint">' + T(UI.rankEmpty) + '</p>';
+}
+async function refreshRank() {
+  try {
+    if (TEST) throw new Error('test');
+    const r = await fetch(RANKING_URL + '?juego=' + JUEGO_ID + '&fecha=' + todayStr() + '&t=' + Date.now());
+    const d = await r.json(); if (!d.ok) throw new Error('bad');
+    renderRank(d.lista || []);
+    $('#rank-upd').textContent = T(UI.rankUpd);
+  } catch (e) {
+    renderRank(window.__mockRank || []);
+    $('#rank-upd').textContent = TEST ? '' : T(UI.rankOff);
+  }
+}
+function showRanking() {
+  if (!RANKING_URL) return;
+  $('#end-rank').style.display = '';
+  refreshRank();
+  if (!rankTimer) rankTimer = setInterval(refreshRank, 5000);
+}
+
+async function shareCard() {
+  sfx.click();
+  showRanking();
+  const cv = makeCard(); const url = cv.toDataURL('image/png');
+  const img = $('#end-img'); img.src = url; img.style.display = 'block';
+  const fname = 'la-palabra-' + (S.name.replace(/\s+/g, '-').toLowerCase() || 'alumno') + '.png';
+  try {
+    const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
+    const file = new File([blob], fname, { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: T(UI.appTitle), text: T(UI.appTitle) + ' · ' + S.name });
+      $('#end-msg').textContent = T(UI.shared); return;
+    }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  const a = document.createElement('a'); a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove();
+  $('#end-msg').textContent = T(UI.downloaded);
+}
+
+// ---------------- Inicio ----------------
+function init() {
+  S.id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID().slice(0, 18) : ('p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
+  document.querySelectorAll('.lang button').forEach(b => b.onclick = () => { S.lang = b.dataset.lang; sfx.click(); applyLang(); });
+  const inp = $('#in-name'), bs = $('#btn-start');
+  inp.oninput = () => { bs.disabled = cleanText(inp.value).length < 2; };
+  bs.onclick = () => { S.name = cleanText(inp.value).slice(0, 24); ac(); sfx.ok(); S.li = 0; S.score = 0; startLevel(); };
+  animScroll('#heart-cv', () => 0);
+  applyLang();
+}
+init();
+
+</script>
+</body>
+</html>
