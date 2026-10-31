@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Luz Paso a Paso: El Viaje de Adán y Eva</title>
+<style>
+  :root{
+    --blue:#3ecbff; --blue-soft:#7fdcff; --gold:#ffd166; --gold-soft:#ffe6a0;
+    --night:#0a0e17; --night2:#111a2e; --night3:#182552;
+    --text:#eaf4ff; --muted:#9db3cc; --danger:#ff5d7a; --ok:#5dffb0;
+    --card:#101a3a; --border:rgba(62,203,255,0.28);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
+    background:radial-gradient(circle at 20% 0%, #14213f 0%, var(--night) 55%, #05070d 100%);
+    color:var(--text); min-height:100vh; display:flex; justify-content:center; overflow:hidden;
+  }
+  #app{ width:100%; max-width:480px; height:100vh; height:100dvh; display:flex; flex-direction:column;
+        padding:14px 14px 18px; position:relative; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .screen{ display:none; flex-direction:column; gap:12px; animation:fadeIn .35s ease; }
+  .screen.active{ display:flex; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+
+  h1{ font-size:1.35rem; text-align:center; margin:4px 0 0; letter-spacing:0.4px;
+      background:linear-gradient(90deg,var(--blue),var(--gold)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .subtitle{ text-align:center; color:var(--muted); font-size:0.82rem; margin-top:-8px; }
+  .logo-orb{ width:64px; height:64px; margin:2px auto 0; border-radius:50%;
+      background:radial-gradient(circle at 35% 30%, var(--blue), #14355a 70%); font-size:1.7rem;
+      display:flex; align-items:center; justify-content:center; box-shadow:0 0 26px rgba(62,203,255,0.5), inset 0 0 16px rgba(0,0,0,0.35); }
+  .card{ background:linear-gradient(160deg,var(--card),var(--night2)); border:1px solid var(--border);
+      border-radius:16px; padding:14px; box-shadow:0 6px 20px rgba(0,0,0,0.35); }
+  label{ font-size:0.8rem; color:var(--muted); display:block; margin-bottom:6px; font-weight:600; }
+  input[type=text], textarea{ width:100%; background:var(--night3); border:1px solid var(--border); border-radius:10px;
+      padding:12px; color:var(--text); font-size:1rem; font-family:inherit; outline:none; }
+  textarea{ resize:vertical; min-height:70px; }
+  input[type=text]:focus, textarea:focus{ border-color:var(--gold); box-shadow:0 0 0 3px rgba(255,209,102,0.15); }
+
+  .lang-row{ display:flex; gap:10px; }
+  .lang-btn{ flex:1; padding:11px 8px; border-radius:10px; border:1px solid var(--border); background:var(--night3);
+      color:var(--muted); font-weight:700; text-align:center; cursor:pointer; font-size:0.9rem; }
+  .lang-btn.selected{ background:linear-gradient(135deg,var(--blue),#1c7fb0); color:#03131c; border-color:transparent;
+      box-shadow:0 4px 14px rgba(62,203,255,0.4); }
+
+  .char-grid{ display:flex; gap:12px; }
+  .char-card{ flex:1; border-radius:14px; padding:14px 8px; text-align:center; background:var(--night3);
+      border:2px solid rgba(255,255,255,0.08); cursor:pointer; }
+  .char-card.selected{ border-color:var(--gold); box-shadow:0 0 18px rgba(255,209,102,0.45); }
+  .char-emoji{ font-size:2.3rem; display:block; margin-bottom:4px; }
+  .char-name{ font-weight:800; font-size:0.98rem; }
+
+  .btn{ display:block; width:100%; padding:14px; border:none; border-radius:12px; font-size:1rem; font-weight:800;
+      cursor:pointer; background:linear-gradient(135deg,var(--blue),#1c7fb0); color:#03131c;
+      box-shadow:0 6px 18px rgba(62,203,255,0.35); transition:transform .12s ease, opacity .2s; }
+  .btn:active{ transform:scale(0.97); }
+  .btn.gold{ background:linear-gradient(135deg,var(--gold),#c98f1c); color:#241800; box-shadow:0 6px 18px rgba(255,209,102,0.4); }
+  .btn.secondary{ background:var(--night3); color:var(--text); border:1px solid var(--border); box-shadow:none; }
+  .btn:disabled{ opacity:0.35; box-shadow:none; cursor:not-allowed; }
+  .instructions{ font-size:0.8rem; color:var(--muted); line-height:1.5; }
+
+  /* ===== GAME SCREEN ===== */
+  #screen-game{ padding:0; gap:0; position:relative; }
+  #game-wrap{ position:relative; width:100%; aspect-ratio:2/3; border-radius:16px; overflow:hidden;
+      border:1px solid var(--border); box-shadow:0 8px 26px rgba(0,0,0,0.4); background:var(--night); }
+  canvas{ width:100%; height:100%; display:block; touch-action:none; }
+
+  #hud-top{ position:absolute; top:8px; left:8px; right:8px; display:flex; justify-content:space-between;
+      align-items:flex-start; pointer-events:none; z-index:5; }
+  .hud-pill{ background:rgba(6,10,22,0.7); border:1px solid var(--border); border-radius:20px; padding:5px 12px;
+      font-size:0.72rem; font-weight:700; }
+
+  #toast{ position:absolute; top:46%; left:50%; transform:translate(-50%,-50%); background:rgba(6,10,22,0.88);
+      border:1px solid var(--blue); border-radius:14px; padding:14px 18px; max-width:82%; text-align:center;
+      font-size:0.85rem; line-height:1.5; z-index:8; display:none; }
+
+  #controls{ position:absolute; bottom:10px; left:8px; right:8px; display:flex; justify-content:space-between;
+      align-items:flex-end; z-index:5; }
+  .dpad{ display:flex; gap:8px; }
+  .ctrl-btn{ width:54px; height:54px; border-radius:16px; background:rgba(24,37,82,0.78); border:1px solid var(--border);
+      color:var(--text); font-size:1.35rem; display:flex; align-items:center; justify-content:center; }
+  .action-btns{ display:flex; flex-direction:column; gap:8px; align-items:flex-end; }
+  .ctrl-btn.jump{ width:62px; height:62px; background:rgba(62,203,255,0.22); border-color:var(--blue); }
+  .ctrl-btn.fire{ width:56px; height:56px; background:rgba(255,209,102,0.12); border-color:rgba(255,209,102,0.35); opacity:0.4; }
+  .ctrl-btn.fire.enabled{ opacity:1; background:rgba(255,209,102,0.3); border-color:var(--gold); box-shadow:0 0 16px rgba(255,209,102,0.4); }
+  .ctrl-btn.active-touch{ transform:scale(0.9); }
+
+  /* ===== MODAL TRIVIA ===== */
+  .modal-overlay{ position:fixed; inset:0; background:rgba(3,6,16,0.82); display:none; align-items:center;
+      justify-content:center; z-index:50; padding:20px; }
+  .modal-overlay.active{ display:flex; }
+  .modal-card{ width:100%; max-width:420px; background:linear-gradient(160deg,#132049,#0c1533);
+      border:1px solid var(--blue); border-radius:18px; padding:20px; box-shadow:0 0 40px rgba(62,203,255,0.25); }
+  .modal-tag{ color:var(--gold); font-size:0.75rem; font-weight:800; letter-spacing:0.6px; text-transform:uppercase; margin-bottom:10px; }
+  .modal-q{ font-size:1rem; margin-bottom:14px; line-height:1.42; font-weight:600; }
+  .option{ display:block; width:100%; text-align:left; background:var(--night3); border:1px solid var(--border);
+      color:var(--text); padding:13px 14px; border-radius:12px; margin-bottom:10px; cursor:pointer; font-size:0.9rem; line-height:1.4; }
+  .option:disabled{ opacity:0.55; }
+  .option.correct{ border-color:var(--ok); background:rgba(93,255,176,0.15); }
+  .option.wrong{ border-color:var(--danger); background:rgba(255,93,122,0.15); }
+  .feedback-box{ border-radius:12px; padding:11px 13px; font-size:0.86rem; line-height:1.4; border:1px solid var(--border);
+      background:var(--night3); display:none; margin-top:6px; }
+  .feedback-box.good{ border-color:var(--ok); color:var(--ok); display:block; }
+  .feedback-box.bad{ border-color:var(--danger); color:var(--danger); display:block; }
+
+  /* ===== FINAL ===== */
+  .final-score{ text-align:center; font-size:2.3rem; font-weight:900; color:var(--blue);
+      text-shadow:0 0 16px rgba(62,203,255,0.6); margin:6px 0 2px; }
+  .refl-summary{ text-align:left; font-size:0.85rem; line-height:1.5; color:var(--muted);
+      background:rgba(255,255,255,0.03); border-radius:10px; padding:12px; }
+  .refl-summary b{ color:var(--gold-soft); display:block; margin-top:8px; }
+  .refl-summary b:first-child{ margin-top:0; }
+  body.capture-mode #controls, body.capture-mode #hud-top, body.capture-mode .no-capture{ display:none !important; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- START -->
+  <div class="screen active" id="screen-start">
+    <div class="logo-orb">🌌</div>
+    <h1 id="t-title">Luz Paso a Paso</h1>
+    <p class="subtitle" id="t-subtitle">El Viaje de Adán y Eva</p>
+
+    <div class="card instructions" id="t-intro-lore"></div>
+
+    <div class="card">
+      <label id="t-char-label">Elige tu personaje</label>
+      <div class="char-grid">
+        <div class="char-card" id="pick-adan" data-char="Adán">
+          <span class="char-emoji">🏃🏻‍♂️</span><span class="char-name">Adán</span>
+        </div>
+        <div class="char-card" id="pick-eva" data-char="Eva">
+          <span class="char-emoji">🏃🏻‍♀️</span><span class="char-name">Eva</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <label id="t-name-label">Escribe tu nombre</label>
+      <input type="text" id="input-name" maxlength="30" placeholder="Tu nombre...">
+    </div>
+
+    <div class="card">
+      <label id="t-lang-label">Elige tu idioma / Choose your language</label>
+      <div class="lang-row">
+        <div class="lang-btn selected" id="btn-lang-es">Español</div>
+        <div class="lang-btn" id="btn-lang-en">English</div>
+      </div>
+    </div>
+
+    <div class="card instructions" id="t-instructions"></div>
+
+    <button class="btn gold" id="btn-start" disabled>Comenzar</button>
+  </div>
+
+  <!-- NARRATIVA DE NIVEL -->
+  <div class="screen" id="screen-narrative">
+    <div class="card">
+      <div class="modal-tag" id="nar-chapter">CAPÍTULO 1</div>
+      <h1 id="nar-title" style="font-size:1.15rem; -webkit-text-fill-color:var(--gold); background:none;"></h1>
+      <p class="instructions" id="nar-text" style="font-size:0.92rem; margin-top:8px;"></p>
+      <button class="btn" id="btn-nar-continue">Continuar</button>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div class="screen" id="screen-game">
+    <div id="game-wrap">
+      <canvas id="game-canvas" width="480" height="720"></canvas>
+      <div id="hud-top">
+        <div class="hud-pill" id="hud-level">Nivel 1</div>
+        <div class="hud-pill" id="hud-progress">0%</div>
+      </div>
+      <div id="toast"></div>
+      <div id="controls">
+        <div class="dpad">
+          <div class="ctrl-btn" id="btn-left">◀</div>
+          <div class="ctrl-btn" id="btn-right">▶</div>
+        </div>
+        <div class="action-btns">
+          <div class="ctrl-btn fire" id="btn-fire">✨</div>
+          <div class="ctrl-btn jump" id="btn-jump">⬆</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRIVIA MODAL -->
+  <div class="modal-overlay" id="trivia-modal">
+    <div class="modal-card">
+      <div class="modal-tag" id="trivia-tag">📜 PERGAMINO SAGRADO</div>
+      <p class="modal-q" id="trivia-question"></p>
+      <div id="trivia-options"></div>
+      <div class="feedback-box" id="trivia-feedback"></div>
+      <button class="btn gold" id="btn-trivia-continue" style="display:none; margin-top:10px;">Continuar</button>
+    </div>
+  </div>
+
+  <!-- EPILOGO -->
+  <div class="screen" id="screen-epilogue">
+    <div class="logo-orb">🌅</div>
+    <h1 id="t-epi-title" style="font-size:1.2rem;">El Amanecer</h1>
+    <div class="card instructions" id="t-epi-text"></div>
+    <button class="btn gold" id="btn-epilogue-continue">Continuar</button>
+  </div>
+
+  <!-- REFLEXION -->
+  <div class="screen" id="screen-reflection">
+    <div class="card">
+      <h1 id="t-refl-title" style="font-size:1.1rem;">🕯️ Reflexión Personal</h1>
+      <div style="text-align:left; margin-top:10px;">
+        <label id="t-refl1-label"></label>
+        <textarea id="refl1"></textarea>
+      </div>
+      <div style="text-align:left; margin-top:12px;">
+        <label id="t-refl2-label"></label>
+        <textarea id="refl2"></textarea>
+      </div>
+      <div style="text-align:left; margin-top:12px;">
+        <label id="t-refl3-label"></label>
+        <textarea id="refl3"></textarea>
+      </div>
+      <button class="btn gold" id="btn-finish" style="margin-top:14px;">Completar mi Viaje</button>
+    </div>
+  </div>
+
+  <!-- RESULTADOS -->
+  <div class="screen" id="screen-results">
+    <div class="logo-orb">🏆</div>
+    <h1 id="t-res-title" style="font-size:1.15rem;">Viaje Completado</h1>
+    <div class="card" style="text-align:center;">
+      <p style="margin:0; color:var(--muted); font-size:0.85rem;" id="res-name"></p>
+      <div class="final-score" id="res-score">0</div>
+      <div class="refl-summary" id="res-summary"></div>
+    </div>
+    <button class="btn no-capture" id="btn-screenshot">📸 Sacar Captura de Pantalla</button>
+    <button class="btn secondary no-capture" id="btn-restore" style="display:none;">↩️ Volver</button>
+  </div>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   TEXTOS BILINGÜES
+============================================================ */
+const UI = {
+  es:{
+    title:"Luz Paso a Paso", subtitle:"El Viaje de Adán y Eva",
+    introLore:"El páramo se extiende bajo un cielo sin estrellas. La niebla cubre el sendero y cada paso parece hundirse en la sombra. Pero existe una luz que no se apaga — solo se revela paso a paso, a quien tiene el valor de caminar.",
+    charLabel:"Elige tu personaje",
+    nameLabel:"Escribe tu nombre",
+    namePh:"Tu nombre...",
+    langLabel:"Elige tu idioma / Choose your language",
+    instructions:"◀ ▶ Muévete por el camino.<br>⬆ Salta para cruzar los abismos.<br>📜 Toca el pergamino y responde la trivia para activar tu poder.<br>✨ Con el poder activo, dispara tu Luz de Fe contra las sombras.<br>🏁 Llega a la meta de cada nivel para avanzar.",
+    start:"Comenzar el Viaje",
+    fillNameAlert:"Por favor escribe tu nombre para continuar.",
+    triviaTag:"📜 Pergamino Sagrado",
+    triviaCorrect:"¡Correcto! Tu poder se ha activado. ✨",
+    triviaWrong:"No es la respuesta correcta. Sigue avanzando, encontrarás otro pergamino.",
+    continue:"Continuar",
+    toastStart:"¡Usa las flechas o los botones para moverte y saltar!",
+    epiTitle:"El Amanecer",
+    epiText:"La cima ya no está envuelta en niebla. El sol nace lento sobre la montaña y, por primera vez, el sendero completo se puede ver: cada paso, cada pergamino, cada sombra vencida formaron una luz que ahora te pertenece. La lámpara ya no está lejos — la llevas contigo.",
+    reflTitle:"🕯️ Reflexión Personal",
+    refl1:"1. ¿Cómo pudiste conseguir esa luz en tu viaje diario?",
+    refl2:"2. ¿Por qué quieres esa protección en tu vida?",
+    refl3:"3. ¿Qué es lo que te da fuerza ante la oscuridad?",
+    finish:"Completar mi Viaje",
+    resTitle:"🏆 Viaje Completado",
+    screenshot:"📸 Sacar Captura de Pantalla",
+    restore:"↩️ Volver",
+    summary1:"1. La luz en el camino diario",
+    summary2:"2. Por qué quiero esa protección",
+    summary3:"3. Lo que me da fuerza",
+  },
+  en:{
+    title:"Light Step by Step", subtitle:"The Journey of Adam and Eve",
+    introLore:"The wasteland stretches beneath a starless sky. Mist covers the path and every step seems to sink into shadow. But there is a light that never fades — it is only revealed step by step, to whoever has the courage to walk.",
+    charLabel:"Choose your character",
+    nameLabel:"Enter your name",
+    namePh:"Your name...",
+    langLabel:"Elige tu idioma / Choose your language",
+    instructions:"◀ ▶ Move along the path.<br>⬆ Jump to cross the gaps.<br>📜 Touch the scroll and answer the trivia to activate your power.<br>✨ With your power active, shoot your Light of Faith at the shadows.<br>🏁 Reach the goal of each level to advance.",
+    start:"Begin the Journey",
+    fillNameAlert:"Please enter your name to continue.",
+    triviaTag:"📜 Sacred Scroll",
+    triviaCorrect:"Correct! Your power has been activated. ✨",
+    triviaWrong:"That's not the correct answer. Keep going, you'll find another scroll.",
+    continue:"Continue",
+    toastStart:"Use the arrows or buttons to move and jump!",
+    epiTitle:"The Dawn",
+    epiText:"The summit is no longer wrapped in mist. The sun rises slowly over the mountain and, for the first time, the whole path can be seen: every step, every scroll, every shadow overcome formed a light that now belongs to you. The lamp is no longer far away — you carry it with you.",
+    reflTitle:"🕯️ Personal Reflection",
+    refl1:"1. How were you able to find that light in your daily journey?",
+    refl2:"2. Why do you want that protection in your life?",
+    refl3:"3. What gives you strength in the face of darkness?",
+    finish:"Complete my Journey",
+    resTitle:"🏆 Journey Completed",
+    screenshot:"📸 Take a Screenshot",
+    restore:"↩️ Back",
+    summary1:"1. The light in the daily path",
+    summary2:"2. Why I want that protection",
+    summary3:"3. What gives me strength",
+  }
+};
+
+const LEVELS = [
+  {
+    chapter:{es:"CAPÍTULO 1", en:"CHAPTER 1"},
+    title:{es:"El Descubrimiento de la Lámpara (Paso a Paso)", en:"Discovering the Lamp (Step by Step)"},
+    text:{
+      es:"El sendero comienza entre grietas y sombras. No hay un mapa completo, solo la promesa de que cada paso dado con fe revelará el siguiente. \"Lámpara es a mis pies tu palabra\" — la luz no se entrega toda a la vez, se recibe paso a paso.",
+      en:"The path begins among cracks and shadows. There is no complete map, only the promise that every step taken in faith will reveal the next one. \"Thy word is a lamp unto my feet\" — the light is not given all at once, it is received step by step."
+    },
+    enemyEmoji:"👻", bg:["#0a0e17","#101a30"], accent:"#3ecbff", accentDark:"#0c2540"
+  },
+  {
+    chapter:{es:"CAPÍTULO 2", en:"CHAPTER 2"},
+    title:{es:"La Fuerza vs. El Lado Oscuro", en:"The Force vs. The Dark Side"},
+    text:{
+      es:"El camino se estrecha entre dos fuerzas que compiten por tu voluntad: la Luz, que edifica y da paz; y la Oscuridad, que promete atajos y solo entrega cadenas. Cada elección te acerca a una o a otra.",
+      en:"The path narrows between two forces competing for your will: the Light, which builds and gives peace; and the Darkness, which promises shortcuts and only delivers chains. Every choice brings you closer to one or the other."
+    },
+    enemyEmoji:"💀", bg:["#0a0e17","#181226"], accent:"#c07bff", accentDark:"#241a3d"
+  },
+  {
+    chapter:{es:"CAPÍTULO 3", en:"CHAPTER 3"},
+    title:{es:"Caminar sobre la Cuerda Floja", en:"Walking the Tightrope"},
+    text:{
+      es:"El equilibrio se vuelve la prueba. Un paso en falso a la izquierda es indiferencia; uno a la derecha, ansiedad extrema. La fe se aprende sosteniendo el paso firme, aunque el viento sople fuerte.",
+      en:"Balance becomes the test. A misstep to the left is indifference; one to the right, extreme anxiety. Faith is learned by holding a steady step, even when the wind blows hard."
+    },
+    enemyEmoji:"🌪️", bg:["#0a0e17","#0f2233"], accent:"#5de0d0", accentDark:"#0d2e2b"
+  },
+  {
+    chapter:{es:"CAPÍTULO 4", en:"CHAPTER 4"},
+    title:{es:"El Escudo contra la Ansiedad", en:"The Shield Against Anxiety"},
+    text:{
+      es:"En la última cuesta antes de la cima, la tormenta arrecia. Pero quien ha caminado paso a paso ya lleva consigo un escudo invisible: la certeza de que no camina solo.",
+      en:"On the final climb before the summit, the storm grows stronger. But whoever has walked step by step already carries an invisible shield: the certainty that they do not walk alone."
+    },
+    enemyEmoji:"⛈️", bg:["#0a0e17","#101c30"], accent:"#ffd166", accentDark:"#3a2a10"
+  }
+];
+
+const QUESTION_BANKS = [
+  [
+    {q:{es:"Según el Salmo 119:105, ¿qué representa la palabra de Dios para el caminante?", en:"According to Psalm 119:105, what does God's word represent for the traveler?"},
+     opts:{es:["Un mapa completo del futuro","Una lámpara a sus pies y lumbrera a su camino","Una recompensa al final del viaje","Un escudo contra el frío"],
+           en:["A complete map of the future","A lamp to his feet and a light to his path","A reward at the end of the journey","A shield against the cold"]}, correct:1},
+    {q:{es:"El élder Bednar enseñó que la revelación personal generalmente llega:", en:"Elder Bednar taught that personal revelation generally comes:"},
+     opts:{es:["Toda de una sola vez","Solo en sueños","Línea por línea, precepto por precepto","Únicamente a los líderes"],
+           en:["All at once","Only in dreams","Line upon line, precept upon precept","Only to leaders"]}, correct:2},
+    {q:{es:"¿Por qué la lámpara del Salmo 119 alumbra solo \"a mis pies\" y no todo el camino de una vez?", en:"Why does the lamp in Psalm 119 light only \"my feet\" and not the whole path at once?"},
+     opts:{es:["Porque la luz es débil","Para enseñar a confiar y avanzar un paso a la vez","Porque el camino no importa","Porque es un error de traducción"],
+           en:["Because the light is weak","To teach us to trust and advance one step at a time","Because the path doesn't matter","Because it's a translation error"]}, correct:1},
+  ],
+  [
+    {q:{es:"La verdadera fuerza espiritual se fortalece principalmente mediante:", en:"True spiritual strength is mainly strengthened through:"},
+     opts:{es:["Evitar toda decisión","Elecciones diarias alineadas con la luz","La suerte","Compararse con otros"],
+           en:["Avoiding every decision","Daily choices aligned with the light","Luck","Comparing yourself to others"]}, correct:1},
+    {q:{es:"El \"lado oscuro\" en la vida espiritual suele presentarse como:", en:"The \"dark side\" in spiritual life usually presents itself as:"},
+     opts:{es:["Algo obviamente malo y fácil de reconocer","Atajos que prometen mucho y quitan libertad","Una fuerza externa sin relación con nuestras elecciones","Algo que solo afecta a otros"],
+           en:["Something obviously bad and easy to recognize","Shortcuts that promise much and take away freedom","An external force unrelated to our choices","Something that only affects others"]}, correct:1},
+    {q:{es:"El don del albedrío (agencia) nos permite:", en:"The gift of agency allows us to:"},
+     opts:{es:["Hacer cualquier cosa sin consecuencias","Elegir, y también vivir las consecuencias de esas elecciones","Ser guiados sin poder decidir","Evitar toda responsabilidad"],
+           en:["Do anything without consequences","Choose, and also live with the consequences of those choices","Be guided without being able to decide","Avoid all responsibility"]}, correct:1},
+  ],
+  [
+    {q:{es:"Caminar en equilibrio espiritual significa principalmente:", en:"Walking in spiritual balance mainly means:"},
+     opts:{es:["No sentir nunca dificultad","Sostener la fe con constancia aun en la incertidumbre","Evitar todo desafío","Depender solo de las emociones"],
+           en:["Never feeling difficulty","Holding on to faith steadily even amid uncertainty","Avoiding every challenge","Relying only on emotions"]}, correct:1},
+    {q:{es:"Las pruebas y dificultades, vistas con fe, pueden servir para:", en:"Trials and difficulties, seen with faith, can serve to:"},
+     opts:{es:["Alejarnos siempre de Dios","Fortalecer el carácter y la confianza en Dios","No tener ningún propósito","Ser ignoradas por completo"],
+           en:["Always push us away from God","Strengthen character and trust in God","Have no purpose at all","Be completely ignored"]}, correct:1},
+    {q:{es:"¿Qué actitud ayuda a mantener el equilibrio ante la adversidad?", en:"What attitude helps maintain balance in adversity?"},
+     opts:{es:["La paciencia y la oración constante","El aislamiento total","La indiferencia","Comparar mi prueba con la de otros"],
+           en:["Patience and constant prayer","Total isolation","Indifference","Comparing my trial to others'"]}, correct:0},
+  ],
+  [
+    {q:{es:"Ante la ansiedad, la protección espiritual comienza por:", en:"Facing anxiety, spiritual protection begins by:"},
+     opts:{es:["Ignorar por completo el sentimiento","Reconocerlo y buscar apoyo en la fe y en personas de confianza","Aislarse de todos","Fingir que no existe"],
+           en:["Completely ignoring the feeling","Recognizing it and seeking support in faith and trusted people","Isolating from everyone","Pretending it doesn't exist"]}, correct:1},
+    {q:{es:"La oración y la Escritura pueden actuar en momentos de angustia como:", en:"Prayer and scripture can act in moments of distress as:"},
+     opts:{es:["Un escudo de paz y perspectiva","Una obligación más que genera estrés","Algo sin ningún efecto práctico","Un reemplazo de la ayuda profesional cuando se necesita"],
+           en:["A shield of peace and perspective","One more obligation that creates stress","Something with no practical effect","A replacement for professional help when it's needed"]}, correct:0},
+    {q:{es:"Recordar que \"no caminamos solos\" ayuda principalmente a:", en:"Remembering that \"we do not walk alone\" mainly helps to:"},
+     opts:{es:["Sentir menos responsabilidad","Encontrar calma y fortaleza frente al temor","Evitar pedir ayuda","Depender únicamente de uno mismo"],
+           en:["Feel less responsibility","Find calm and strength in the face of fear","Avoid asking for help","Depend only on oneself"]}, correct:1},
+  ],
+];
+
+/* ============================================================
+   DISEÑO DE NIVELES (plataformas estilo Mario/Zelda)
+============================================================ */
+const GROUND_Y = 620, VIEW_W = 480, VIEW_H = 720;
+const GRAVITY = 1400, MOVE_SPEED = 200, JUMP_VELOCITY = -650;
+
+/* --------------------------------------------------------------
+   CONFIGURACIÓN DE NIVELES — editable a mano, nivel por nivel.
+   Cada nivel es un objeto independiente, así podés mover/agregar/quitar
+   plataformas, chispas, el pergamino, la meta o los enemigos sin tocar
+   el motor del juego. Todas las coordenadas son en píxeles del mundo
+   del nivel (el "mundo" es más ancho que la pantalla; la cámara sigue
+   al jugador). GROUND_Y = altura del piso.
+
+   worldW              -> ancho total del nivel
+   platforms[]          -> {x,y,w,h} suelo o plataformas flotantes.
+                            Dejar huecos entre bloques = abismos a saltar.
+   chispas[]             -> {x,y} puntitos de luz a recolectar (+100 c/u)
+   pergamino             -> {x,y} único por nivel, dispara la trivia
+   goal                  -> {x,y,w,h} bandera de meta del nivel
+   enemySpawnsAfterPower  -> aparecen recién cuando se responde bien la
+                            trivia. dx = distancia desde el jugador en
+                            ese momento, range = cuánto patrullan, speed.
+-------------------------------------------------------------- */
+const LEVEL_LAYOUTS = [
+  { // NIVEL 1
+    worldW: 2100,
+    platforms: [
+      {x:0,    y:GROUND_Y, w:520, h:100},
+      {x:700,  y:GROUND_Y, w:420, h:100},
+      {x:1260, y:GROUND_Y, w:420, h:100},
+      {x:1820, y:GROUND_Y, w:280, h:100},
+      {x:330,  y:500, w:140, h:24},
+      {x:1000, y:480, w:140, h:24},
+      {x:1500, y:500, w:140, h:24},
+    ],
+    chispas: [
+      {x:200, y:GROUND_Y-40}, {x:390, y:460}, {x:850, y:GROUND_Y-40},
+      {x:1060, y:440}, {x:1400, y:GROUND_Y-40}, {x:1560, y:460},
+    ],
+    pergamino: {x:1080, y:420},
+    goal: {x:1960, y:GROUND_Y-120, w:60, h:120},
+    enemySpawnsAfterPower: [
+      {dx:260, y:GROUND_Y-32, range:160, speed:60},
+      {dx:520, y:GROUND_Y-32, range:170, speed:70},
+      {dx:820, y:GROUND_Y-32, range:180, speed:65},
+    ],
+  },
+  { // NIVEL 2
+    worldW: 2250,
+    platforms: [
+      {x:0,    y:GROUND_Y, w:480, h:100},
+      {x:650,  y:GROUND_Y, w:400, h:100},
+      {x:1180, y:GROUND_Y, w:400, h:100},
+      {x:1700, y:GROUND_Y, w:420, h:100},
+      {x:300,  y:490, w:150, h:24},
+      {x:900,  y:470, w:150, h:24},
+      {x:1420, y:490, w:150, h:24},
+      {x:1950, y:470, w:150, h:24},
+    ],
+    chispas: [
+      {x:180, y:GROUND_Y-40}, {x:360, y:450}, {x:800, y:GROUND_Y-40},
+      {x:970, y:430}, {x:1330, y:GROUND_Y-40}, {x:1490, y:450}, {x:2020, y:430},
+    ],
+    pergamino: {x:1180, y:400},
+    goal: {x:2100, y:GROUND_Y-120, w:60, h:120},
+    enemySpawnsAfterPower: [
+      {dx:240, y:GROUND_Y-32, range:150, speed:65},
+      {dx:480, y:GROUND_Y-32, range:160, speed:75},
+      {dx:760, y:GROUND_Y-32, range:170, speed:70},
+    ],
+  },
+  { // NIVEL 3
+    worldW: 2350,
+    platforms: [
+      {x:0,    y:GROUND_Y, w:440, h:100},
+      {x:620,  y:GROUND_Y, w:360, h:100},
+      {x:1120, y:GROUND_Y, w:360, h:100},
+      {x:1620, y:GROUND_Y, w:360, h:100},
+      {x:2120, y:GROUND_Y, w:230, h:100},
+      {x:260,  y:500, w:130, h:24},
+      {x:850,  y:470, w:130, h:24},
+      {x:1360, y:500, w:130, h:24},
+      {x:1860, y:470, w:130, h:24},
+    ],
+    chispas: [
+      {x:150, y:GROUND_Y-40}, {x:320, y:460}, {x:760, y:GROUND_Y-40},
+      {x:910, y:430}, {x:1260, y:GROUND_Y-40}, {x:1420, y:460}, {x:1980, y:430},
+    ],
+    pergamino: {x:1300, y:400},
+    goal: {x:2220, y:GROUND_Y-120, w:60, h:120},
+    enemySpawnsAfterPower: [
+      {dx:220, y:GROUND_Y-32, range:140, speed:70},
+      {dx:460, y:GROUND_Y-32, range:150, speed:80},
+      {dx:720, y:GROUND_Y-32, range:160, speed:75},
+    ],
+  },
+  { // NIVEL 4
+    worldW: 2450,
+    platforms: [
+      {x:0,    y:GROUND_Y, w:420, h:100},
+      {x:600,  y:GROUND_Y, w:340, h:100},
+      {x:1080, y:GROUND_Y, w:340, h:100},
+      {x:1560, y:GROUND_Y, w:340, h:100},
+      {x:2040, y:GROUND_Y, w:410, h:100},
+      {x:240,  y:490, w:130, h:24},
+      {x:800,  y:460, w:130, h:24},
+      {x:1300, y:490, w:130, h:24},
+      {x:1800, y:460, w:130, h:24},
+    ],
+    chispas: [
+      {x:140, y:GROUND_Y-40}, {x:300, y:450}, {x:720, y:GROUND_Y-40},
+      {x:860, y:420}, {x:1200, y:GROUND_Y-40}, {x:1360, y:450},
+      {x:1700, y:GROUND_Y-40}, {x:1860, y:420},
+    ],
+    pergamino: {x:1400, y:390},
+    goal: {x:2320, y:GROUND_Y-120, w:60, h:120},
+    enemySpawnsAfterPower: [
+      {dx:220, y:GROUND_Y-32, range:140, speed:75},
+      {dx:440, y:GROUND_Y-32, range:150, speed:85},
+      {dx:680, y:GROUND_Y-32, range:160, speed:80},
+      {dx:940, y:GROUND_Y-32, range:150, speed:75},
+    ],
+  },
+];
+
+/* ============================================================
+   ESTADO GLOBAL
+============================================================ */
+let state = { name:"", lang:"es", character:null };
+let Game = { levelIndex:0, score:0, answers:['','',''] };
+let game = null;
+
+function T(key){ return UI[state.lang][key]; }
+
+function newLevelState(levelIndex){
+  const layout = LEVEL_LAYOUTS[levelIndex];
+  return {
+    running:false, camX:0, poweredUp:false,
+    player:{ x:50, y:GROUND_Y-44, vx:0, vy:0, w:28, h:44, onGround:false, facing:1, invuln:0 },
+    chispas: layout.chispas.map(c=>({...c, collected:false})),
+    pergamino: {...layout.pergamino, collected:false},
+    goal: layout.goal,
+    platforms: layout.platforms,
+    worldW: layout.worldW,
+    enemies: [],
+    fireballs: [],
+    keys:{left:false, right:false, jump:false},
+    triviaOpen:false,
+    triviaCooldownUntil:0,
+    finished:false,
+    lastTime:0,
+    layout,
+  };
+}
+
+/* ============================================================
+   NAVEGACIÓN / SETUP
+============================================================ */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function applyStaticTexts(){
+  document.getElementById('t-title').textContent = T('title');
+  document.getElementById('t-subtitle').textContent = T('subtitle');
+  document.getElementById('t-intro-lore').textContent = T('introLore');
+  document.getElementById('t-char-label').textContent = T('charLabel');
+  document.getElementById('t-name-label').textContent = T('nameLabel');
+  document.getElementById('input-name').placeholder = T('namePh');
+  document.getElementById('t-lang-label').textContent = T('langLabel');
+  document.getElementById('t-instructions').innerHTML = T('instructions');
+  document.getElementById('btn-start').textContent = T('start');
+  document.getElementById('t-epi-title').textContent = T('epiTitle');
+  document.getElementById('t-epi-text').textContent = T('epiText');
+  document.getElementById('t-refl-title').textContent = T('reflTitle');
+  document.getElementById('t-refl1-label').textContent = T('refl1');
+  document.getElementById('t-refl2-label').textContent = T('refl2');
+  document.getElementById('t-refl3-label').textContent = T('refl3');
+  document.getElementById('btn-finish').textContent = T('finish');
+  document.getElementById('t-res-title').textContent = T('resTitle');
+  document.getElementById('btn-screenshot').textContent = T('screenshot');
+  document.getElementById('btn-restore').textContent = T('restore');
+  document.getElementById('btn-nar-continue').textContent = T('continue');
+  document.getElementById('trivia-tag').textContent = T('triviaTag');
+}
+
+document.getElementById('btn-lang-es').addEventListener('click', ()=>setLang('es'));
+document.getElementById('btn-lang-en').addEventListener('click', ()=>setLang('en'));
+function setLang(lang){
+  state.lang = lang;
+  document.getElementById('btn-lang-es').classList.toggle('selected', lang==='es');
+  document.getElementById('btn-lang-en').classList.toggle('selected', lang==='en');
+  applyStaticTexts();
+}
+
+const pickAdan = document.getElementById('pick-adan');
+const pickEva = document.getElementById('pick-eva');
+const btnStart = document.getElementById('btn-start');
+const nameInput = document.getElementById('input-name');
+function refreshStartBtn(){
+  btnStart.disabled = !(state.character && nameInput.value.trim().length>0);
+}
+[pickAdan, pickEva].forEach(el=>{
+  el.addEventListener('click', ()=>{
+    [pickAdan, pickEva].forEach(x=>x.classList.remove('selected'));
+    el.classList.add('selected');
+    state.character = el.dataset.char;
+    refreshStartBtn();
+  });
+});
+nameInput.addEventListener('input', refreshStartBtn);
+
+btnStart.addEventListener('click', ()=>{
+  const name = nameInput.value.trim();
+  if(!name){ alert(T('fillNameAlert')); nameInput.focus(); return; }
+  state.name = name;
+  Game.levelIndex = 0;
+  Game.score = 0;
+  showLevelNarrative();
+});
+
+/* ============================================================
+   NARRATIVA DE NIVEL
+============================================================ */
+function showLevelNarrative(){
+  const lvl = LEVELS[Game.levelIndex];
+  document.getElementById('nar-chapter').textContent = lvl.chapter[state.lang];
+  document.getElementById('nar-title').textContent = lvl.title[state.lang];
+  document.getElementById('nar-text').textContent = lvl.text[state.lang];
+  showScreen('screen-narrative');
+}
+document.getElementById('btn-nar-continue').addEventListener('click', startLevelGameplay);
+
+/* ============================================================
+   CONTROLES
+============================================================ */
+function bindHold(id, onDown, onUp){
+  const el = document.getElementById(id);
+  const down = ev=>{ ev.preventDefault(); el.classList.add('active-touch'); onDown(); };
+  const up = ev=>{ if(ev)ev.preventDefault(); el.classList.remove('active-touch'); onUp(); };
+  el.addEventListener('touchstart', down, {passive:false});
+  el.addEventListener('touchend', up, {passive:false});
+  el.addEventListener('touchcancel', up, {passive:false});
+  el.addEventListener('mousedown', down);
+  el.addEventListener('mouseup', up);
+  el.addEventListener('mouseleave', up);
+}
+bindHold('btn-left',  ()=>{ if(game) game.keys.left = true; },  ()=>{ if(game) game.keys.left = false; });
+bindHold('btn-right', ()=>{ if(game) game.keys.right = true; }, ()=>{ if(game) game.keys.right = false; });
+bindHold('btn-jump',  ()=>{ if(game) game.keys.jump = true; },  ()=>{ if(game) game.keys.jump = false; });
+bindHold('btn-fire',  ()=> throwFireball(), ()=>{});
+
+window.addEventListener('keydown', e=>{
+  if(!game) return;
+  if(e.code==='ArrowLeft'||e.code==='KeyA') game.keys.left = true;
+  if(e.code==='ArrowRight'||e.code==='KeyD') game.keys.right = true;
+  if(e.code==='Space'||e.code==='ArrowUp'||e.code==='KeyW') game.keys.jump = true;
+  if(e.code==='KeyF') throwFireball();
+});
+window.addEventListener('keyup', e=>{
+  if(!game) return;
+  if(e.code==='ArrowLeft'||e.code==='KeyA') game.keys.left = false;
+  if(e.code==='ArrowRight'||e.code==='KeyD') game.keys.right = false;
+  if(e.code==='Space'||e.code==='ArrowUp'||e.code==='KeyW') game.keys.jump = false;
+});
+
+/* ============================================================
+   INICIO DE NIVEL
+============================================================ */
+function startLevelGameplay(){
+  game = newLevelState(Game.levelIndex);
+  document.getElementById('hud-level').textContent = `${LEVELS[Game.levelIndex].chapter[state.lang]}`;
+  document.getElementById('btn-fire').classList.remove('enabled');
+  showScreen('screen-game');
+  showToast(T('toastStart'), 2200);
+  game.running = true;
+  game.lastTime = performance.now();
+  requestAnimationFrame(loop);
+}
+
+function showToast(msg, ms){
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.style.display = 'block';
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>{ el.style.display='none'; }, ms);
+}
+
+/* ============================================================
+   FÍSICA / COLISIONES
+============================================================ */
+function aabbOverlap(a,b){ return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y; }
+function playerBox(p){ return {x:p.x, y:p.y, w:p.w, h:p.h}; }
+
+function updatePlayerPhysics(dt){
+  const p = game.player;
+  let ax = 0;
+  if(game.keys.left){ ax=-1; p.facing=-1; }
+  if(game.keys.right){ ax=1; p.facing=1; }
+  p.vx = ax*MOVE_SPEED;
+
+  p.vy += GRAVITY*dt;
+  if(game.keys.jump && p.onGround){ p.vy = JUMP_VELOCITY; p.onGround=false; }
+
+  p.x += p.vx*dt;
+  p.x = Math.max(0, Math.min(game.worldW - p.w, p.x));
+  resolveCollisions(p,'x');
+
+  p.y += p.vy*dt;
+  p.onGround = false;
+  resolveCollisions(p,'y');
+
+  if(p.y > VIEW_H+120){ p.x = Math.max(0, p.x-200); p.y=0; p.vy=0; }
+  if(p.invuln>0) p.invuln -= dt;
+}
+function resolveCollisions(p, axis){
+  for(const plat of game.platforms){
+    if(!aabbOverlap(playerBox(p), plat)) continue;
+    if(axis==='x'){
+      if(p.vx>0) p.x = plat.x - p.w;
+      else if(p.vx<0) p.x = plat.x + plat.w;
+    } else {
+      if(p.vy>0){ p.y = plat.y - p.h; p.vy=0; p.onGround=true; }
+      else if(p.vy<0){ p.y = plat.y + plat.h; p.vy=0; }
+    }
+  }
+}
+function updateCamera(){
+  const p = game.player;
+  game.camX = Math.max(0, Math.min(game.worldW - VIEW_W, p.x - VIEW_W/2));
+}
+function updateProgress(){
+  const pct = Math.min(100, Math.round((game.player.x / game.goal.x)*100));
+  document.getElementById('hud-progress').textContent = pct+'%';
+}
+
+/* ============================================================
+   CHISPAS Y PERGAMINO
+============================================================ */
+function updateChispas(){
+  const p = game.player;
+  for(const c of game.chispas){
+    if(c.collected) continue;
+    const box = {x:c.x-14, y:c.y-14, w:28, h:28};
+    if(aabbOverlap(playerBox(p), box)){ c.collected = true; Game.score += 100; }
+  }
+}
+function updatePergamino(){
+  const p = game.player;
+  const m = game.pergamino;
+  if(m.collected || game.triviaOpen) return;
+  if(performance.now() < game.triviaCooldownUntil) return;
+  const box = {x:m.x-20, y:m.y-20, w:40, h:40};
+  if(aabbOverlap(playerBox(p), box)) openTrivia();
+}
+
+let currentQuestion = null;
+function openTrivia(){
+  game.triviaOpen = true;
+  const bank = QUESTION_BANKS[Game.levelIndex];
+  currentQuestion = bank[Math.floor(Math.random()*bank.length)];
+  document.getElementById('trivia-tag').textContent = T('triviaTag');
+  document.getElementById('trivia-question').textContent = currentQuestion.q[state.lang];
+  const feedback = document.getElementById('trivia-feedback');
+  feedback.style.display = 'none'; feedback.className = 'feedback-box';
+  document.getElementById('btn-trivia-continue').style.display = 'none';
+
+  const optsWrap = document.getElementById('trivia-options');
+  optsWrap.innerHTML = '';
+  currentQuestion.opts[state.lang].forEach((text, idx)=>{
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.textContent = text;
+    btn.addEventListener('click', ()=>answerTrivia(idx, btn));
+    optsWrap.appendChild(btn);
+  });
+  document.getElementById('trivia-modal').classList.add('active');
+}
+function answerTrivia(idx, btnEl){
+  document.querySelectorAll('#trivia-options .option').forEach(b=>b.disabled=true);
+  const opts = document.querySelectorAll('#trivia-options .option');
+  const feedback = document.getElementById('trivia-feedback');
+  const correct = idx === currentQuestion.correct;
+  if(correct){
+    game.pergamino.collected = true;
+    game.poweredUp = true;
+    Game.score += 500;
+    document.getElementById('btn-fire').classList.add('enabled');
+    btnEl.classList.add('correct');
+    feedback.className = 'feedback-box good';
+    feedback.textContent = T('triviaCorrect');
+    spawnEnemyWave();
+  } else {
+    btnEl.classList.add('wrong');
+    opts[currentQuestion.correct].classList.add('correct');
+    feedback.className = 'feedback-box bad';
+    feedback.textContent = T('triviaWrong');
+  }
+  document.getElementById('btn-trivia-continue').style.display = 'block';
+}
+document.getElementById('btn-trivia-continue').addEventListener('click', ()=>{
+  document.getElementById('trivia-modal').classList.remove('active');
+  game.triviaOpen = false;
+  game.triviaCooldownUntil = performance.now() + 900;
+});
+
+/* ============================================================
+   ENEMIGOS Y DISPARO DE FE
+============================================================ */
+function spawnEnemyWave(){
+  const p = game.player;
+  for(const t of game.layout.enemySpawnsAfterPower){
+    const cx = p.x + t.dx;
+    game.enemies.push({
+      x:cx, y:t.y, minX:Math.max(0,cx-t.range), maxX:Math.min(game.worldW-20,cx+t.range),
+      speed:t.speed, dir:-1, alive:true
+    });
+  }
+}
+function updateEnemies(dt){
+  const p = game.player;
+  for(const e of game.enemies){
+    if(!e.alive) continue;
+    e.x += e.dir*e.speed*dt;
+    if(e.x < e.minX){ e.x=e.minX; e.dir=1; }
+    if(e.x > e.maxX){ e.x=e.maxX; e.dir=-1; }
+    const eBox = {x:e.x-15, y:e.y-15, w:30, h:30};
+    if(aabbOverlap(playerBox(p), eBox) && p.invuln<=0){
+      p.invuln = 1.1;
+      p.vx = -p.facing*180;
+      p.x = Math.max(0, p.x - p.facing*22);
+    }
+  }
+  for(const f of game.fireballs){
+    if(!f.alive) continue;
+    for(const e of game.enemies){
+      if(!e.alive) continue;
+      const eBox = {x:e.x-15, y:e.y-15, w:30, h:30};
+      const fBox = {x:f.x-6, y:f.y-6, w:12, h:12};
+      if(aabbOverlap(fBox, eBox)){ e.alive=false; f.alive=false; Game.score += 150; }
+    }
+  }
+}
+function throwFireball(){
+  if(!game || !game.poweredUp || game.triviaOpen) return;
+  const p = game.player;
+  game.fireballs.push({x:p.x+p.w/2, y:p.y+p.h/2, vx:p.facing*420, alive:true});
+}
+function updateFireballs(dt){
+  for(const f of game.fireballs){
+    if(!f.alive) continue;
+    f.x += f.vx*dt;
+    if(f.x < game.camX-40 || f.x > game.camX+VIEW_W+40) f.alive=false;
+  }
+  game.fireballs = game.fireballs.filter(f=>f.alive);
+}
+
+/* ============================================================
+   META Y AVANCE DE NIVEL
+============================================================ */
+function checkGoal(){
+  if(aabbOverlap(playerBox(game.player), game.goal)) finishLevel();
+}
+function finishLevel(){
+  if(game.finished) return;
+  game.finished = true;
+  game.running = false;
+  setTimeout(()=>{
+    Game.levelIndex++;
+    if(Game.levelIndex >= LEVELS.length){ showScreen('screen-epilogue'); }
+    else { showLevelNarrative(); }
+  }, 350);
+}
+
+/* ============================================================
+   LOOP
+============================================================ */
+function loop(ts){
+  if(!game || !game.running) return;
+  const dt = Math.min(0.033, (ts-game.lastTime)/1000);
+  game.lastTime = ts;
+  if(!game.triviaOpen){
+    updatePlayerPhysics(dt);
+    updateChispas();
+    updatePergamino();
+    updateEnemies(dt);
+    updateFireballs(dt);
+    updateCamera();
+    updateProgress();
+    checkGoal();
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+
+/* ============================================================
+   RENDER
+============================================================ */
+const canvas = document.getElementById('game-canvas');
+const ctx = canvas.getContext('2d');
+function draw(){
+  ctx.clearRect(0,0,VIEW_W,VIEW_H);
+  const lvl = LEVELS[Game.levelIndex];
+  const sky = ctx.createLinearGradient(0,0,0,VIEW_H);
+  sky.addColorStop(0, lvl.bg[1]); sky.addColorStop(1, lvl.bg[0]);
+  ctx.fillStyle = sky; ctx.fillRect(0,0,VIEW_W,VIEW_H);
+
+  // luna / sol fijo en pantalla (no se mueve con la cámara, da sensación de escenario real)
+  ctx.beginPath(); ctx.arc(VIEW_W*0.78, 120, 46, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.fill();
+  ctx.beginPath(); ctx.arc(VIEW_W*0.78, 120, 30, 0, Math.PI*2);
+  ctx.fillStyle = lvl.accent; ctx.globalAlpha = 0.5; ctx.fill(); ctx.globalAlpha = 1;
+
+  ctx.save();
+  ctx.translate(-game.camX, 0);
+
+  // estrellas
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  for(let i=0;i<90;i++){
+    const sx = (i*131) % game.worldW, sy = (i*77) % 340;
+    ctx.fillRect(sx, sy, 2, 2);
+  }
+
+  // montañas de paralaje (fondo lejano, se mueven más lento que la cámara)
+  ctx.fillStyle = lvl.accentDark;
+  ctx.globalAlpha = 0.55;
+  for(let mx=-200; mx<game.worldW+400; mx+=340){
+    const px = mx + game.camX*0.35;
+    ctx.beginPath();
+    ctx.moveTo(px-170, GROUND_Y);
+    ctx.lineTo(px, GROUND_Y-150);
+    ctx.lineTo(px+170, GROUND_Y);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // plataformas (color temático de cada nivel)
+  for(const plat of game.platforms){
+    const grad = ctx.createLinearGradient(0,plat.y,0,plat.y+plat.h);
+    grad.addColorStop(0, lvl.accentDark); grad.addColorStop(1,'#05070d');
+    ctx.fillStyle = grad;
+    ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
+    ctx.fillStyle = lvl.accent;
+    ctx.shadowColor = lvl.accent; ctx.shadowBlur = 6;
+    ctx.fillRect(plat.x, plat.y, plat.w, 5);
+    ctx.shadowBlur = 0;
+  }
+
+  // chispas
+  for(const c of game.chispas){
+    if(c.collected) continue;
+    ctx.beginPath(); ctx.arc(c.x, c.y, 9, 0, Math.PI*2);
+    ctx.fillStyle = '#ffd166'; ctx.shadowColor='#ffd166'; ctx.shadowBlur=14; ctx.fill(); ctx.shadowBlur=0;
+  }
+
+  // pergamino
+  if(!game.pergamino.collected){
+    ctx.font = '30px serif'; ctx.textAlign='center';
+    ctx.shadowColor='#ffd166'; ctx.shadowBlur=16;
+    ctx.fillText('📜', game.pergamino.x, game.pergamino.y);
+    ctx.shadowBlur=0;
+  }
+
+  // enemigos
+  for(const e of game.enemies){
+    if(!e.alive) continue;
+    ctx.font = '30px serif'; ctx.textAlign='center';
+    ctx.shadowColor='#ff5d7a'; ctx.shadowBlur=10;
+    ctx.fillText(lvl.enemyEmoji, e.x, e.y);
+    ctx.shadowBlur=0;
+  }
+
+  // fireballs
+  ctx.fillStyle = '#ffd166';
+  for(const f of game.fireballs){
+    if(!f.alive) continue;
+    ctx.beginPath(); ctx.arc(f.x, f.y, 6, 0, Math.PI*2); ctx.fill();
+  }
+
+  // meta
+  drawGoal();
+  // jugador
+  drawPlayer();
+
+  ctx.restore();
+}
+function drawGoal(){
+  const g = game.goal;
+  const lvl = LEVELS[Game.levelIndex];
+  ctx.strokeStyle = '#eaf4ff'; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(g.x, g.y+g.h); ctx.lineTo(g.x, g.y); ctx.stroke();
+  ctx.fillStyle = lvl.accent;
+  ctx.shadowColor = lvl.accent; ctx.shadowBlur = 12;
+  ctx.beginPath(); ctx.moveTo(g.x, g.y); ctx.lineTo(g.x+36, g.y+14); ctx.lineTo(g.x, g.y+28); ctx.closePath(); ctx.fill();
+  ctx.shadowBlur = 0;
+}
+const PLAYER_EMOJI = { Adán:"🏃🏻‍♂️", Eva:"🏃🏻‍♀️" };
+function drawPlayer(){
+  const p = game.player;
+  const lvl = LEVELS[Game.levelIndex];
+  ctx.save();
+  ctx.translate(p.x+p.w/2, p.y+p.h/2+6);
+  if(p.facing>0) ctx.scale(-1,1); // el emoji mira a la izquierda por defecto: se voltea al correr a la derecha
+  if(p.invuln>0 && Math.floor(p.invuln*12)%2===0){ ctx.restore(); return; }
+
+  if(game.poweredUp){
+    ctx.strokeStyle = lvl.accent;
+    ctx.lineWidth = 3;
+    ctx.shadowColor = lvl.accent; ctx.shadowBlur = 16;
+    ctx.beginPath(); ctx.arc(0,-4, p.w*1.25, 0, Math.PI*2); ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+  // pequeño rebote al saltar/correr para que se sienta vivo
+  const bob = p.onGround ? Math.sin(performance.now()*0.012)*2 : 0;
+  ctx.font = '38px serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.shadowColor = state.character==='Eva' ? 'rgba(255,209,102,0.5)' : 'rgba(62,203,255,0.5)';
+  ctx.shadowBlur = 8;
+  ctx.fillText(PLAYER_EMOJI[state.character] || '🏃🏻‍♂️', 0, bob);
+  ctx.shadowBlur = 0;
+  ctx.restore();
+}
+
+/* ============================================================
+   EPÍLOGO -> REFLEXIÓN
+============================================================ */
+document.getElementById('btn-epilogue-continue').addEventListener('click', ()=>{
+  showScreen('screen-reflection');
+});
+
+/* ============================================================
+   FINALIZAR / PUNTAJE (revelado solo al final)
+============================================================ */
+document.getElementById('btn-finish').addEventListener('click', ()=>{
+  const r1 = document.getElementById('refl1').value.trim();
+  const r2 = document.getElementById('refl2').value.trim();
+  const r3 = document.getElementById('refl3').value.trim();
+  Game.answers = [r1, r2, r3];
+
+  // Regla secreta: +2 puntos por cada carácter escrito en las 3 respuestas
+  const totalChars = r1.length + r2.length + r3.length;
+  Game.score += totalChars * 2;
+
+  document.getElementById('res-name').textContent = state.name;
+  document.getElementById('res-score').textContent = Game.score;
+  const summary = document.getElementById('res-summary');
+  summary.innerHTML = `
+    <b>${T('summary1')}</b>${escapeHtml(r1)||'—'}
+    <b>${T('summary2')}</b>${escapeHtml(r2)||'—'}
+    <b>${T('summary3')}</b>${escapeHtml(r3)||'—'}
+  `;
+  showScreen('screen-results');
+});
+function escapeHtml(str){ const d=document.createElement('div'); d.textContent=str; return d.innerHTML; }
+
+/* ============================================================
+   CAPTURA DE PANTALLA
+============================================================ */
+document.getElementById('btn-screenshot').addEventListener('click', ()=>{
+  document.body.classList.add('capture-mode');
+  document.getElementById('btn-restore').style.display = 'block';
+  document.getElementById('btn-restore').classList.remove('no-capture');
+});
+document.getElementById('btn-restore').addEventListener('click', ()=>{
+  document.body.classList.remove('capture-mode');
+  document.getElementById('btn-restore').style.display = 'none';
+});
+
+/* ============================================================
+   INIT
+============================================================ */
+applyStaticTexts();
+
+})();
+</script>
+</body>
+</html>

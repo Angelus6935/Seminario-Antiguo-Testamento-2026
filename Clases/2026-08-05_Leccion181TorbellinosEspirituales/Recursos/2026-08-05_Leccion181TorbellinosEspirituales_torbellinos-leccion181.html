@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Torbellinos: Fortaleza en Él</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rubik:wght@400;600;800&display=swap');
+
+:root{
+  --bg:#080b14;
+  --bg2:#0d1220;
+  --cyan:#00e5ff;
+  --amber:#ffb020;
+  --magenta:#ff3d81;
+  --violet:#7c5cff;
+  --green:#33e59b;
+  --text:#eaf2ff;
+  --muted:#8ea0c2;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none;}
+html,body{
+  margin:0; padding:0; width:100%; height:100%;
+  background:var(--bg); color:var(--text);
+  font-family:'Rubik',sans-serif;
+  overflow:hidden;
+  overscroll-behavior:none;
+  touch-action:none;
+}
+#app{ position:fixed; inset:0; overflow:hidden; }
+
+.arcade{ font-family:'Press Start 2P', monospace; }
+
+/* ---------- Fondo animado de torbellino ---------- */
+.bgSwirl{
+  position:absolute; inset:-20%;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(124,92,255,.25), transparent 40%),
+    radial-gradient(circle at 80% 30%, rgba(0,229,255,.2), transparent 45%),
+    radial-gradient(circle at 50% 80%, rgba(255,61,129,.15), transparent 40%);
+  animation: swirl 18s linear infinite;
+  z-index:0;
+}
+@keyframes swirl{
+  0%{ transform:rotate(0deg) scale(1); }
+  50%{ transform:rotate(180deg) scale(1.15); }
+  100%{ transform:rotate(360deg) scale(1); }
+}
+
+.screen{
+  position:absolute; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:20px; text-align:center;
+  opacity:0; pointer-events:none;
+  transform:scale(.96);
+  transition:opacity .35s ease, transform .35s ease;
+  z-index:1;
+}
+.screen.active{ opacity:1; pointer-events:auto; transform:scale(1); }
+
+h1.title{
+  font-size:22px; line-height:1.6; color:var(--cyan);
+  text-shadow:0 0 12px rgba(0,229,255,.6), 0 0 30px rgba(0,229,255,.3);
+  margin:0 0 6px;
+  animation: floaty 3s ease-in-out infinite;
+}
+@keyframes floaty{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-6px);} }
+
+.subtitle{ color:var(--muted); font-size:14px; margin-bottom:22px; max-width:340px; }
+
+.treeEmoji{ font-size:64px; margin-bottom:10px; filter:drop-shadow(0 0 18px rgba(51,229,155,.5)); animation:sway 2.6s ease-in-out infinite; }
+@keyframes sway{ 0%,100%{transform:rotate(-4deg);} 50%{transform:rotate(4deg);} }
+
+.btn{
+  font-family:'Press Start 2P', monospace;
+  font-size:12px;
+  color:#04121a;
+  background:linear-gradient(180deg, var(--cyan), #00a6bd);
+  border:none; border-radius:14px;
+  padding:16px 22px;
+  margin:8px 6px;
+  box-shadow:0 6px 0 #007c8f, 0 10px 20px rgba(0,229,255,.25);
+  cursor:pointer;
+  min-width:200px;
+  transition:transform .08s ease, box-shadow .08s ease;
+}
+.btn:active{ transform:translateY(6px); box-shadow:0 0 0 #007c8f; }
+.btn.amber{ background:linear-gradient(180deg, var(--amber), #c9840f); box-shadow:0 6px 0 #8a5c0a, 0 10px 20px rgba(255,176,32,.25); color:#241300;}
+.btn.amber:active{ box-shadow:0 0 0 #8a5c0a; }
+.btn.ghost{ background:transparent; border:2px solid var(--muted); color:var(--muted); box-shadow:none; }
+.btn.ghost:active{ transform:translateY(2px); }
+.btn.danger{ background:linear-gradient(180deg, var(--magenta), #a0134f); box-shadow:0 6px 0 #6d0d37, 0 10px 20px rgba(255,61,129,.25); }
+.btn.danger:active{ box-shadow:0 0 0 #6d0d37; }
+.btn:disabled{ opacity:.4; }
+
+.card{
+  background:linear-gradient(160deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:18px;
+  padding:18px;
+  backdrop-filter:blur(6px);
+  max-width:380px;
+  width:100%;
+}
+
+/* ---------- HUD ---------- */
+#hud{
+  position:absolute; top:0; left:0; right:0; z-index:5;
+  display:flex; justify-content:space-between; align-items:center;
+  padding:10px 14px; pointer-events:none;
+}
+#hud > *{ pointer-events:auto; }
+.hudPill{
+  font-family:'Press Start 2P', monospace; font-size:10px;
+  background:rgba(8,11,20,.7); border:1px solid rgba(255,255,255,.15);
+  padding:8px 10px; border-radius:10px; display:flex; align-items:center; gap:6px;
+}
+#hearts{ display:flex; gap:4px; font-size:16px; }
+.heart{ transition:transform .2s ease, opacity .2s ease; }
+.heart.lost{ animation:heartBreak .4s ease forwards; }
+@keyframes heartBreak{ 0%{transform:scale(1);} 40%{transform:scale(1.4) rotate(-10deg); opacity:.6;} 100%{transform:scale(0) rotate(15deg); opacity:0;} }
+
+#exitBtn{
+  width:38px; height:38px; border-radius:50%;
+  background:rgba(255,61,129,.15); border:1px solid var(--magenta);
+  color:var(--magenta); font-size:16px; font-weight:800;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer;
+}
+#exitBtn:active{ transform:scale(.9); }
+
+#scoreFloat{
+  font-family:'Press Start 2P', monospace; font-size:14px; color:var(--amber);
+  text-shadow:0 0 10px rgba(255,176,32,.6);
+}
+
+/* ---------- Canvas games ---------- */
+#gameCanvas{ position:absolute; inset:0; z-index:2; display:block; touch-action:none; }
+.controlsRow{
+  position:absolute; bottom:16px; left:0; right:0; z-index:5;
+  display:flex; justify-content:space-between; padding:0 20px; pointer-events:none;
+}
+.padBtn{
+  pointer-events:auto;
+  width:70px; height:70px; border-radius:50%;
+  background:rgba(0,229,255,.12); border:2px solid var(--cyan);
+  color:var(--cyan); font-size:26px; display:flex; align-items:center; justify-content:center;
+  box-shadow:0 0 16px rgba(0,229,255,.25);
+}
+.padBtn:active{ background:rgba(0,229,255,.35); transform:scale(.9); }
+
+.timerBar{
+  position:absolute; top:56px; left:14px; right:14px; height:8px; z-index:5;
+  background:rgba(255,255,255,.1); border-radius:6px; overflow:hidden;
+}
+.timerFill{ height:100%; background:linear-gradient(90deg, var(--green), var(--cyan)); width:100%; transition:width .1s linear; }
+
+/* ---------- Preguntas ---------- */
+#quizOverlay{
+  position:absolute; inset:0; z-index:8; display:none;
+  align-items:center; justify-content:center; padding:18px;
+  background:rgba(4,6,12,.88); backdrop-filter:blur(4px);
+}
+#quizOverlay.show{ display:flex; animation:fadeIn .25s ease; }
+@keyframes fadeIn{ from{opacity:0;} to{opacity:1;} }
+.quizCard{ max-width:400px; width:100%; animation:popIn .3s cubic-bezier(.34,1.56,.64,1); }
+@keyframes popIn{ 0%{transform:scale(.7); opacity:0;} 100%{transform:scale(1); opacity:1;} }
+.quizQ{ font-size:15px; margin-bottom:14px; line-height:1.5; }
+.opt{
+  display:block; width:100%; text-align:left;
+  background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.15);
+  color:var(--text); border-radius:12px; padding:12px 14px; margin-bottom:10px;
+  font-size:14px; cursor:pointer;
+}
+.opt:active{ transform:scale(.98); }
+.opt.correct{ background:rgba(51,229,155,.25); border-color:var(--green); animation:pulseGood .5s ease; }
+.opt.wrong{ background:rgba(255,61,129,.25); border-color:var(--magenta); animation:shake .4s ease; }
+@keyframes pulseGood{ 0%{transform:scale(1);} 50%{transform:scale(1.03);} 100%{transform:scale(1);} }
+@keyframes shake{ 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
+.hintBtn{ font-size:11px; color:var(--amber); background:none; border:1px dashed var(--amber); border-radius:10px; padding:8px 10px; margin-top:4px; cursor:pointer; }
+.hintBox{ font-size:12.5px; color:var(--muted); margin-top:10px; text-align:left; border-left:3px solid var(--amber); padding-left:10px; display:none; }
+.hintBox.show{ display:block; animation:fadeIn .3s ease; }
+
+/* ---------- Nivel 3: matching ---------- */
+.matchWrap{ display:flex; gap:14px; width:100%; max-width:420px; z-index:2; }
+.matchCol{ flex:1; display:flex; flex-direction:column; gap:8px; }
+.matchItem{
+  background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.15);
+  border-radius:12px; padding:10px 8px; font-size:12px; line-height:1.3;
+  cursor:pointer; transition:all .2s ease; text-align:center;
+}
+.matchItem.selected{ border-color:var(--cyan); background:rgba(0,229,255,.18); }
+.matchItem.matched{ background:rgba(51,229,155,.2); border-color:var(--green); opacity:.5; pointer-events:none; }
+.matchItem.wrong{ animation:shake .4s ease; border-color:var(--magenta); }
+
+/* ---------- Confeti ---------- */
+#confettiCanvas{ position:absolute; inset:0; z-index:9; pointer-events:none; }
+
+/* ---------- Modal salida ---------- */
+#exitModal{
+  position:absolute; inset:0; z-index:20; display:none;
+  align-items:center; justify-content:center; padding:20px;
+  background:rgba(0,0,0,.75); backdrop-filter:blur(3px);
+}
+#exitModal.show{ display:flex; animation:fadeIn .2s ease; }
+.exitCard{ max-width:340px; text-align:center; animation:popIn .25s ease; }
+.exitCard h3{ color:var(--magenta); margin:0 0 10px; font-size:15px; }
+.exitCard p{ color:var(--muted); font-size:13px; line-height:1.5; }
+
+/* ---------- Resultados ---------- */
+.starsRow{ font-size:38px; margin:10px 0 4px; }
+.starsRow span{ display:inline-block; opacity:.25; transform:scale(.5); transition:all .4s ease; }
+.starsRow span.on{ opacity:1; transform:scale(1); text-shadow:0 0 16px rgba(255,176,32,.8); }
+textarea{
+  width:100%; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.18);
+  border-radius:12px; color:var(--text); padding:10px; font-family:'Rubik',sans-serif; font-size:13px;
+  resize:vertical; min-height:52px; margin-bottom:10px;
+}
+label.reflectLabel{ font-size:12px; color:var(--muted); display:block; text-align:left; margin:8px 2px 4px; }
+
+.levelBadge{
+  font-family:'Press Start 2P', monospace; font-size:10px; color:var(--violet);
+  border:1px solid var(--violet); border-radius:8px; padding:4px 8px; margin-bottom:10px; display:inline-block;
+}
+
+.shieldRing{
+  position:absolute; border:3px solid var(--cyan); border-radius:50%;
+  box-shadow:0 0 20px var(--cyan); animation:ringPulse 1s ease-in-out infinite;
+}
+@keyframes ringPulse{ 0%,100%{transform:scale(1); opacity:.9;} 50%{transform:scale(1.15); opacity:.4;} }
+
+.floatText{ position:absolute; font-family:'Press Start 2P', monospace; font-size:12px; pointer-events:none; z-index:6; animation:floatUp 1s ease forwards; }
+@keyframes floatUp{ 0%{transform:translateY(0); opacity:1;} 100%{transform:translateY(-50px); opacity:0;} }
+
+@media (max-width:360px){
+  h1.title{ font-size:18px; }
+  .btn{ font-size:11px; min-width:170px; padding:14px 16px; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="bgSwirl"></div>
+  <canvas id="confettiCanvas"></canvas>
+
+  <!-- HUD -->
+  <div id="hud" style="display:none;">
+    <div class="hudPill"><span id="hearts"></span></div>
+    <div class="hudPill" id="scoreFloat">0</div>
+    <button id="exitBtn">✕</button>
+  </div>
+  <div class="timerBar" id="timerBar" style="display:none;"><div class="timerFill" id="timerFill"></div></div>
+
+  <!-- PANTALLA INICIO -->
+  <section class="screen active" id="scr-start">
+    <div class="treeEmoji">🌳</div>
+    <h1 class="title arcade">TORBELLINOS<br>FORTALEZA EN ÉL</h1>
+    <p class="subtitle">Un árbol golpeado por el viento crece raíces más fuertes. Atraviesa 4 niveles, aprende con el Señor y aumenta tu resiliencia emocional.</p>
+    <input type="text" id="nameInput" maxlength="20" placeholder="Escribe tu nombre" autocomplete="off"
+      style="font-family:'Rubik',sans-serif; font-size:15px; text-align:center; width:100%; max-width:260px; padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.06); color:var(--text); margin-bottom:14px;">
+    <div id="nameError" style="color:var(--magenta); font-size:12px; display:none; margin:-8px 0 10px;">Escribe tu nombre para comenzar ✏️</div>
+    <button class="btn" id="btnPlay">▶ JUGAR</button>
+    <button class="btn ghost" id="btnHow">¿CÓMO SE JUEGA?</button>
+  </section>
+
+  <!-- COMO SE JUEGA -->
+  <section class="screen" id="scr-how">
+    <div class="card">
+      <h3 style="color:var(--cyan); margin-top:0;">Cómo jugar 📱</h3>
+      <p style="font-size:13px; color:var(--muted); text-align:left; line-height:1.6;">
+      🌪️ <b>Nivel 1:</b> desliza el árbol para atrapar raíces y esquivar ramas rotas.<br><br>
+      🏃 <b>Nivel 2:</b> toca izquierda/derecha para cambiar de carril y llegar con Josué.<br><br>
+      📖 <b>Nivel 3:</b> une cada emoción con la escritura que le da fortaleza.<br><br>
+      🌀 <b>Nivel 4 (jefe):</b> esquiva el torbellino y responde para ganar un escudo.<br><br>
+      💡 Si dudas una pregunta, usa "Pista de estudio" — te ayuda a leer, pero resta algunos puntos.
+      </p>
+    </div>
+    <button class="btn" id="btnHowBack" style="margin-top:16px;">LISTO</button>
+  </section>
+
+  <!-- INTRO DE NIVEL -->
+  <section class="screen" id="scr-levelIntro">
+    <div class="levelBadge" id="liBadge">NIVEL 1</div>
+    <div class="treeEmoji" id="liEmoji">🌪️</div>
+    <h1 class="title arcade" id="liTitle" style="font-size:18px;"></h1>
+    <p class="subtitle" id="liDesc"></p>
+    <button class="btn amber" id="btnStartLevel">EMPEZAR</button>
+  </section>
+
+  <!-- JUEGO (canvas) -->
+  <section class="screen" id="scr-game">
+    <canvas id="gameCanvas"></canvas>
+    <div class="controlsRow" id="controlsRow">
+      <button class="padBtn" id="btnLeft">◀</button>
+      <button class="padBtn" id="btnRight">▶</button>
+    </div>
+  </section>
+
+  <!-- NIVEL 3 MATCHING -->
+  <section class="screen" id="scr-match">
+    <div class="levelBadge">NIVEL 3</div>
+    <h1 class="title arcade" style="font-size:16px;">EMPAREJA Y VENCE</h1>
+    <p class="subtitle" style="max-width:340px;">Toca una emoción y luego la escritura que la fortalece.</p>
+    <div class="matchWrap">
+      <div class="matchCol" id="matchEmotions"></div>
+      <div class="matchCol" id="matchRefs"></div>
+    </div>
+  </section>
+
+  <!-- RESULTADO DE NIVEL -->
+  <section class="screen" id="scr-levelResult">
+    <div class="treeEmoji">✅</div>
+    <h1 class="title arcade" style="font-size:18px;" id="lrTitle">¡NIVEL SUPERADO!</h1>
+    <p class="subtitle" id="lrDesc"></p>
+    <button class="btn" id="btnNextLevel">CONTINUAR</button>
+  </section>
+
+  <!-- RESULTADOS FINALES -->
+  <section class="screen" id="scr-final">
+    <div class="card" style="max-width:420px;">
+      <div class="treeEmoji" style="font-size:50px;">🌳✨</div>
+      <h1 class="title arcade" style="font-size:16px;">¡RESILIENCIA LOGRADA<span id="finalNameSuffix"></span>!</h1>
+      <div class="starsRow" id="finalStars"><span>⭐</span><span>⭐</span><span>⭐</span></div>
+      <p style="font-family:'Press Start 2P', monospace; font-size:16px; color:var(--amber); margin:6px 0 16px;">
+        PUNTAJE: <span id="finalScore">0</span>
+      </p>
+      <label class="reflectLabel">Describe tu capacidad para enfrentar desafíos emocionales. ¿Qué emociones manejas bien? ¿Cuáles te resultan difíciles?</label>
+      <textarea id="reflect1" placeholder="Escribe aquí..."></textarea>
+      <label class="reflectLabel">Describe tu capacidad para recibir ayuda del Señor con esas emociones. ¿Qué has logrado? ¿Qué intentaste que no funcionó?</label>
+      <textarea id="reflect2" placeholder="Escribe aquí..."></textarea>
+      <button class="btn amber" id="btnWhatsapp">📲 ENVIAR REFLEXIÓN Y PUNTAJE</button>
+      <button class="btn ghost" id="btnReplay">🔁 JUGAR DE NUEVO</button>
+    </div>
+  </section>
+
+  <!-- OVERLAY PREGUNTAS -->
+  <div id="quizOverlay">
+    <div class="card quizCard">
+      <div class="levelBadge" id="quizBadge">PREGUNTA</div>
+      <p class="quizQ" id="quizQ"></p>
+      <div id="quizOpts"></div>
+      <button class="hintBtn" id="btnHint">📖 Pista de estudio (−15 pts)</button>
+      <div class="hintBox" id="hintBox"></div>
+    </div>
+  </div>
+
+  <!-- MODAL SALIDA -->
+  <div id="exitModal">
+    <div class="card exitCard" id="exitCardInner">
+      <h3>⚠️ ¿Seguro que quieres salir?</h3>
+      <p>Perderás tu progreso y puntaje de esta partida.</p>
+      <button class="btn ghost" id="btnExitCancel">SEGUIR JUGANDO</button>
+      <button class="btn danger" id="btnExitConfirm1">SALIR</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============ ESTADO GLOBAL ============ */
+const state = {
+  score:0, lives:3, level:0, quizBonus:0,
+  matchDone:0, playerName:''
+};
+const TOTAL_LEVELS = 4;
+
+/* ============ UTILIDADES DE PANTALLA ============ */
+const screens = document.querySelectorAll('.screen');
+function showScreen(id){
+  screens.forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function vibrate(ms){ if(navigator.vibrate) navigator.vibrate(ms); }
+
+/* ============ HUD ============ */
+const heartsEl = document.getElementById('hearts');
+const scoreFloatEl = document.getElementById('scoreFloat');
+function renderHUD(){
+  heartsEl.innerHTML = '';
+  for(let i=0;i<3;i++){
+    const h = document.createElement('span');
+    h.className='heart';
+    h.textContent = i < state.lives ? '❤️' : '🤍';
+    heartsEl.appendChild(h);
+  }
+  scoreFloatEl.textContent = state.score;
+}
+function loseLife(){
+  state.lives = Math.max(0, state.lives-1);
+  renderHUD();
+  vibrate(60);
+}
+function addScore(n){
+  state.score += n;
+  renderHUD();
+}
+
+/* ============ CONFETI ============ */
+const confettiCanvas = document.getElementById('confettiCanvas');
+const cctx = confettiCanvas.getContext('2d');
+let confettiParticles = [];
+function resizeAll(){
+  [confettiCanvas, gameCanvas].forEach(c=>{
+    c.width = window.innerWidth * devicePixelRatio;
+    c.height = window.innerHeight * devicePixelRatio;
+    c.style.width = window.innerWidth+'px';
+    c.style.height = window.innerHeight+'px';
+  });
+}
+function burstConfetti(x,y,count=26,colors=['#00e5ff','#ffb020','#ff3d81','#33e59b','#7c5cff']){
+  for(let i=0;i<count;i++){
+    confettiParticles.push({
+      x:x*devicePixelRatio, y:y*devicePixelRatio,
+      vx:(Math.random()-0.5)*8*devicePixelRatio, vy:(Math.random()-1.6)*8*devicePixelRatio,
+      g:0.25*devicePixelRatio, life:60+Math.random()*20,
+      size:(3+Math.random()*4)*devicePixelRatio,
+      color:colors[Math.floor(Math.random()*colors.length)],
+      rot:Math.random()*Math.PI, vr:(Math.random()-0.5)*0.3
+    });
+  }
+}
+function confettiLoop(){
+  cctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+  confettiParticles.forEach(p=>{
+    p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; p.life--; p.rot+=p.vr;
+    cctx.save();
+    cctx.translate(p.x,p.y); cctx.rotate(p.rot);
+    cctx.fillStyle=p.color;
+    cctx.globalAlpha = Math.max(0, p.life/70);
+    cctx.fillRect(-p.size/2,-p.size/2,p.size,p.size);
+    cctx.restore();
+  });
+  confettiParticles = confettiParticles.filter(p=>p.life>0);
+  requestAnimationFrame(confettiLoop);
+}
+requestAnimationFrame(confettiLoop);
+
+function floatingText(text,x,y,color){
+  const el = document.createElement('div');
+  el.className='floatText'; el.textContent=text; el.style.color=color||'var(--amber)';
+  el.style.left = x+'px'; el.style.top = y+'px';
+  document.getElementById('app').appendChild(el);
+  setTimeout(()=>el.remove(),1000);
+}
+
+/* ============ CANVAS BASE ============ */
+const gameCanvas = document.getElementById('gameCanvas');
+const gctx = gameCanvas.getContext('2d');
+resizeAll();
+window.addEventListener('resize', resizeAll);
+
+function W(){ return window.innerWidth; }
+function H(){ return window.innerHeight; }
+
+/* ============ BANCO DE PREGUNTAS ============ */
+const QUIZ = {
+  1:[
+    {q:"¿Qué les sucede a las raíces de un árbol golpeado por el viento?",
+     opts:["Crecen más rápido, gruesas y profundas","Se debilitan y se secan","No cambian en nada","Dejan de absorber agua"],
+     correct:0, hint:"El manual enseña: 'los árboles que son golpeados por fuertes vientos a menudo desarrollan raíces que crecen más rápido, más gruesas y se extienden más lejos.'"},
+    {q:"¿Cómo se llama la capacidad de resistir fielmente los torbellinos emocionales?",
+     opts:["Fuerza física","Resiliencia emocional","Autoestima","Paciencia académica"],
+     correct:1, hint:"La lección la define como 'resiliencia emocional': la capacidad de resistir los torbellinos de la vida."}
+  ],
+  2:[
+    {q:"En Josué 1:9, ¿qué le pide el Señor a Josué frente al desafío?",
+     opts:["Que espere a que otro lo resuelva","Que sea fuerte y valiente, porque Él estará con él","Que abandone su llamamiento","Que ore solo una vez al año"],
+     correct:1, hint:"El Señor le dice a Josué que sea fuerte y valiente, y le promete estar con él dondequiera que vaya."},
+    {q:"Según Josué 1:8, ¿qué debía hacer Josué de día y de noche?",
+     opts:["Entrenar al ejército","Meditar en el libro de la ley (las Escrituras)","Dormir para descansar","Construir un templo"],
+     correct:1, hint:"El Señor le dice que medite en el libro de la ley de día y de noche, para guardar y hacer conforme a lo escrito."}
+  ],
+  4:[
+    {q:"¿Qué apóstol enseñó sobre los 'torbellinos espirituales'?",
+     opts:["Élder Neil L. Andersen","Presidente Holland","Élder Christofferson","Hna. Tracy Browning"],
+     correct:0, hint:"El élder Neil L. Andersen, del Cuórum de los Doce, enseñó sobre los torbellinos espirituales de la juventud."},
+    {q:"Según el élder Holland, ¿por qué envió Dios a Jesucristo?",
+     opts:["Para juzgarnos de inmediato","Porque nos ama y quiere fortalecernos y ayudarnos a seguir adelante","Para reemplazar a los profetas","Para que no tengamos pruebas"],
+     correct:1, hint:"Holland enseña que, por Su amor infinito, el Padre envió a Jesucristo para fortalecerte y ayudarte a seguir adelante."},
+    {q:"¿Qué nos ayuda a sentir la fortaleza del Señor, según esta lección?",
+     opts:["Ignorar lo que sentimos","Meditar en las Escrituras","Compararnos con otros","Evitar hablar de las emociones"],
+     correct:1, hint:"La lección enseña que meditar en las palabras del Señor nos ayuda a hallar fortaleza emocional en Él."},
+    {q:"Si seguimos al Señor con valentía, ¿qué nos enseña Josué 1 que sucederá?",
+     opts:["Nada cambiará","Tendremos más pruebas y menos ayuda","Él estará con nosotros y nos fortalecerá","Perderemos a nuestros amigos"],
+     correct:2, hint:"La verdad clave de la lección: si seguimos al Señor con valentía, Él estará con nosotros y nos fortalecerá."}
+  ]
+};
+
+const MATCH_PAIRS = [
+  {emotion:"Abrumado", ref:"Isaías 40:28–31"},
+  {emotion:"Asustado", ref:"Juan 14:27"},
+  {emotion:"Triste", ref:"Apocalipsis 21:3–5"},
+  {emotion:"Olvidado", ref:"Lucas 12:6–7"},
+  {emotion:"Desanimado", ref:"Isaías 43:1–2, 5"},
+  {emotion:"Solo", ref:"D. y C. 68:6"}
+];
+
+/* ============ QUIZ OVERLAY ============ */
+const quizOverlay = document.getElementById('quizOverlay');
+const quizQ = document.getElementById('quizQ');
+const quizOpts = document.getElementById('quizOpts');
+const quizBadge = document.getElementById('quizBadge');
+const btnHint = document.getElementById('btnHint');
+const hintBox = document.getElementById('hintBox');
+
+function askQuiz(list, idx, onDone){
+  if(idx >= list.length){ quizOverlay.classList.remove('show'); onDone(); return; }
+  const item = list[idx];
+  quizBadge.textContent = `PREGUNTA ${idx+1}/${list.length}`;
+  quizQ.textContent = item.q;
+  quizOpts.innerHTML = '';
+  hintBox.classList.remove('show'); hintBox.textContent = item.hint;
+  btnHint.style.display='inline-block';
+  btnHint.disabled = false;
+  let hintUsed = false;
+  btnHint.onclick = ()=>{
+    if(hintUsed) return;
+    hintUsed = true;
+    hintBox.classList.add('show');
+    addScore(-15);
+    btnHint.disabled = true;
+    btnHint.style.opacity = .5;
+  };
+  item.opts.forEach((opt,i)=>{
+    const b = document.createElement('button');
+    b.className='opt'; b.textContent = opt;
+    b.onclick = ()=>{
+      Array.from(quizOpts.children).forEach(c=>c.style.pointerEvents='none');
+      if(i === item.correct){
+        b.classList.add('correct');
+        addScore(hintUsed?15:30);
+        vibrate(30);
+      } else {
+        b.classList.add('wrong');
+        quizOpts.children[item.correct].classList.add('correct');
+        vibrate([40,40,40]);
+      }
+      setTimeout(()=>{ askQuiz(list, idx+1, onDone); }, 900);
+    };
+    quizOpts.appendChild(b);
+  });
+  quizOverlay.classList.add('show');
+}
+function closeQuizAnd(cb){
+  quizOverlay.classList.remove('show');
+  cb();
+}
+
+/* ============ NIVEL 1: ESQUIVAR EN EL TORBELLINO ============ */
+let raf1 = null;
+function runLevel1(onFinish){
+  document.getElementById('controlsRow').style.display='flex';
+  document.getElementById('timerBar').style.display='block';
+  const player = { x: W()/2, y: H()-110, w:56, h:56, speed: 9*devicePixelRatio };
+  let items = [];
+  let spawnTimer = 0;
+  let duration = 24000; // ms
+  let elapsed = 0;
+  let last = performance.now();
+  let leftHeld=false, rightHeld=false;
+  let lives = 3; state.lives = 3; renderHUD();
+
+  const btnLeft = document.getElementById('btnLeft');
+  const btnRight = document.getElementById('btnRight');
+  const holdStart = (dir)=> (e)=>{ e.preventDefault(); if(dir<0) leftHeld=true; else rightHeld=true; };
+  const holdEnd = (dir)=> (e)=>{ e.preventDefault(); if(dir<0) leftHeld=false; else rightHeld=false; };
+  btnLeft.addEventListener('touchstart', holdStart(-1)); btnLeft.addEventListener('touchend', holdEnd(-1));
+  btnLeft.addEventListener('mousedown', holdStart(-1)); btnLeft.addEventListener('mouseup', holdEnd(-1));
+  btnRight.addEventListener('touchstart', holdStart(1)); btnRight.addEventListener('touchend', holdEnd(1));
+  btnRight.addEventListener('mousedown', holdStart(1)); btnRight.addEventListener('mouseup', holdEnd(1));
+
+  // swipe / drag directo sobre canvas
+  let dragging=false;
+  function pointerX(e){ return (e.touches ? e.touches[0].clientX : e.clientX); }
+  gameCanvas.addEventListener('touchstart', e=>{ dragging=true; movePlayerTo(pointerX(e)); });
+  gameCanvas.addEventListener('touchmove', e=>{ if(dragging) movePlayerTo(pointerX(e)); e.preventDefault(); }, {passive:false});
+  gameCanvas.addEventListener('touchend', ()=>dragging=false);
+  function movePlayerTo(clientX){ player.x = clientX*devicePixelRatio; }
+
+  function cleanupControls(){
+    btnLeft.replaceWith(btnLeft.cloneNode(true));
+    btnRight.replaceWith(btnRight.cloneNode(true));
+  }
+
+  const GOOD_EMOJIS = ['🌱','🌿','🍀'];
+  function spawnItem(){
+    const good = Math.random() < 0.62;
+    items.push({
+      x: Math.random()*(W()-40)*devicePixelRatio + 20*devicePixelRatio,
+      y: -40*devicePixelRatio,
+      vy: (2.4 + Math.random()*2 + elapsed/9000)*devicePixelRatio,
+      good,
+      emoji: good ? GOOD_EMOJIS[Math.floor(Math.random()*GOOD_EMOJIS.length)] : (Math.random()<0.5?'🍂':'⚡'),
+      size: (good ? 46 : 40)*devicePixelRatio,
+      spin: Math.random()*Math.PI*2,
+      spinSpeed: (Math.random()-0.5)*0.06,
+      bobPhase: Math.random()*Math.PI*2
+    });
+  }
+
+  function loop(now){
+    const dt = now-last; last = now; elapsed += dt;
+    spawnTimer -= dt;
+    if(spawnTimer<=0){ spawnItem(); spawnTimer = 480 - Math.min(260, elapsed/90); }
+
+    if(leftHeld) player.x -= player.speed;
+    if(rightHeld) player.x += player.speed;
+    player.x = Math.max(30*devicePixelRatio, Math.min(W()*devicePixelRatio-30*devicePixelRatio, player.x));
+
+    gctx.clearRect(0,0,gameCanvas.width, gameCanvas.height);
+
+    // suelo decorativo
+    gctx.fillStyle = 'rgba(51,229,155,.08)';
+    gctx.fillRect(0, gameCanvas.height-30*devicePixelRatio, gameCanvas.width, 30*devicePixelRatio);
+
+    items.forEach(it=>{
+      it.y += it.vy;
+      it.spin += it.spinSpeed;
+      const bob = Math.sin(elapsed/220 + it.bobPhase) * 4 * devicePixelRatio;
+      gctx.save();
+      gctx.translate(it.x + bob, it.y);
+      gctx.rotate(it.spin*0.3);
+      // halo de brillo detrás del objeto
+      const haloColor = it.good ? 'rgba(51,229,155,.45)' : 'rgba(255,61,129,.4)';
+      const grad = gctx.createRadialGradient(0,0,4,0,0,it.size*0.9);
+      grad.addColorStop(0, haloColor);
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      gctx.fillStyle = grad;
+      gctx.beginPath(); gctx.arc(0,0,it.size*0.8,0,Math.PI*2); gctx.fill();
+      gctx.shadowColor = it.good ? '#33e59b' : '#ff3d81';
+      gctx.shadowBlur = 14*devicePixelRatio;
+      gctx.font = `${it.size}px sans-serif`;
+      gctx.textAlign='center'; gctx.textBaseline='middle';
+      gctx.fillText(it.emoji, 0, 0);
+      gctx.restore();
+    });
+
+    // colisiones
+    const py = (H()-110)*devicePixelRatio;
+    items = items.filter(it=>{
+      const dx = it.x - player.x, dy = it.y - py;
+      const dist = Math.sqrt(dx*dx+dy*dy);
+      if(dist < 40*devicePixelRatio){
+        if(it.good){
+          addScore(10); floatingText('+10 🌱', it.x/devicePixelRatio, it.y/devicePixelRatio, '#33e59b');
+          burstConfetti(it.x/devicePixelRatio, it.y/devicePixelRatio, 10);
+        } else {
+          loseLife(); floatingText('-1 ❤️', it.x/devicePixelRatio, it.y/devicePixelRatio, '#ff3d81');
+        }
+        return false;
+      }
+      if(it.y > gameCanvas.height+50) return false;
+      return true;
+    });
+
+    // dibujar árbol jugador
+    gctx.font = `56px sans-serif`; gctx.textAlign='center'; gctx.textBaseline='middle';
+    gctx.fillText('🌳', player.x, py);
+
+    // timer
+    const pct = Math.max(0, 1 - elapsed/duration);
+    document.getElementById('timerFill').style.width = (pct*100)+'%';
+
+    if(elapsed < duration && state.lives>0){
+      raf1 = requestAnimationFrame(loop);
+    } else {
+      cancelAnimationFrame(raf1);
+      cleanupControls();
+      document.getElementById('controlsRow').style.display='none';
+      document.getElementById('timerBar').style.display='none';
+      onFinish();
+    }
+  }
+  raf1 = requestAnimationFrame(loop);
+}
+
+/* ============ NIVEL 2: CARRERA DE JOSUÉ (3 carriles) ============ */
+let raf2 = null;
+function runLevel2(onFinish){
+  document.getElementById('controlsRow').style.display='flex';
+  document.getElementById('timerBar').style.display='block';
+  const lanesX = [0.22, 0.5, 0.78];
+  let lane = 1;
+  let items = [];
+  let spawnTimer = 0;
+  let duration = 22000;
+  let elapsed = 0;
+  let last = performance.now();
+  state.lives = 3; renderHUD();
+
+  const btnLeft = document.getElementById('btnLeft');
+  const btnRight = document.getElementById('btnRight');
+  btnLeft.textContent='◀'; btnRight.textContent='▶';
+  const goLeft = e=>{ e.preventDefault(); lane = Math.max(0, lane-1); vibrate(15); };
+  const goRight = e=>{ e.preventDefault(); lane = Math.min(2, lane+1); vibrate(15); };
+  btnLeft.addEventListener('touchstart', goLeft); btnLeft.addEventListener('click', goLeft);
+  btnRight.addEventListener('touchstart', goRight); btnRight.addEventListener('click', goRight);
+
+  let touchStartX = null;
+  gameCanvas.addEventListener('touchstart', e=>{ touchStartX = e.touches[0].clientX; });
+  gameCanvas.addEventListener('touchend', e=>{
+    if(touchStartX===null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if(dx > 40) lane = Math.min(2, lane+1);
+    else if(dx < -40) lane = Math.max(0, lane-1);
+    touchStartX = null;
+  });
+
+  function cleanupControls(){
+    btnLeft.replaceWith(btnLeft.cloneNode(true));
+    btnRight.replaceWith(btnRight.cloneNode(true));
+  }
+
+  function spawnItem(){
+    const l = Math.floor(Math.random()*3);
+    const good = Math.random() < 0.55;
+    items.push({ lane:l, y:-40*devicePixelRatio, vy:(3+elapsed/7000)*devicePixelRatio, good, emoji: good?'⭐':'🪨' });
+  }
+
+  function loop(now){
+    const dt = now-last; last=now; elapsed+=dt;
+    spawnTimer -= dt;
+    if(spawnTimer<=0){ spawnItem(); spawnTimer = 520 - Math.min(300, elapsed/80); }
+
+    gctx.clearRect(0,0,gameCanvas.width, gameCanvas.height);
+
+    // carriles
+    gctx.strokeStyle='rgba(255,255,255,.08)'; gctx.lineWidth=2*devicePixelRatio;
+    [0.36,0.64].forEach(fx=>{
+      gctx.beginPath(); gctx.moveTo(fx*gameCanvas.width,0); gctx.lineTo(fx*gameCanvas.width, gameCanvas.height); gctx.stroke();
+    });
+
+    const py = (H()-110)*devicePixelRatio;
+    items.forEach(it=>{ it.y += it.vy; });
+    items = items.filter(it=>{
+      const ix = lanesX[it.lane]*gameCanvas.width;
+      gctx.font='38px sans-serif'; gctx.textAlign='center'; gctx.textBaseline='middle';
+      gctx.fillText(it.emoji, ix, it.y);
+      const closeY = Math.abs(it.y - py) < 46*devicePixelRatio;
+      if(closeY && it.lane===lane){
+        if(it.good){ addScore(12); floatingText('+12 ⭐', ix/devicePixelRatio, it.y/devicePixelRatio,'#ffb020'); burstConfetti(ix/devicePixelRatio, it.y/devicePixelRatio, 8);}
+        else { loseLife(); floatingText('-1 ❤️', ix/devicePixelRatio, it.y/devicePixelRatio,'#ff3d81'); }
+        return false;
+      }
+      if(it.y > gameCanvas.height+50) return false;
+      return true;
+    });
+
+    const px = lanesX[lane]*gameCanvas.width;
+    gctx.font='50px sans-serif'; gctx.textAlign='center'; gctx.textBaseline='middle';
+    gctx.fillText('🏃', px, py);
+
+    const pct = Math.max(0, 1-elapsed/duration);
+    document.getElementById('timerFill').style.width=(pct*100)+'%';
+
+    if(elapsed<duration && state.lives>0){
+      raf2 = requestAnimationFrame(loop);
+    } else {
+      cancelAnimationFrame(raf2);
+      cleanupControls();
+      document.getElementById('controlsRow').style.display='none';
+      document.getElementById('timerBar').style.display='none';
+      onFinish();
+    }
+  }
+  raf2 = requestAnimationFrame(loop);
+}
+
+/* ============ NIVEL 3: EMPAREJAR ============ */
+function runLevel3(onFinish){
+  showScreen('scr-match');
+  const emoCol = document.getElementById('matchEmotions');
+  const refCol = document.getElementById('matchRefs');
+  emoCol.innerHTML=''; refCol.innerHTML='';
+  const shuffledEmo = [...MATCH_PAIRS].sort(()=>Math.random()-0.5);
+  const shuffledRef = [...MATCH_PAIRS].sort(()=>Math.random()-0.5);
+  let selectedEmo = null, selectedRef = null;
+  let matched = 0;
+
+  shuffledEmo.forEach(p=>{
+    const d = document.createElement('div');
+    d.className='matchItem'; d.textContent = p.emotion; d.dataset.emotion = p.emotion;
+    d.onclick = ()=>{
+      if(d.classList.contains('matched')) return;
+      Array.from(emoCol.children).forEach(c=>c.classList.remove('selected'));
+      d.classList.add('selected'); selectedEmo = d;
+      tryMatch();
+    };
+    emoCol.appendChild(d);
+  });
+  shuffledRef.forEach(p=>{
+    const d = document.createElement('div');
+    d.className='matchItem'; d.textContent = p.ref; d.dataset.ref = p.ref; d.dataset.emotion = p.emotion;
+    d.onclick = ()=>{
+      if(d.classList.contains('matched')) return;
+      Array.from(refCol.children).forEach(c=>c.classList.remove('selected'));
+      d.classList.add('selected'); selectedRef = d;
+      tryMatch();
+    };
+    refCol.appendChild(d);
+  });
+
+  function tryMatch(){
+    if(!selectedEmo || !selectedRef) return;
+    if(selectedEmo.dataset.emotion === selectedRef.dataset.emotion){
+      selectedEmo.classList.add('matched'); selectedRef.classList.add('matched');
+      selectedEmo.classList.remove('selected'); selectedRef.classList.remove('selected');
+      addScore(20); matched++;
+      const rect = selectedRef.getBoundingClientRect();
+      burstConfetti(rect.left+rect.width/2, rect.top+rect.height/2, 16);
+      vibrate(25);
+      selectedEmo=null; selectedRef=null;
+      if(matched === MATCH_PAIRS.length){
+        setTimeout(onFinish, 500);
+      }
+    } else {
+      selectedEmo.classList.add('wrong'); selectedRef.classList.add('wrong');
+      vibrate([30,30,30]);
+      setTimeout(()=>{
+        selectedEmo.classList.remove('wrong','selected'); selectedRef.classList.remove('wrong','selected');
+        selectedEmo=null; selectedRef=null;
+      }, 450);
+    }
+  }
+}
+
+/* ============ NIVEL 4: JEFE FINAL ============ */
+let raf4 = null;
+function runLevel4(onFinish){
+  document.getElementById('controlsRow').style.display='flex';
+  document.getElementById('timerBar').style.display='block';
+  const player = { x: W()/2*devicePixelRatio };
+  let projectiles = [];
+  let spawnTimer = 0;
+  let bossHealth = 100;
+  let elapsed = 0;
+  let last = performance.now();
+  let shieldUntil = 0;
+  let leftHeld=false, rightHeld=false;
+  let questionTimer = 6500;
+  let qIdx = 0;
+  const pool = [...QUIZ[4]].sort(()=>Math.random()-0.5);
+  state.lives = 3; renderHUD();
+
+  const btnLeft = document.getElementById('btnLeft');
+  const btnRight = document.getElementById('btnRight');
+  const holdStart = (dir)=> (e)=>{ e.preventDefault(); if(dir<0) leftHeld=true; else rightHeld=true; };
+  const holdEnd = (dir)=> (e)=>{ e.preventDefault(); if(dir<0) leftHeld=false; else rightHeld=false; };
+  btnLeft.addEventListener('touchstart', holdStart(-1)); btnLeft.addEventListener('touchend', holdEnd(-1));
+  btnLeft.addEventListener('mousedown', holdStart(-1)); btnLeft.addEventListener('mouseup', holdEnd(-1));
+  btnRight.addEventListener('touchstart', holdStart(1)); btnRight.addEventListener('touchend', holdEnd(1));
+  btnRight.addEventListener('mousedown', holdStart(1)); btnRight.addEventListener('mouseup', holdEnd(1));
+
+  let dragging=false;
+  function pointerX(e){ return (e.touches?e.touches[0].clientX:e.clientX); }
+  gameCanvas.addEventListener('touchstart', e=>{ dragging=true; player.x=pointerX(e)*devicePixelRatio; });
+  gameCanvas.addEventListener('touchmove', e=>{ if(dragging) player.x=pointerX(e)*devicePixelRatio; e.preventDefault(); }, {passive:false});
+  gameCanvas.addEventListener('touchend', ()=>dragging=false);
+
+  function cleanupControls(){
+    btnLeft.replaceWith(btnLeft.cloneNode(true));
+    btnRight.replaceWith(btnRight.cloneNode(true));
+  }
+
+  let paused = false;
+  function askBossQuestion(){
+    paused = true;
+    if(qIdx >= pool.length) qIdx = 0;
+    const item = pool[qIdx++];
+    quizBadge.textContent = '🌀 EL TORBELLINO TE DESAFÍA';
+    quizQ.textContent = item.q;
+    quizOpts.innerHTML=''; hintBox.classList.remove('show'); hintBox.textContent=item.hint;
+    let hintUsed=false; btnHint.disabled=false; btnHint.style.opacity=1;
+    btnHint.onclick=()=>{ if(hintUsed)return; hintUsed=true; hintBox.classList.add('show'); addScore(-15); btnHint.disabled=true; btnHint.style.opacity=.5; };
+    item.opts.forEach((opt,i)=>{
+      const b=document.createElement('button'); b.className='opt'; b.textContent=opt;
+      b.onclick=()=>{
+        Array.from(quizOpts.children).forEach(c=>c.style.pointerEvents='none');
+        if(i===item.correct){
+          b.classList.add('correct'); addScore(hintUsed?15:30); bossHealth -= 18;
+          shieldUntil = performance.now() + 5000;
+          vibrate(30);
+        } else {
+          b.classList.add('wrong'); quizOpts.children[item.correct].classList.add('correct');
+          loseLife(); vibrate([40,40,40]);
+        }
+        setTimeout(()=>{
+          quizOverlay.classList.remove('show');
+          paused=false; questionTimer = 7000; last = performance.now();
+          if(bossHealth<=0 || state.lives<=0){
+            cancelAnimationFrame(raf4);
+            cleanupControls();
+            document.getElementById('controlsRow').style.display='none';
+            document.getElementById('timerBar').style.display='none';
+            onFinish(bossHealth<=0);
+          } else {
+            raf4 = requestAnimationFrame(loop);
+          }
+        }, 900);
+      };
+      quizOpts.appendChild(b);
+    });
+    quizOverlay.classList.add('show');
+  }
+
+  function spawnProjectile(){
+    projectiles.push({
+      x: Math.random()*(W()-40)*devicePixelRatio+20*devicePixelRatio,
+      y:-30*devicePixelRatio,
+      vy:(3.2+elapsed/8000)*devicePixelRatio
+    });
+  }
+
+  function loop(now){
+    if(paused) return;
+    const dt = now-last; last=now; elapsed+=dt;
+    spawnTimer -= dt; questionTimer -= dt;
+    if(spawnTimer<=0){ spawnProjectile(); spawnTimer = 380; }
+
+    if(leftHeld) player.x -= 9*devicePixelRatio;
+    if(rightHeld) player.x += 9*devicePixelRatio;
+    player.x = Math.max(30*devicePixelRatio, Math.min(W()*devicePixelRatio-30*devicePixelRatio, player.x));
+
+    gctx.clearRect(0,0,gameCanvas.width, gameCanvas.height);
+
+    // jefe torbellino arriba
+    gctx.font='60px sans-serif'; gctx.textAlign='center'; gctx.textBaseline='middle';
+    gctx.save();
+    gctx.translate(gameCanvas.width/2, 80*devicePixelRatio);
+    gctx.rotate((elapsed/300)%(Math.PI*2));
+    gctx.fillText('🌀', 0, 0);
+    gctx.restore();
+
+    // barra de vida del jefe
+    const barW = gameCanvas.width*0.7, barX=(gameCanvas.width-barW)/2, barY=20*devicePixelRatio;
+    gctx.fillStyle='rgba(255,255,255,.15)'; gctx.fillRect(barX,barY,barW,10*devicePixelRatio);
+    gctx.fillStyle='#ff3d81'; gctx.fillRect(barX,barY,barW*Math.max(0,bossHealth/100),10*devicePixelRatio);
+
+    const py=(H()-110)*devicePixelRatio;
+    projectiles.forEach(p=>{ p.y+=p.vy; gctx.font='30px sans-serif'; gctx.fillText('💢', p.x, p.y); });
+    const shielded = performance.now() < shieldUntil;
+    projectiles = projectiles.filter(p=>{
+      const dist = Math.hypot(p.x-player.x, p.y-py);
+      if(dist < 36*devicePixelRatio){
+        if(!shielded){ loseLife(); floatingText('-1 ❤️', p.x/devicePixelRatio, p.y/devicePixelRatio, '#ff3d81'); }
+        else { floatingText('¡Bloqueado! 🛡️', p.x/devicePixelRatio, p.y/devicePixelRatio, '#00e5ff'); }
+        return false;
+      }
+      return p.y < gameCanvas.height+50;
+    });
+
+    gctx.font='50px sans-serif'; gctx.fillText('🌳', player.x, py);
+    if(shielded){
+      gctx.strokeStyle='rgba(0,229,255,.7)'; gctx.lineWidth=4*devicePixelRatio;
+      gctx.beginPath(); gctx.arc(player.x, py, 42*devicePixelRatio, 0, Math.PI*2); gctx.stroke();
+    }
+
+    document.getElementById('timerFill').style.width = Math.max(0, Math.min(100,(questionTimer/7000)*100))+'%';
+
+    if(state.lives<=0 || bossHealth<=0){
+      cancelAnimationFrame(raf4);
+      cleanupControls();
+      document.getElementById('controlsRow').style.display='none';
+      document.getElementById('timerBar').style.display='none';
+      onFinish(bossHealth<=0);
+      return;
+    }
+    if(questionTimer<=0){ askBossQuestion(); return; }
+    raf4 = requestAnimationFrame(loop);
+  }
+  raf4 = requestAnimationFrame(loop);
+}
+
+/* ============ FLUJO DE NIVELES ============ */
+const LEVEL_INFO = [
+  {badge:'NIVEL 1', emoji:'🌪️', title:'EL TORBELLINO', desc:'Desliza el árbol para atrapar raíces 🌱 y esquivar ramas rotas. ¡No pierdas tus 3 corazones!'},
+  {badge:'NIVEL 2', emoji:'🏃', title:'EL LLAMADO DE JOSUÉ', desc:'Cambia de carril tocando ◀ ▶ o deslizando. Recoge estrellas ⭐ y esquiva las rocas.'},
+  {badge:'NIVEL 3', emoji:'📖', title:'EMPAREJA Y VENCE', desc:'Toca una emoción y luego la escritura que le da fortaleza a esa persona.'},
+  {badge:'NIVEL 4', emoji:'🌀', title:'TORBELLINO FINAL', desc:'Esquiva al jefe. Responde bien para ganar un escudo 🛡️ y dañarlo.'}
+];
+
+function startLevelIntro(n){
+  state.level = n;
+  const info = LEVEL_INFO[n-1];
+  document.getElementById('liBadge').textContent = info.badge;
+  document.getElementById('liEmoji').textContent = info.emoji;
+  document.getElementById('liTitle').textContent = info.title;
+  document.getElementById('liDesc').textContent = info.desc;
+  document.getElementById('liTitle').textContent = (n===1 ? `¡Vamos, ${state.playerName}!  ` : '') + info.title;
+  showScreen('scr-levelIntro');
+  document.getElementById('hud').style.display='flex';
+  renderHUD();
+}
+
+document.getElementById('btnStartLevel').addEventListener('click', ()=>{
+  const n = state.level;
+  showScreen('scr-game');
+  if(n===1){
+    runLevel1(()=> closeQuizAnd(()=> askQuiz(QUIZ[1],0,()=>finishLevel(n)) ) );
+  } else if(n===2){
+    runLevel2(()=> closeQuizAnd(()=> askQuiz(QUIZ[2],0,()=>finishLevel(n)) ) );
+  } else if(n===3){
+    runLevel3(()=> finishLevel(n));
+  } else if(n===4){
+    runLevel4((won)=> finishLevel(n, won));
+  }
+});
+
+function finishLevel(n, extra){
+  const titles = {
+    1:'¡Raíces fortalecidas!', 2:'¡Josué llegó firme!', 3:'¡Escrituras dominadas!',
+    4: extra ? '¡Torbellino vencido!' : '¡Sobreviviste al torbellino!'
+  };
+  const descs = {
+    1:'Aprendiste que resistir el viento nos hace más fuertes en el Señor.',
+    2:'Si seguimos al Señor con valentía, Él estará con nosotros y nos fortalecerá.',
+    3:'Ahora conoces pasajes que fortalecen distintas emociones difíciles.',
+    4:'Meditar en las Escrituras y confiar en Cristo nos da fortaleza real.'
+  };
+  document.getElementById('lrTitle').textContent = titles[n];
+  document.getElementById('lrDesc').textContent = descs[n];
+  showScreen('scr-levelResult');
+  burstConfetti(W()/2, H()/2, 40);
+  vibrate([20,40,20]);
+  document.getElementById('btnNextLevel').textContent = n < TOTAL_LEVELS ? 'CONTINUAR' : 'VER RESULTADOS';
+}
+
+document.getElementById('btnNextLevel').addEventListener('click', ()=>{
+  if(state.level < TOTAL_LEVELS){
+    startLevelIntro(state.level+1);
+  } else {
+    showFinal();
+  }
+});
+
+/* ============ PANTALLA FINAL ============ */
+function showFinal(){
+  document.getElementById('hud').style.display='none';
+  showScreen('scr-final');
+  document.getElementById('finalNameSuffix').textContent = state.playerName ? `, ${state.playerName}` : '';
+  const finalScoreEl = document.getElementById('finalScore');
+  let disp = 0;
+  const target = Math.max(0, state.score);
+  const step = Math.max(1, Math.round(target/40));
+  const timer = setInterval(()=>{
+    disp += step;
+    if(disp >= target){ disp = target; clearInterval(timer); }
+    finalScoreEl.textContent = disp;
+  }, 20);
+
+  const stars = document.querySelectorAll('#finalStars span');
+  stars.forEach(s=>s.classList.remove('on'));
+  let starCount = target >= 260 ? 3 : target >= 160 ? 2 : 1;
+  stars.forEach((s,i)=>{ if(i<starCount) setTimeout(()=>s.classList.add('on'), 300+i*250); });
+  burstConfetti(W()/2, H()*0.3, 60);
+}
+
+document.getElementById('btnWhatsapp').addEventListener('click', ()=>{
+  const r1 = document.getElementById('reflect1').value.trim() || '(sin respuesta)';
+  const r2 = document.getElementById('reflect2').value.trim() || '(sin respuesta)';
+  const msg =
+`🌪️ *Torbellinos: Fortaleza en Él*
+Lección 181 — Salud física y emocional
+👤 Jugador: ${state.playerName || 'Anónimo'}
+
+🏆 Puntaje final: ${Math.max(0,state.score)}
+
+📝 *Emociones que manejo bien / me cuestan:*
+${r1}
+
+🙏 *Cómo he recibido ayuda del Señor:*
+${r2}
+
+"Si seguimos al Señor con valentía, Él estará con nosotros y nos fortalecerá." — Josué 1`;
+  const url = 'https://wa.me/?text=' + encodeURIComponent(msg);
+  window.open(url, '_blank');
+});
+
+document.getElementById('btnReplay').addEventListener('click', resetGame);
+
+function resetGame(){
+  state.score=0; state.lives=3; state.level=0;
+  document.getElementById('reflect1').value='';
+  document.getElementById('reflect2').value='';
+  showScreen('scr-start');
+  document.getElementById('hud').style.display='none';
+}
+
+/* ============ NAVEGACIÓN INICIAL ============ */
+document.getElementById('btnPlay').addEventListener('click', ()=>{
+  const nameInput = document.getElementById('nameInput');
+  const name = nameInput.value.trim();
+  if(!name){
+    document.getElementById('nameError').style.display='block';
+    nameInput.style.borderColor = 'var(--magenta)';
+    nameInput.focus();
+    vibrate([30,30,30]);
+    return;
+  }
+  state.playerName = name;
+  document.getElementById('nameError').style.display='none';
+  startLevelIntro(1);
+});
+document.getElementById('btnHow').addEventListener('click', ()=> showScreen('scr-how'));
+document.getElementById('btnHowBack').addEventListener('click', ()=> showScreen('scr-start'));
+
+/* ============ SALIDA CON DOBLE CONFIRMACIÓN ============ */
+const exitModal = document.getElementById('exitModal');
+const exitCardInner = document.getElementById('exitCardInner');
+let exitStage = 0;
+
+function openExitModal(){
+  exitStage = 1;
+  exitCardInner.innerHTML = `
+    <h3>⚠️ ¿Seguro que quieres salir?</h3>
+    <p>Perderás tu progreso y puntaje de esta partida.</p>
+    <button class="btn ghost" id="btnExitCancel">SEGUIR JUGANDO</button>
+    <button class="btn danger" id="btnExitConfirm1">SALIR</button>
+  `;
+  exitModal.classList.add('show');
+  document.getElementById('btnExitCancel').onclick = closeExitModal;
+  document.getElementById('btnExitConfirm1').onclick = openExitStage2;
+}
+function openExitStage2(){
+  exitStage = 2;
+  exitCardInner.innerHTML = `
+    <h3>🚨 Esto es definitivo</h3>
+    <p>Se cerrará la partida actual y volverás al inicio. ¿Salir igual?</p>
+    <button class="btn ghost" id="btnExitCancel2">VOLVER</button>
+    <button class="btn danger" id="btnExitConfirm2">SÍ, SALIR</button>
+  `;
+  document.getElementById('btnExitCancel2').onclick = closeExitModal;
+  document.getElementById('btnExitConfirm2').onclick = ()=>{
+    closeExitModal();
+    [raf1,raf2,raf4].forEach(r=>r&&cancelAnimationFrame(r));
+    quizOverlay.classList.remove('show');
+    document.getElementById('controlsRow').style.display='none';
+    document.getElementById('timerBar').style.display='none';
+    resetGame();
+  };
+}
+function closeExitModal(){ exitModal.classList.remove('show'); exitStage=0; }
+
+document.getElementById('exitBtn').addEventListener('click', openExitModal);
+
+// Intento de captura del botón "atrás" del navegador/celular
+history.pushState({guard:true}, '');
+window.addEventListener('popstate', ()=>{
+  history.pushState({guard:true}, '');
+  if(document.getElementById('scr-start').classList.contains('active')) return;
+  openExitModal();
+});
+window.addEventListener('beforeunload', (e)=>{
+  if(!document.getElementById('scr-start').classList.contains('active') &&
+     !document.getElementById('scr-final').classList.contains('active')){
+    e.preventDefault(); e.returnValue='';
+  }
+});
+
+/* ============ INICIALIZAR ============ */
+renderHUD();
+showScreen('scr-start');
+
+})();
+</script>
+</body>
+</html>

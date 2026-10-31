@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Jehová es mi Pastor — El Sendero del Buen Pastor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --deep-blue: #0c1f3f;
+    --deep-blue-2: #14335f;
+    --night-vignette: #071427;
+    --gold: #e3b23c;
+    --gold-soft: #f0cf7f;
+    --pasture: #4c8c4a;
+    --pasture-deep: #2f5f31;
+    --cream: #f6efdd;
+    --cream-dim: #cdc2a2;
+    --danger: #c05a4a;
+    --tile-bg: rgba(246,239,221,0.06);
+    --radius: 16px;
+    --font-display: 'Cormorant Garamond', serif;
+    --font-body: 'Nunito', sans-serif;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{
+    margin:0; padding:0; width:100%; min-height:100%;
+    background:
+      radial-gradient(ellipse at top, var(--deep-blue-2) 0%, var(--deep-blue) 45%, var(--night-vignette) 100%);
+    font-family: var(--font-body);
+    color: var(--cream);
+    overflow-x:hidden;
+  }
+  .screen{
+    min-height:100vh;
+    min-height:100dvh;
+    width:100%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding: 24px 16px 40px;
+    position:relative;
+  }
+  .hidden{ display:none !important; }
+
+  /* Decorative pasture line at bottom of every screen */
+  .pasture-line{
+    position:fixed; left:0; right:0; bottom:0; height:10px;
+    background: linear-gradient(90deg, var(--pasture-deep), var(--pasture), var(--pasture-deep));
+    box-shadow: 0 -2px 20px rgba(76,140,74,0.5);
+    z-index: 5;
+  }
+
+  .stars-bg{ position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.55; }
+
+  h1,h2,h3{ font-family: var(--font-display); font-weight:700; margin:0 0 8px; letter-spacing:.3px; }
+  .eyebrow{
+    font-family: var(--font-body); font-weight:800; letter-spacing:2.5px; text-transform:uppercase;
+    font-size:12px; color: var(--gold-soft); opacity:.9;
+  }
+
+  /* ---------- LANGUAGE SCREEN ---------- */
+  #screen-lang .staff-icon{ font-size:54px; filter: drop-shadow(0 4px 10px rgba(227,178,60,.35)); }
+  #screen-lang h1{ font-size: clamp(30px,7vw,44px); text-align:center; color:var(--cream); }
+  #screen-lang p.sub{ color:var(--cream-dim); text-align:center; max-width:360px; font-size:15px; margin-bottom:28px; }
+  .lang-choices{ display:flex; gap:16px; flex-wrap:wrap; justify-content:center; }
+  .lang-btn{
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    background: linear-gradient(180deg, rgba(246,239,221,0.08), rgba(246,239,221,0.02));
+    border: 1.5px solid rgba(227,178,60,0.35);
+    border-radius: var(--radius);
+    padding: 18px 26px;
+    cursor:pointer;
+    color: var(--cream);
+    font-family: var(--font-body); font-weight:700; font-size:15px;
+    transition: transform .15s ease, border-color .15s ease, background .15s ease;
+  }
+  .lang-btn:hover, .lang-btn:active{
+    transform: translateY(-3px);
+    border-color: var(--gold);
+    background: linear-gradient(180deg, rgba(227,178,60,0.16), rgba(246,239,221,0.03));
+  }
+  .lang-btn .flag{ font-size:34px; }
+
+  /* ---------- GAME SCREEN ---------- */
+  #screen-game{ padding-top: 14px; justify-content:flex-start; }
+  .game-wrap{ width:100%; max-width: 480px; display:flex; flex-direction:column; align-items:center; z-index:1;}
+
+  .header-row{
+    width:100%; display:flex; align-items:center; justify-content:space-between;
+    margin-bottom: 10px;
+  }
+  .title-block{ text-align:left; }
+  .title-block h2{ font-size: clamp(19px,5.2vw,24px); color:var(--gold-soft); margin-bottom:2px; }
+  .title-block .verse{ font-size:12px; color:var(--cream-dim); font-style:italic; }
+  .score-chip{
+    background: linear-gradient(180deg, rgba(227,178,60,0.18), rgba(227,178,60,0.05));
+    border:1px solid rgba(227,178,60,0.4);
+    border-radius: 12px;
+    padding: 8px 14px;
+    text-align:center;
+    min-width: 84px;
+  }
+  .score-chip .label{ font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--cream-dim); }
+  .score-chip .value{ font-family: var(--font-display); font-size:22px; font-weight:700; color:var(--gold-soft); }
+
+  /* Flock progress = the four-question tracker, on-theme */
+  .flock-bar{
+    width:100%; display:flex; align-items:center; gap:8px;
+    background: rgba(246,239,221,0.05);
+    border: 1px solid rgba(246,239,221,0.12);
+    border-radius: 999px;
+    padding: 8px 14px;
+    margin-bottom: 14px;
+  }
+  .flock-bar .flock-label{ font-size:11px; color:var(--cream-dim); font-weight:700; letter-spacing:.5px; white-space:nowrap; margin-right:2px; }
+  .flock-slots{ display:flex; gap:8px; flex:1; justify-content:space-between; }
+  .flock-slot{
+    flex:1; display:flex; align-items:center; justify-content:center;
+    height:30px; border-radius:8px;
+    background: rgba(0,0,0,0.18);
+    border: 1px dashed rgba(246,239,221,0.25);
+    font-size:16px; opacity:.4; filter: grayscale(1);
+    transition: all .4s ease;
+  }
+  .flock-slot.lit{
+    opacity:1; filter:none;
+    background: linear-gradient(180deg, rgba(227,178,60,0.3), rgba(76,140,74,0.18));
+    border: 1px solid var(--gold);
+    box-shadow: 0 0 12px rgba(227,178,60,0.45);
+    transform: scale(1.05);
+  }
+
+  .board-outer{
+    position:relative;
+    padding: 10px;
+    border-radius: 20px;
+    background: linear-gradient(160deg, rgba(246,239,221,0.07), rgba(0,0,0,0.15));
+    border: 1px solid rgba(227,178,60,0.25);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.45), inset 0 0 30px rgba(0,0,0,0.25);
+  }
+  .board-outer::before{
+    content:"";
+    position:absolute; inset:-1px;
+    border-radius:20px;
+    padding:1px;
+    background: linear-gradient(135deg, rgba(227,178,60,0.5), transparent 40%, rgba(76,140,74,0.35));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    pointer-events:none;
+  }
+  #board-grid{
+    position:relative;
+    touch-action:none;
+  }
+  .tile{
+    position:absolute;
+    display:flex; align-items:center; justify-content:center;
+    border-radius: 10px;
+    background: var(--tile-bg);
+    border: 1px solid rgba(246,239,221,0.08);
+    cursor:pointer;
+    user-select:none;
+    transition: transform .22s cubic-bezier(.4,1.4,.6,1), opacity .22s ease, background .2s ease;
+    will-change: transform;
+  }
+  .tile .glyph{ transition: transform .18s ease; line-height:1; }
+  .tile.selected{
+    background: rgba(227,178,60,0.22);
+    border-color: var(--gold);
+    box-shadow: 0 0 14px rgba(227,178,60,0.55);
+  }
+  .tile.selected .glyph{ transform: scale(1.15); }
+  .tile.removing{ opacity:0; transform: scale(.3) rotate(20deg) !important; }
+  .tile.spawning .glyph{ animation: pop-in .28s ease; }
+  @keyframes pop-in{ from{ transform:scale(0); opacity:0;} to{ transform:scale(1); opacity:1;} }
+  .tile.shake{ animation: shake .3s ease; }
+  @keyframes shake{
+    0%,100%{ transform: translate(var(--tx,0px), var(--ty,0px)); }
+    25%{ transform: translate(calc(var(--tx,0px) + 5px), var(--ty,0px)); }
+    75%{ transform: translate(calc(var(--tx,0px) - 5px), var(--ty,0px)); }
+  }
+
+  .help-text{
+    margin-top:12px; font-size:12.5px; color: var(--cream-dim); text-align:center; max-width:340px;
+  }
+
+  /* ---------- QUESTION MODAL ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; z-index:40;
+    background: rgba(4,10,22,0.72);
+    backdrop-filter: blur(3px);
+    display:flex; align-items:center; justify-content:center;
+    padding: 18px;
+    opacity:0; pointer-events:none;
+    transition: opacity .25s ease;
+  }
+  .modal-overlay.show{ opacity:1; pointer-events:all; }
+  .modal-card{
+    width:100%; max-width: 420px;
+    background: linear-gradient(180deg, #16305a, #0c1f3f);
+    border: 1px solid rgba(227,178,60,0.4);
+    border-radius: 20px;
+    padding: 22px 20px 20px;
+    box-shadow: 0 30px 60px rgba(0,0,0,.5);
+    transform: translateY(14px) scale(.97);
+    transition: transform .28s cubic-bezier(.2,1.4,.5,1);
+  }
+  .modal-overlay.show .modal-card{ transform: translateY(0) scale(1); }
+  .modal-eyebrow{ display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .modal-eyebrow .badge{
+    background: var(--gold); color:#1a1204; font-weight:800; font-size:11px;
+    padding:3px 9px; border-radius:999px; letter-spacing:.5px;
+  }
+  .modal-card h3{ font-size:20px; color:var(--cream); margin-bottom:14px; line-height:1.3; }
+  .options{ display:flex; flex-direction:column; gap:10px; margin-bottom: 4px; }
+  .option-btn{
+    text-align:left;
+    background: rgba(246,239,221,0.06);
+    border: 1px solid rgba(246,239,221,0.15);
+    color: var(--cream);
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-family: var(--font-body); font-size: 14px; font-weight:600;
+    cursor:pointer;
+    transition: all .15s ease;
+  }
+  .option-btn:hover{ border-color: var(--gold); background: rgba(227,178,60,0.1); }
+  .option-btn.correct{ background: rgba(76,140,74,0.35); border-color: var(--pasture); }
+  .option-btn.wrong{ background: rgba(192,90,74,0.35); border-color: var(--danger); }
+  .option-btn:disabled{ cursor:default; }
+  .feedback-msg{
+    margin-top: 12px; font-size: 13.5px; font-weight:700; min-height: 18px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .feedback-msg.correct{ color: #a9e0a4; }
+  .feedback-msg.wrong{ color: #f0a898; }
+
+  /* ---------- VICTORY SCREEN ---------- */
+  #screen-victory{ text-align:center; z-index:1; }
+  #screen-victory .crown{ font-size:52px; margin-bottom:6px; }
+  #screen-victory h1{ font-size: clamp(26px,7vw,38px); color: var(--gold-soft); }
+  #screen-victory .sub{ color: var(--cream-dim); font-size:14.5px; max-width:360px; margin: 4px auto 18px; }
+  .final-score{
+    display:inline-flex; flex-direction:column; align-items:center;
+    background: linear-gradient(180deg, rgba(227,178,60,0.18), rgba(76,140,74,0.08));
+    border: 1px solid rgba(227,178,60,0.4);
+    padding: 14px 34px; border-radius:16px; margin-bottom: 22px;
+  }
+  .final-score .label{ font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--cream-dim); }
+  .final-score .value{ font-family: var(--font-display); font-size:40px; font-weight:700; color:var(--gold-soft); }
+
+  .reflection-box{ width:100%; max-width: 420px; text-align:left; margin-bottom: 18px; }
+  .reflection-box label{ display:block; font-size:13.5px; font-weight:700; color:var(--cream); margin-bottom:8px; line-height:1.4; }
+  .reflection-box textarea{
+    width:100%; min-height: 92px; resize: vertical;
+    background: rgba(246,239,221,0.06);
+    border: 1px solid rgba(246,239,221,0.2);
+    border-radius: 12px;
+    padding: 12px;
+    color: var(--cream);
+    font-family: var(--font-body); font-size: 14px;
+    outline:none;
+  }
+  .reflection-box textarea:focus{ border-color: var(--gold); }
+  .reflection-hint{ font-size: 11.5px; color: var(--cream-dim); margin-top:6px; }
+
+  .whatsapp-btn{
+    display:inline-flex; align-items:center; gap:10px;
+    background: linear-gradient(180deg, #4c8c4a, #356436);
+    color: #f6efdd;
+    border:none; border-radius: 999px;
+    padding: 14px 26px;
+    font-family: var(--font-body); font-weight:800; font-size:15px;
+    cursor:pointer;
+    box-shadow: 0 10px 24px rgba(76,140,74,0.4);
+    transition: transform .15s ease;
+  }
+  .whatsapp-btn:hover{ transform: translateY(-2px); }
+  .whatsapp-btn:disabled{ opacity:.5; cursor:not-allowed; transform:none; }
+  .replay-link{
+    display:block; margin-top:16px; color: var(--cream-dim); font-size:12.5px; text-decoration:underline; cursor:pointer; background:none; border:none; font-family: var(--font-body);
+  }
+
+  .confetti-piece{
+    position:fixed; top:-20px; z-index:60; pointer-events:none;
+    width:9px; height:14px; opacity:.95;
+  }
+
+  @media (max-width:380px){
+    .score-chip{ min-width:72px; padding:6px 10px; }
+    .flock-bar{ padding:7px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas class="stars-bg" id="starsCanvas"></canvas>
+<div class="pasture-line"></div>
+
+<!-- ============ SCREEN 1: LANGUAGE ============ -->
+<section class="screen" id="screen-lang">
+  <div class="staff-icon">🐑</div>
+  <p class="eyebrow">Salmo 23</p>
+  <h1>El Sendero del<br>Buen Pastor</h1>
+  <p class="sub">Choose your language / Elige tu idioma</p>
+  <div class="lang-choices">
+    <button class="lang-btn" data-lang="es">
+      <span class="flag">🇪🇸</span> Español
+    </button>
+    <button class="lang-btn" data-lang="en">
+      <span class="flag">🇬🇧</span> English
+    </button>
+  </div>
+</section>
+
+<!-- ============ SCREEN 2: GAME ============ -->
+<section class="screen hidden" id="screen-game">
+  <div class="game-wrap">
+    <div class="header-row">
+      <div class="title-block">
+        <h2 id="gameTitle">Jehová es mi Pastor</h2>
+        <div class="verse" id="gameVerse">"Nada me faltará" — Salmo 23:1</div>
+      </div>
+      <div class="score-chip">
+        <div class="label" id="scoreLabel">PUNTAJE</div>
+        <div class="value" id="scoreValue">0</div>
+      </div>
+    </div>
+
+    <div class="flock-bar">
+      <span class="flock-label" id="flockLabel">REBAÑO</span>
+      <div class="flock-slots">
+        <div class="flock-slot" data-slot="0">🐑</div>
+        <div class="flock-slot" data-slot="1">🐑</div>
+        <div class="flock-slot" data-slot="2">🐑</div>
+        <div class="flock-slot" data-slot="3">🐑</div>
+      </div>
+    </div>
+
+    <div class="board-outer">
+      <div id="board-grid"></div>
+    </div>
+
+    <p class="help-text" id="helpText">Combina 3 o más fichas iguales. Cada combinación desbloquea una pregunta del Salmo 23.</p>
+  </div>
+</section>
+
+<!-- ============ QUESTION MODAL ============ -->
+<div class="modal-overlay" id="questionModal">
+  <div class="modal-card">
+    <div class="modal-eyebrow">
+      <span class="badge" id="modalBadge">PREGUNTA 1</span>
+    </div>
+    <h3 id="modalQuestion">¿Pregunta?</h3>
+    <div class="options" id="modalOptions"></div>
+    <div class="feedback-msg" id="modalFeedback"></div>
+  </div>
+</div>
+
+<!-- ============ SCREEN 3: VICTORY ============ -->
+<section class="screen hidden" id="screen-victory">
+  <div class="crown">🌿🐑🌿</div>
+  <h1 id="victoryTitle">¡Completaste la carrera del Buen Pastor!</h1>
+  <p class="sub" id="victorySub">Has recorrido el Salmo 23 hasta el final.</p>
+  <div class="final-score">
+    <div class="label" id="finalScoreLabel">PUNTAJE FINAL</div>
+    <div class="value" id="finalScoreValue">0</div>
+  </div>
+
+  <div class="reflection-box">
+    <label id="reflectionLabel">¿De qué manera has sentido el cuidado del Buen Pastor en tu vida esta semana?</label>
+    <textarea id="reflectionText" placeholder="Escribe tu reflexión aquí..." maxlength="400"></textarea>
+    <div class="reflection-hint" id="reflectionHint">Tu respuesta se incluirá en el mensaje de WhatsApp.</div>
+  </div>
+
+  <button class="whatsapp-btn" id="whatsappBtn" disabled>
+    <span>💬</span><span id="whatsappBtnText">Enviar Reflexión por WhatsApp</span>
+  </button>
+  <button class="replay-link" id="replayBtn">↺ <span id="replayText">Jugar de nuevo</span></button>
+</section>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ===================== i18n ===================== */
+  const STR = {
+    es: {
+      gameTitle: "Jehová es mi Pastor",
+      gameVerse: '"Nada me faltará" — Salmo 23:1',
+      scoreLabel: "PUNTAJE",
+      flockLabel: "REBAÑO",
+      helpText: "Combina 3 o más fichas iguales. Cada combinación desbloquea una pregunta del Salmo 23.",
+      wrongFeedback: "Casi... ¡vuelve a intentarlo con tu próxima combinación!",
+      correctFeedback: "¡Correcto! Poder del Pastor activado.",
+      victoryTitle: "¡Felicidades, completaste la carrera del Buen Pastor!",
+      victorySub: "Has recorrido el Salmo 23 hasta el final. Que esta verdad more en tu corazón.",
+      finalScoreLabel: "PUNTAJE FINAL",
+      reflectionLabel: "¿De qué manera has sentido el cuidado del Buen Pastor en tu vida esta semana?",
+      reflectionHint: "Tu respuesta se incluirá en el mensaje de WhatsApp.",
+      reflectionPlaceholder: "Escribe tu reflexión aquí...",
+      whatsappBtnText: "Enviar Reflexión por WhatsApp",
+      replayText: "Jugar de nuevo",
+      whatsappMsg: (score, reflexion) =>
+        `¡Hola! Completé el juego del Salmo 23.\nPuntaje: ${score}\nMi reflexión: ${reflexion}`,
+      questionBadge: (n) => `PREGUNTA ${n}`,
+      questions: [
+        {
+          q: 'En el Salmo 23:1, al decir "Jehová es mi pastor; nada me faltará", ¿qué principio se enseña?',
+          options: [
+            "Que nunca tendremos problemas financieros.",
+            "Que Jesucristo conoce y satisface nuestras necesidades espirituales y reales.",
+            "Que no necesitamos trabajar."
+          ],
+          correct: 1
+        },
+        {
+          q: 'Según el Salmo 23:4, ¿qué representan "la vara y el cayado" del Pastor?',
+          options: [
+            "Castigo y enojo hacia las ovejas.",
+            "Protección contra el peligro y guía amorosa para rescatarnos.",
+            "Simples adornos de madera sin uso."
+          ],
+          correct: 1
+        },
+        {
+          q: '¿Qué significa la frase "aunque ande en valle de sombra de muerte, no temeré mal alguno"?',
+          options: [
+            "Que las pruebas difíciles no existirán.",
+            "Que no caminamos solos en los momentos oscuros porque Cristo está con nosotros.",
+            "Que solo debemos orar cuando estemos en peligro."
+          ],
+          correct: 1
+        },
+        {
+          q: 'En el Salmo 23:5, la expresión "mi copa está rebosando" simboliza:',
+          options: [
+            "La abundancia de la gracia, el amor y las bendiciones del Señor.",
+            "Tener muchas bebidas en un banquete.",
+            "Que el tiempo se está acabando."
+          ],
+          correct: 0
+        }
+      ]
+    },
+    en: {
+      gameTitle: "The Lord is my Shepherd",
+      gameVerse: '"I shall not want" — Psalm 23:1',
+      scoreLabel: "SCORE",
+      flockLabel: "FLOCK",
+      helpText: "Match 3 or more identical tiles. Each match unlocks a Psalm 23 question.",
+      wrongFeedback: "Not quite... try again on your next match!",
+      correctFeedback: "Correct! Shepherd's power activated.",
+      victoryTitle: "Congratulations, you completed the Good Shepherd's journey!",
+      victorySub: "You've walked through Psalm 23 to the end. May this truth dwell in your heart.",
+      finalScoreLabel: "FINAL SCORE",
+      reflectionLabel: "In what way have you felt the Good Shepherd's care in your life this week?",
+      reflectionHint: "Your answer will be included in the WhatsApp message.",
+      reflectionPlaceholder: "Write your reflection here...",
+      whatsappBtnText: "Send Reflection via WhatsApp",
+      replayText: "Play again",
+      whatsappMsg: (score, reflexion) =>
+        `Hi! I completed the Psalm 23 game.\nScore: ${score}\nMy reflection: ${reflexion}`,
+      questionBadge: (n) => `QUESTION ${n}`,
+      questions: [
+        {
+          q: 'In Psalm 23:1, "The Lord is my shepherd; I shall not want", what principle is taught?',
+          options: [
+            "We will never face financial problems.",
+            "Jesus Christ knows and provides for our spiritual and deepest needs.",
+            "We do not need to work."
+          ],
+          correct: 1
+        },
+        {
+          q: 'According to Psalm 23:4, what do the "rod and staff" represent?',
+          options: [
+            "Punishment and anger towards the sheep.",
+            "Protection from danger and loving guidance to rescue us.",
+            "Plain wooden decorations."
+          ],
+          correct: 1
+        },
+        {
+          q: 'What does "though I walk through the valley of the shadow of death, I will fear no evil" mean?',
+          options: [
+            "Hard times will never happen.",
+            "We do not walk alone in dark times because Christ is with us.",
+            "We should only pray when in danger."
+          ],
+          correct: 1
+        },
+        {
+          q: 'In Psalm 23:5, the phrase "my cup runneth over" symbolizes:',
+          options: [
+            "The abundance of the Lord's grace, love, and blessings.",
+            "Having many drinks at a feast.",
+            "That time is running out."
+          ],
+          correct: 0
+        }
+      ]
+    }
+  };
+
+  let lang = "es";
+  const t = (key) => STR[lang][key];
+
+  /* ===================== DOM refs ===================== */
+  const screenLang = document.getElementById("screen-lang");
+  const screenGame = document.getElementById("screen-game");
+  const screenVictory = document.getElementById("screen-victory");
+  const boardGrid = document.getElementById("board-grid");
+  const scoreValueEl = document.getElementById("scoreValue");
+  const flockSlots = Array.from(document.querySelectorAll(".flock-slot"));
+  const modalOverlay = document.getElementById("questionModal");
+  const modalBadge = document.getElementById("modalBadge");
+  const modalQuestion = document.getElementById("modalQuestion");
+  const modalOptions = document.getElementById("modalOptions");
+  const modalFeedback = document.getElementById("modalFeedback");
+
+  /* ===================== Game constants ===================== */
+  const SIZE = 8;
+  const TYPES = [
+    { key: "candy", emoji: "🍬" },
+    { key: "sheep", emoji: "🐑" },
+    { key: "star", emoji: "⭐" },
+    { key: "grass", emoji: "🌿" },
+    { key: "water", emoji: "💧" },
+    { key: "staff", emoji: "🦯" }
+  ];
+
+  let tileSize = 0;
+  let boardPx = 0;
+  const board = []; // board[row][col] = tileId or null
+  const tiles = {}; // id -> {id, type, row, col, el}
+  let nextTileId = 1;
+  let selectedId = null;
+  let isBusy = false;
+  let questionIndex = 0; // 0..4 (4 = finished)
+  let score = 0;
+  let gameEnded = false;
+  let dragState = null;
+
+  const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+
+  /* ===================== Board sizing ===================== */
+  function computeTileSize() {
+    const maxWidth = Math.min(window.innerWidth * 0.92, 460);
+    tileSize = Math.floor(maxWidth / SIZE);
+    boardPx = tileSize * SIZE;
+    boardGrid.style.width = boardPx + "px";
+    boardGrid.style.height = boardPx + "px";
+    Object.values(tiles).forEach(updateTilePosition);
+  }
+  window.addEventListener("resize", computeTileSize);
+
+  /* ===================== Tile creation ===================== */
+  function randomType(excludeCheckRow, excludeCheckCol) {
+    return Math.floor(Math.random() * TYPES.length);
+  }
+
+  function makeTile(type, row, col) {
+    const id = nextTileId++;
+    const el = document.createElement("div");
+    el.className = "tile spawning";
+    el.style.width = tileSize - 6 + "px";
+    el.style.height = tileSize - 6 + "px";
+    el.style.margin = "3px";
+    const glyph = document.createElement("span");
+    glyph.className = "glyph";
+    glyph.style.fontSize = Math.floor(tileSize * 0.5) + "px";
+    glyph.textContent = TYPES[type].emoji;
+    el.appendChild(glyph);
+    el.addEventListener("pointerdown", (e) => onPointerDown(e, id));
+    boardGrid.appendChild(el);
+    const tile = { id, type, row, col, el };
+    tiles[id] = tile;
+    updateTilePosition(tile, true);
+    return tile;
+  }
+
+  function updateTilePosition(tile, instant) {
+    if (!tile || !tile.el) return;
+    if (instant) {
+      tile.el.style.transition = "none";
+      tile.el.style.transform = `translate(${tile.col * tileSize}px, ${tile.row * tileSize}px)`;
+      // force reflow then restore transition
+      void tile.el.offsetWidth;
+      tile.el.style.transition = "";
+    } else {
+      tile.el.style.transform = `translate(${tile.col * tileSize}px, ${tile.row * tileSize}px)`;
+    }
+  }
+
+  /* ===================== Board init ===================== */
+  function initBoard() {
+    boardGrid.innerHTML = "";
+    for (let r = 0; r < SIZE; r++) board.push(new Array(SIZE).fill(null));
+
+    for (let r = 0; r < SIZE; r++) {
+      for (let c = 0; c < SIZE; c++) {
+        let type;
+        let attempts = 0;
+        do {
+          type = randomType();
+          attempts++;
+        } while (attempts < 20 && createsInitialMatch(r, c, type));
+        const tile = makeTile(type, r, c);
+        board[r][c] = tile.id;
+      }
+    }
+  }
+
+  function createsInitialMatch(r, c, type) {
+    if (c >= 2) {
+      const id1 = board[r][c - 1], id2 = board[r][c - 2];
+      if (id1 && id2 && tiles[id1].type === type && tiles[id2].type === type) return true;
+    }
+    if (r >= 2) {
+      const id1 = board[r - 1][c], id2 = board[r - 2][c];
+      if (id1 && id2 && tiles[id1].type === type && tiles[id2].type === type) return true;
+    }
+    return false;
+  }
+
+  /* ===================== Interaction ===================== */
+  function onPointerDown(e, id) {
+    if (isBusy || gameEnded) return;
+    e.preventDefault();
+    const tile = tiles[id];
+    dragState = { id, startX: e.clientX, startY: e.clientY, handled: false };
+    const move = (ev) => onPointerMove(ev);
+    const up = (ev) => {
+      document.removeEventListener("pointermove", move);
+      document.removeEventListener("pointerup", up);
+      if (dragState && !dragState.handled) {
+        onTileTap(id);
+      }
+      dragState = null;
+    };
+    document.addEventListener("pointermove", move);
+    document.addEventListener("pointerup", up);
+  }
+
+  function onPointerMove(e) {
+    if (!dragState || dragState.handled || isBusy) return;
+    const dx = e.clientX - dragState.startX;
+    const dy = e.clientY - dragState.startY;
+    const threshold = tileSize * 0.35;
+    if (Math.abs(dx) < threshold && Math.abs(dy) < threshold) return;
+    dragState.handled = true;
+    const tile = tiles[dragState.id];
+    if (!tile) return;
+    let targetR = tile.row, targetC = tile.col;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      targetC += dx > 0 ? 1 : -1;
+    } else {
+      targetR += dy > 0 ? 1 : -1;
+    }
+    clearSelection();
+    if (targetR >= 0 && targetR < SIZE && targetC >= 0 && targetC < SIZE) {
+      const targetId = board[targetR][targetC];
+      if (targetId) attemptSwap(tile.id, targetId);
+    }
+  }
+
+  function onTileTap(id) {
+    if (isBusy || gameEnded) return;
+    const tile = tiles[id];
+    if (!tile) return;
+    if (selectedId === null) {
+      selectedId = id;
+      tile.el.classList.add("selected");
+      return;
+    }
+    if (selectedId === id) {
+      clearSelection();
+      return;
+    }
+    const selTile = tiles[selectedId];
+    const isAdjacent =
+      (Math.abs(selTile.row - tile.row) === 1 && selTile.col === tile.col) ||
+      (Math.abs(selTile.col - tile.col) === 1 && selTile.row === tile.row);
+    clearSelection();
+    if (isAdjacent) {
+      attemptSwap(selectedIdBackup(selTile.id), id);
+    } else {
+      selectedId = id;
+      tile.el.classList.add("selected");
+    }
+  }
+  function selectedIdBackup(id) { return id; }
+
+  function clearSelection() {
+    if (selectedId !== null && tiles[selectedId]) {
+      tiles[selectedId].el.classList.remove("selected");
+    }
+    selectedId = null;
+  }
+
+  /* ===================== Swap + matching ===================== */
+  async function attemptSwap(idA, idB) {
+    if (isBusy || gameEnded) return;
+    isBusy = true;
+    swapTilesData(idA, idB);
+    await sleep(220);
+    const matched = findMatches();
+    if (matched.size === 0) {
+      swapTilesData(idA, idB);
+      tiles[idA].el.classList.add("shake");
+      tiles[idB].el.classList.add("shake");
+      await sleep(300);
+      tiles[idA].el.classList.remove("shake");
+      tiles[idB].el.classList.remove("shake");
+      isBusy = false;
+      return;
+    }
+    await resolveCascades(true);
+    isBusy = false;
+  }
+
+  function swapTilesData(idA, idB) {
+    const a = tiles[idA], b = tiles[idB];
+    const ar = a.row, ac = a.col, br = b.row, bc = b.col;
+    board[ar][ac] = idB;
+    board[br][bc] = idA;
+    a.row = br; a.col = bc;
+    b.row = ar; b.col = ac;
+    updateTilePosition(a);
+    updateTilePosition(b);
+  }
+
+  function findMatches() {
+    const matched = new Set();
+    // horizontal
+    for (let r = 0; r < SIZE; r++) {
+      let runStart = 0;
+      for (let c = 1; c <= SIZE; c++) {
+        const curId = c < SIZE ? board[r][c] : null;
+        const prevId = board[r][c - 1];
+        const sameType = curId && prevId && tiles[curId].type === tiles[prevId].type;
+        if (!sameType) {
+          if (c - runStart >= 3) {
+            for (let k = runStart; k < c; k++) matched.add(board[r][k]);
+          }
+          runStart = c;
+        }
+      }
+    }
+    // vertical
+    for (let c = 0; c < SIZE; c++) {
+      let runStart = 0;
+      for (let r = 1; r <= SIZE; r++) {
+        const curId = r < SIZE ? board[r][c] : null;
+        const prevId = board[r - 1][c];
+        const sameType = curId && prevId && tiles[curId].type === tiles[prevId].type;
+        if (!sameType) {
+          if (r - runStart >= 3) {
+            for (let k = runStart; k < r; k++) matched.add(board[k][c]);
+          }
+          runStart = r;
+        }
+      }
+    }
+    return matched;
+  }
+
+  async function removeMatchedTiles(matchedSet) {
+    matchedSet.forEach((id) => {
+      const tile = tiles[id];
+      if (!tile) return;
+      tile.el.classList.add("removing");
+    });
+    await sleep(240);
+    matchedSet.forEach((id) => {
+      const tile = tiles[id];
+      if (!tile) return;
+      board[tile.row][tile.col] = null;
+      tile.el.remove();
+      delete tiles[id];
+    });
+  }
+
+  async function applyGravityAndRefill(noRefill) {
+    for (let c = 0; c < SIZE; c++) {
+      let writeRow = SIZE - 1;
+      for (let r = SIZE - 1; r >= 0; r--) {
+        const id = board[r][c];
+        if (id) {
+          if (r !== writeRow) {
+            board[writeRow][c] = id;
+            board[r][c] = null;
+            tiles[id].row = writeRow;
+          }
+          writeRow--;
+        }
+      }
+      if (!noRefill) {
+        for (let r = writeRow; r >= 0; r--) {
+          const type = randomType();
+          const tile = makeTile(type, r - (writeRow + 1) - 1, c); // spawn above grid
+          tile.row = r;
+          tile.el.classList.remove("spawning");
+          updateTilePosition(tile, true);
+          // reposition instantly above board then animate down
+          tile.el.style.transition = "none";
+          tile.el.style.transform = `translate(${c * tileSize}px, ${(r - SIZE) * tileSize}px)`;
+          void tile.el.offsetWidth;
+          tile.el.style.transition = "";
+          board[r][c] = tile.id;
+        }
+      }
+    }
+    // animate all tiles to their current row/col
+    Object.values(tiles).forEach((tile) => updateTilePosition(tile));
+    await sleep(260);
+  }
+
+  async function resolveCascades(fromPlayerMove) {
+    let anyMatch = false;
+    while (true) {
+      const matched = findMatches();
+      if (matched.size === 0) break;
+      anyMatch = true;
+      score += matched.size * 10;
+      updateScoreUI();
+      await removeMatchedTiles(matched);
+      await applyGravityAndRefill(false);
+    }
+    if (fromPlayerMove && anyMatch && !gameEnded && questionIndex < 4) {
+      openQuestionModal(questionIndex);
+    }
+    return anyMatch;
+  }
+
+  function updateScoreUI() {
+    scoreValueEl.textContent = score;
+  }
+
+  /* ===================== Question modal ===================== */
+  function openQuestionModal(index) {
+    const q = t("questions")[index];
+    modalBadge.textContent = t("questionBadge")(index + 1);
+    modalQuestion.textContent = q.q;
+    modalOptions.innerHTML = "";
+    modalFeedback.textContent = "";
+    modalFeedback.className = "feedback-msg";
+    q.options.forEach((opt, i) => {
+      const btn = document.createElement("button");
+      btn.className = "option-btn";
+      btn.textContent = opt;
+      btn.addEventListener("click", () => onAnswerSelected(i, q.correct, index));
+      modalOptions.appendChild(btn);
+    });
+    modalOverlay.classList.add("show");
+  }
+
+  function closeModal() {
+    modalOverlay.classList.remove("show");
+  }
+
+  async function onAnswerSelected(chosenIndex, correctIndex, questionIdx) {
+    const buttons = Array.from(modalOptions.querySelectorAll(".option-btn"));
+    buttons.forEach((b) => (b.disabled = true));
+    const isCorrect = chosenIndex === correctIndex;
+    buttons[chosenIndex].classList.add(isCorrect ? "correct" : "wrong");
+    if (!isCorrect) buttons[correctIndex].classList.add("correct");
+    modalFeedback.textContent = isCorrect ? t("correctFeedback") : t("wrongFeedback");
+    modalFeedback.className = "feedback-msg " + (isCorrect ? "correct" : "wrong");
+
+    await sleep(1300);
+    closeModal();
+    await sleep(260);
+
+    if (isCorrect) {
+      lightFlockSlot(questionIdx);
+      questionIndex = questionIdx + 1;
+      await applyPower(questionIdx);
+    }
+  }
+
+  function lightFlockSlot(index) {
+    if (flockSlots[index]) flockSlots[index].classList.add("lit");
+  }
+
+  /* ===================== Powers ===================== */
+  async function applyPower(index) {
+    isBusy = true;
+    let cleared = new Set();
+    if (index === 0) {
+      cleared = clearRandomLine();
+    } else if (index === 1) {
+      cleared = clearCross();
+    } else if (index === 2) {
+      cleared = clearBlock();
+    } else if (index === 3) {
+      cleared = clearAll();
+    }
+    if (cleared.size > 0) {
+      score += cleared.size * 10;
+      updateScoreUI();
+      await removeMatchedTiles(cleared);
+      if (index === 3) {
+        gameEnded = true;
+        await sleep(400);
+        showVictory();
+        isBusy = false;
+        return;
+      }
+      await applyGravityAndRefill(false);
+      await resolveCascades(false);
+    }
+    isBusy = false;
+  }
+
+  function clearRandomLine() {
+    const cleared = new Set();
+    if (Math.random() < 0.5) {
+      const r = Math.floor(Math.random() * SIZE);
+      for (let c = 0; c < SIZE; c++) if (board[r][c]) cleared.add(board[r][c]);
+    } else {
+      const c = Math.floor(Math.random() * SIZE);
+      for (let r = 0; r < SIZE; r++) if (board[r][c]) cleared.add(board[r][c]);
+    }
+    return cleared;
+  }
+
+  function clearCross() {
+    const cleared = new Set();
+    const center = Math.floor(SIZE / 2);
+    for (let c = 0; c < SIZE; c++) if (board[center][c]) cleared.add(board[center][c]);
+    for (let r = 0; r < SIZE; r++) if (board[r][center]) cleared.add(board[r][center]);
+    return cleared;
+  }
+
+  function clearBlock() {
+    const cleared = new Set();
+    const size = Math.random() < 0.5 ? 4 : 5;
+    const start = Math.max(0, Math.floor((SIZE - size) / 2));
+    for (let r = start; r < start + size && r < SIZE; r++) {
+      for (let c = start; c < start + size && c < SIZE; c++) {
+        if (board[r][c]) cleared.add(board[r][c]);
+      }
+    }
+    return cleared;
+  }
+
+  function clearAll() {
+    const cleared = new Set();
+    for (let r = 0; r < SIZE; r++) {
+      for (let c = 0; c < SIZE; c++) {
+        if (board[r][c]) cleared.add(board[r][c]);
+      }
+    }
+    return cleared;
+  }
+
+  /* ===================== Victory screen ===================== */
+  function showVictory() {
+    screenGame.classList.add("hidden");
+    screenVictory.classList.remove("hidden");
+    document.getElementById("finalScoreValue").textContent = score;
+    launchConfetti();
+  }
+
+  function launchConfetti() {
+    const colors = ["#e3b23c", "#f0cf7f", "#4c8c4a", "#f6efdd", "#c05a4a"];
+    for (let i = 0; i < 70; i++) {
+      setTimeout(() => {
+        const piece = document.createElement("div");
+        piece.className = "confetti-piece";
+        piece.style.left = Math.random() * 100 + "vw";
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.borderRadius = Math.random() < 0.5 ? "50%" : "2px";
+        const duration = 2400 + Math.random() * 1800;
+        const rotate = Math.random() * 720 - 360;
+        piece.animate(
+          [
+            { transform: `translateY(0) rotate(0deg)`, opacity: 1 },
+            { transform: `translateY(${window.innerHeight + 40}px) rotate(${rotate}deg)`, opacity: 0.9 }
+          ],
+          { duration, easing: "cubic-bezier(.2,.6,.4,1)", fill: "forwards" }
+        );
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), duration + 100);
+      }, i * 35);
+    }
+  }
+
+  /* ===================== Language + boot ===================== */
+  function applyLanguageStrings() {
+    document.documentElement.lang = lang;
+    document.getElementById("gameTitle").textContent = t("gameTitle");
+    document.getElementById("gameVerse").textContent = t("gameVerse");
+    document.getElementById("scoreLabel").textContent = t("scoreLabel");
+    document.getElementById("flockLabel").textContent = t("flockLabel");
+    document.getElementById("helpText").textContent = t("helpText");
+    document.getElementById("victoryTitle").textContent = t("victoryTitle");
+    document.getElementById("victorySub").textContent = t("victorySub");
+    document.getElementById("finalScoreLabel").textContent = t("finalScoreLabel");
+    document.getElementById("reflectionLabel").textContent = t("reflectionLabel");
+    document.getElementById("reflectionHint").textContent = t("reflectionHint");
+    document.getElementById("reflectionText").placeholder = t("reflectionPlaceholder");
+    document.getElementById("whatsappBtnText").textContent = t("whatsappBtnText");
+    document.getElementById("replayText").textContent = t("replayText");
+  }
+
+  function startGame(selectedLang) {
+    lang = selectedLang;
+    applyLanguageStrings();
+    screenLang.classList.add("hidden");
+    screenGame.classList.remove("hidden");
+    computeTileSize();
+    initBoard();
+  }
+
+  document.querySelectorAll(".lang-btn").forEach((btn) => {
+    btn.addEventListener("click", () => startGame(btn.dataset.lang));
+  });
+
+  document.getElementById("replayBtn").addEventListener("click", () => {
+    window.location.reload();
+  });
+
+  const reflectionText = document.getElementById("reflectionText");
+  const whatsappBtn = document.getElementById("whatsappBtn");
+  reflectionText.addEventListener("input", () => {
+    whatsappBtn.disabled = reflectionText.value.trim().length === 0;
+  });
+  whatsappBtn.addEventListener("click", () => {
+    const reflexion = reflectionText.value.trim();
+    if (!reflexion) return;
+    const msg = t("whatsappMsg")(score, reflexion);
+    const url = "https://wa.me/?text=" + encodeURIComponent(msg);
+    window.open(url, "_blank");
+  });
+
+  /* ===================== Ambient starfield (decorative) ===================== */
+  function drawStars() {
+    const canvas = document.getElementById("starsCanvas");
+    const ctx = canvas.getContext("2d");
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener("resize", resize);
+    const stars = Array.from({ length: 60 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height * 0.6,
+      r: Math.random() * 1.4 + 0.3,
+      a: Math.random()
+    }));
+    function frame() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const t2 = Date.now() / 1000;
+      stars.forEach((s, i) => {
+        const alpha = 0.3 + 0.4 * Math.abs(Math.sin(t2 * 0.6 + i));
+        ctx.fillStyle = `rgba(240,207,127,${alpha * 0.55})`;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      requestAnimationFrame(frame);
+    }
+    frame();
+  }
+  drawStars();
+})();
+</script>
+</body>
+</html>

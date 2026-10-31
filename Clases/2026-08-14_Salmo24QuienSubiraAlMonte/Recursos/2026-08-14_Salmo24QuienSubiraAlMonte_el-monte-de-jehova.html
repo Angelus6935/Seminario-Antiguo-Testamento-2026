@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>EL MONTE DE JEHOVÁ: LA ASCENSIÓN</title>
+<style>
+  :root{
+    --cyan:#00f0ff;
+    --magenta:#ff2ee6;
+    --amber:#ffb020;
+    --gold:#ffd680;
+    --bg1:#050014;
+    --bg2:#12002b;
+    --panel:#0c0620;
+    --danger:#ff3b57;
+    --ok:#39ff9c;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    background: radial-gradient(ellipse at 50% -10%, #2a0050 0%, var(--bg1) 55%, #000 100%);
+    font-family:'Courier New', 'Consolas', monospace;
+    color:#eaf6ff;
+    overflow:hidden;
+  }
+  #app{
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+    height:100%; width:100%; max-width:520px; margin:0 auto; position:relative;
+  }
+  .hidden{display:none !important;}
+
+  /* ---------- LANGUAGE / START SCREEN ---------- */
+  #langScreen, #nameScreen{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    height:100%; width:100%; text-align:center; padding:24px; gap:18px;
+  }
+  .titleMain{
+    font-size:7vw; max-font-size:34px; font-weight:900; letter-spacing:2px;
+    color:var(--gold);
+    text-shadow: 0 0 6px var(--amber), 0 0 18px var(--amber), 0 0 34px #ff8c00;
+    line-height:1.25;
+  }
+  .titleSub{
+    font-size:3.4vw; color:var(--cyan);
+    text-shadow:0 0 8px var(--cyan), 0 0 18px #0088ff;
+    letter-spacing:3px;
+  }
+  .versicle{
+    font-size:3vw; color:#9fb8d8; font-style:italic; max-width:340px; line-height:1.5;
+  }
+  .langBtnRow{display:flex; gap:16px; margin-top:10px;}
+  .bigBtn{
+    font-family:inherit; font-weight:900; letter-spacing:1px; cursor:pointer;
+    padding:14px 22px; border-radius:10px; border:2px solid var(--cyan);
+    background:linear-gradient(180deg,#0d1830,#050818);
+    color:var(--cyan); text-shadow:0 0 8px var(--cyan);
+    box-shadow:0 0 12px rgba(0,240,255,.5), inset 0 0 10px rgba(0,240,255,.15);
+    font-size:4vw;
+    transition:transform .12s;
+  }
+  .bigBtn:active{transform:scale(.93);}
+  .bigBtn.magenta{border-color:var(--magenta); color:var(--magenta); text-shadow:0 0 8px var(--magenta);
+    box-shadow:0 0 12px rgba(255,46,230,.5), inset 0 0 10px rgba(255,46,230,.15);}
+  .bigBtn.gold{border-color:var(--gold); color:var(--gold); text-shadow:0 0 8px var(--gold);
+    box-shadow:0 0 12px rgba(255,214,128,.5), inset 0 0 10px rgba(255,214,128,.15); margin-top:6px;}
+
+  /* ---------- GAME SCREEN ---------- */
+  #gameScreen{
+    display:flex; flex-direction:column; align-items:center; width:100%; height:100%; padding:6px;
+  }
+  #hud{
+    width:100%; max-width:400px; display:flex; justify-content:space-between; align-items:center;
+    padding:4px 10px; font-size:3.4vw; color:var(--cyan); text-shadow:0 0 6px var(--cyan);
+    letter-spacing:1px;
+  }
+  #hud .aura{color:var(--gold); text-shadow:0 0 8px var(--gold);}
+  #canvasWrap{
+    position:relative; width:100%; max-width:400px; aspect-ratio: 400/700;
+    border:2px solid #1a2a4a; border-radius:8px; overflow:hidden;
+    box-shadow:0 0 24px rgba(0,240,255,.18), inset 0 0 40px rgba(0,0,0,.6);
+    background:#000;
+  }
+  canvas{width:100%; height:100%; display:block;}
+
+  #hint{
+    position:absolute; bottom:6px; left:0; right:0; text-align:center;
+    font-size:2.6vw; color:#ffd680; text-shadow:0 0 6px #ff8c00;
+    pointer-events:none; opacity:0; transition:opacity .2s;
+  }
+
+  #controls{
+    width:100%; max-width:400px; display:flex; justify-content:space-between; align-items:center;
+    padding:10px 4px; gap:8px;
+  }
+  .ctrlGroup{display:flex; gap:8px;}
+  .padBtn{
+    width:15vw; height:15vw; max-width:64px; max-height:64px; min-width:48px; min-height:48px;
+    border-radius:14px; border:2px solid var(--cyan); background:radial-gradient(circle at 35% 30%, #123 0%, #010208 80%);
+    color:var(--cyan); font-size:6vw; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 0 10px rgba(0,240,255,.45); touch-action:none;
+  }
+  .padBtn:active{background:#00323f; transform:scale(.92);}
+  .padBtn.jump{border-color:var(--amber); color:var(--amber); box-shadow:0 0 10px rgba(255,176,32,.5);}
+  .padBtn.ladder{border-color:var(--magenta); color:var(--magenta); box-shadow:0 0 10px rgba(255,46,230,.5);}
+
+  /* ---------- QUIZ MODAL ---------- */
+  .overlay{
+    position:absolute; inset:0; background:rgba(2,0,12,.88); backdrop-filter:blur(2px);
+    display:flex; align-items:center; justify-content:center; z-index:20; padding:16px;
+  }
+  .modalBox{
+    width:100%; max-width:380px; background:linear-gradient(180deg,#120a30,#06031a);
+    border:2px solid var(--cyan); border-radius:14px; padding:18px;
+    box-shadow:0 0 30px rgba(0,240,255,.35); text-align:center;
+  }
+  .modalBox.gold{border-color:var(--gold); box-shadow:0 0 30px rgba(255,214,128,.4);}
+  .modalTitle{
+    font-size:4.2vw; color:var(--gold); text-shadow:0 0 8px var(--amber); margin-bottom:10px; letter-spacing:1px;
+  }
+  .modalQ{font-size:3.8vw; line-height:1.5; margin-bottom:14px; color:#eaf6ff;}
+  .optBtn{
+    display:block; width:100%; text-align:left; margin:8px 0; padding:10px 12px;
+    background:#0d1830; border:2px solid #2c5a7a; border-radius:8px; color:#cfe9ff;
+    font-family:inherit; font-size:3.4vw; cursor:pointer;
+  }
+  .optBtn:active{transform:scale(.98);}
+  .optBtn.correct{border-color:var(--ok); background:#04301e; color:var(--ok); box-shadow:0 0 10px var(--ok);}
+  .optBtn.wrong{border-color:var(--danger); background:#3a0410; color:#ff8a9a; box-shadow:0 0 10px var(--danger);}
+  .feedback{min-height:24px; font-size:3.4vw; margin-top:6px; letter-spacing:1px;}
+  .feedback.ok{color:var(--ok); text-shadow:0 0 8px var(--ok);}
+  .feedback.bad{color:var(--danger); text-shadow:0 0 8px var(--danger);}
+
+  /* ---------- VICTORY MODAL ---------- */
+  #victoryBox textarea{
+    width:100%; min-height:80px; border-radius:8px; border:2px solid var(--gold);
+    background:#0a0518; color:#fff; font-family:inherit; font-size:3.4vw; padding:8px; margin:10px 0;
+    resize:vertical;
+  }
+  .waBtn{
+    display:inline-flex; align-items:center; gap:8px; justify-content:center;
+    width:100%; padding:12px; border-radius:10px; border:none; cursor:pointer;
+    background:linear-gradient(180deg,#25d366,#128c4a); color:#fff; font-weight:900;
+    font-size:3.8vw; box-shadow:0 0 16px rgba(37,211,102,.6); font-family:inherit;
+  }
+  .waBtn:disabled{opacity:.4; cursor:not-allowed; box-shadow:none;}
+  #scoreLine{font-size:4vw; color:var(--gold); text-shadow:0 0 8px var(--amber); margin:8px 0;}
+
+  @media (min-width:520px){
+    .titleMain{font-size:30px;}
+    .titleSub{font-size:16px;}
+    .versicle{font-size:14px;}
+    .bigBtn{font-size:18px;}
+    #hud{font-size:15px;}
+    .modalTitle{font-size:18px;}
+    .modalQ{font-size:15px;}
+    .optBtn{font-size:14px;}
+    .feedback{font-size:14px;}
+    #victoryBox textarea{font-size:14px;}
+    .waBtn{font-size:16px;}
+    #scoreLine{font-size:17px;}
+    #hint{font-size:12px;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- LANGUAGE / START SCREEN -->
+  <div id="langScreen">
+    <div class="titleMain">EL MONTE DE JEHOVÁ<br><span style="font-size:.6em;">LA ASCENSIÓN</span></div>
+    <div class="titleSub">THE MOUNTAIN OF THE LORD</div>
+    <div class="versicle">"¿Quién subirá al monte de Jehová? ... El limpio de manos y puro de corazón" — Salmo 24:3-4</div>
+    <div class="langBtnRow">
+      <button class="bigBtn" id="btnES">🇦🇷 ESPAÑOL</button>
+      <button class="bigBtn magenta" id="btnEN">🇺🇸 ENGLISH</button>
+    </div>
+  </div>
+
+  <!-- NAME ENTRY SCREEN -->
+  <div id="nameScreen" class="hidden">
+    <div class="titleSub" id="nameTitle" style="margin-bottom:8px;">¿CÓMO TE LLAMAS?</div>
+    <input type="text" id="nameInput" maxlength="18" placeholder="Tu nombre" autocomplete="off"
+      style="width:80%; max-width:280px; padding:12px; border-radius:10px; border:2px solid var(--cyan);
+      background:#050818; color:#eaf6ff; font-family:inherit; font-size:4vw; text-align:center;
+      box-shadow:0 0 10px rgba(0,240,255,.4); margin-bottom:16px;">
+    <button class="bigBtn gold" id="btnStartGame">COMENZAR ▶</button>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="gameScreen" class="hidden">
+    <div id="hud">
+      <span id="hudLevel">NIVEL 1/4</span>
+      <span class="aura" id="hudAura">✨ 0</span>
+      <span id="hudScore">0 PTS</span>
+    </div>
+    <div id="canvasWrap">
+      <canvas id="gameCanvas" width="400" height="700"></canvas>
+      <div id="hint"></div>
+    </div>
+    <div id="controls">
+      <div class="ctrlGroup">
+        <button class="padBtn" id="btnLeft">⬅️</button>
+        <button class="padBtn" id="btnRight">➡️</button>
+      </div>
+      <div class="ctrlGroup">
+        <button class="padBtn ladder" id="btnLadder">🪜</button>
+        <button class="padBtn jump" id="btnJump">⬆️</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUIZ OVERLAY -->
+  <div id="quizOverlay" class="overlay hidden">
+    <div class="modalBox">
+      <div class="modalTitle" id="quizLevelTitle">NIVEL 1: LIMPIO DE MANOS</div>
+      <div class="modalQ" id="quizQuestion">...</div>
+      <div id="quizOptions"></div>
+      <div class="feedback" id="quizFeedback"></div>
+    </div>
+  </div>
+
+  <!-- VICTORY OVERLAY -->
+  <div id="victoryOverlay" class="overlay hidden">
+    <div class="modalBox gold" id="victoryBox">
+      <div class="modalTitle" id="victoryTitle">¡LO LOGRASTE!</div>
+      <div id="scoreLine">0 PTS</div>
+      <div class="modalQ" id="reflectionQ"></div>
+      <textarea id="reflectionInput" maxlength="220"></textarea>
+      <button class="waBtn" id="btnWhatsapp">📲 <span id="waBtnLabel">ENVIAR AL MAESTRO</span></button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============ CONFIG ============ */
+const WHATSAPP_NUMBER = ""; // <-- Configurar número del maestro aquí, formato: 549XXXXXXXXXX (vacío = elegir contacto)
+
+const T = {
+  es:{
+    hudLevel:(n)=>`NIVEL ${n}/4`,
+    hint_gem:"¡Toca la Gema!",
+    hint_ladder:"Sube la escalera 🪜",
+    hint_locked:"Responde el acertijo primero",
+    levelTitles:["🙌 NIVEL 1: LIMPIO DE MANOS","❤️ NIVEL 2: PURO DE CORAZÓN","🕊️ NIVEL 3: SIN VANIDAD","🤝 NIVEL 4: INTEGRIDAD Y VERDAD"],
+    correctMsg:"¡CORRECTO! ✨ Tu luz aumenta",
+    wrongMsg:"Incorrecto... vuelve a intentarlo",
+    quizzes:[
+      {q:'Según el Salmo 24:4, ¿qué significa ser "limpio de manos"?',
+       opts:["Lavarse las manos antes de cada comida ritual.","Guardar acciones morales y mantener mi virtud.","Evitar hacer trabajos físicos pesados."], correct:1},
+      {q:'¿Qué representa tener un "corazón puro"?',
+       opts:["Tener pensamientos, deseos e intenciones interiores verdaderas, sinceras y limpias.","Nunca sentir tristeza o enojo ante los problemas.","Demostrar a los demás lo perfeccionistas que somos."], correct:0},
+      {q:'¿Qué significa "no haber elevado su alma a la vanidad"?',
+       opts:["No buscar ropa de marca ni objetos costosos.","Vivir con humildad, sin buscar la gloria del mundo ni guiarse por las apariencias.","No tener metas personales ni aspiraciones altas."], correct:1},
+      {q:'¿Qué significa "no haber jurado con engaño"?',
+       opts:["Ser honesto con Dios y con los demás, y cumplir íntegramente nuestros convenios.","No hacer promesas a nadie bajo ninguna circunstancia.","Decir siempre la verdad solo cuando no tengamos nada que perder."], correct:0},
+    ],
+    victoryTitle:"¡LO LOGRASTE!",
+    reflectionQ:"En un mundo lleno de distracciones, comparaciones y apariencias, ¿qué decisiones diarias nos ayudan a mantener el alma 'libre de vanidad' y ser honestos con Dios?",
+    waLabel:"ENVIAR AL MAESTRO",
+    waTemplate:(name,score,reflection)=>`¡Hola Maestro! ${name} subió al Monte de Jehová 🏔️✨. Puntaje: ${score} PTS. Mi reflexión personal: ${reflection}`,
+    ptsLabel:"PTS", auraLabel:"✨",
+    nameTitle:"¿CÓMO TE LLAMAS?", namePlaceholder:"Tu nombre", startBtn:"COMENZAR ▶",
+    defaultName:"Joven"
+  },
+  en:{
+    hudLevel:(n)=>`LEVEL ${n}/4`,
+    hint_gem:"Touch the Gem!",
+    hint_ladder:"Climb the ladder 🪜",
+    hint_locked:"Answer the riddle first",
+    levelTitles:["🙌 LEVEL 1: CLEAN HANDS","❤️ LEVEL 2: PURE HEART","🕊️ LEVEL 3: NOT LIFTED UP UNTO VANITY","🤝 LEVEL 4: NOT SWORN DECEITFULLY"],
+    correctMsg:"CORRECT! ✨ Your light grows",
+    wrongMsg:"Incorrect... try again",
+    quizzes:[
+      {q:'According to Psalm 24:4, what does having "clean hands" mean?',
+       opts:["Washing your hands before every ritual meal.","Keeping moral actions and maintaining my virtue.","Avoiding hard physical work."], correct:1},
+      {q:'What does having a "pure heart" represent?',
+       opts:["True inner thoughts, desires, intentions, and clean feelings.","Never feeling sad or angry during hard times.","Showing others how perfect we are."], correct:0},
+      {q:'What does "not lifting up one\u2019s soul unto vanity" mean?',
+       opts:["Never wearing branded clothing or buying expensive things.","Living humbly without seeking worldly glory or false appearances.","Having no personal goals or high aspirations."], correct:1},
+      {q:'What does "not swearing deceitfully" mean?',
+       opts:["Being honest with God and others, and faithfully keeping our covenants.","Never making promises under any circumstances.","Always telling the truth only when we have nothing to lose."], correct:0},
+    ],
+    victoryTitle:"YOU MADE IT!",
+    reflectionQ:"In a world full of distractions, comparisons, and appearances, what daily decisions help us keep our soul 'free from vanity' and be honest with God?",
+    waLabel:"SEND TO TEACHER",
+    waTemplate:(name,score,reflection)=>`Hi Teacher! ${name} climbed the Mountain of the Lord 🏔️✨. Score: ${score} PTS. My personal reflection: ${reflection}`,
+    ptsLabel:"PTS", auraLabel:"✨",
+    nameTitle:"WHAT'S YOUR NAME?", namePlaceholder:"Your name", startBtn:"START ▶",
+    defaultName:"Youth"
+  }
+};
+
+let lang = "es";
+let L = T.es;
+
+/* ============ AUDIO ============ */
+let actx = null;
+function ensureAudio(){ if(!actx){ actx = new (window.AudioContext||window.webkitAudioContext)(); } }
+function beep(freq,dur,type,vol,delay,glideTo){
+  if(!actx) return;
+  const t0 = actx.currentTime + (delay||0);
+  const osc = actx.createOscillator();
+  const gain = actx.createGain();
+  osc.type = type||"square";
+  osc.frequency.setValueAtTime(freq,t0);
+  if(glideTo) osc.frequency.exponentialRampToValueAtTime(glideTo, t0+dur);
+  gain.gain.setValueAtTime((vol||0.15), t0);
+  gain.gain.exponentialRampToValueAtTime(0.001, t0+dur);
+  osc.connect(gain); gain.connect(actx.destination);
+  osc.start(t0); osc.stop(t0+dur+0.02);
+}
+function sndJump(){ beep(320,0.16,"square",0.14,0,720); }
+function sndHit(){ beep(140,0.28,"sawtooth",0.18,0,60); }
+function sndGemOk(){ beep(523,0.1,"square",0.15,0); beep(659,0.1,"square",0.15,0.1); beep(784,0.16,"square",0.16,0.2); }
+function sndWrong(){ beep(180,0.12,"square",0.15,0); beep(120,0.18,"square",0.15,0.1); }
+function sndClimb(){ beep(400,0.06,"triangle",0.08,0); }
+function sndFanfare(){
+  const notes=[523,659,784,1046,784,1046];
+  notes.forEach((f,i)=> beep(f, i===notes.length-1?0.5:0.16,"square",0.17, i*0.16));
+}
+
+/* ============ GAME STATE / LEVELS ============ */
+const CW=400, CH=700;
+const platforms = [
+  {x1:20,  x2:280, y:640, ladderX:255}, // level0 -> ground
+  {x1:120, x2:380, y:490, ladderX:145}, // level1
+  {x1:20,  x2:280, y:340, ladderX:255}, // level2
+  {x1:120, x2:380, y:190, ladderX:145}, // level3
+  {x1:100, x2:300, y:60,  ladderX:null} // level4 temple top
+];
+const tempts = {
+  es:["Orgullo","Engaño","Dudas","Presión Social","Adicciones"],
+  en:["Pride","Deceit","Doubt","Peer Pressure","Addictions"]
+};
+
+let player, obstacles, levelPassed, score, hitsCount, aura;
+let gameActive=false, quizOpen=false, victoryDone=false, quizLevelIdx=-1;
+let keys={left:false,right:false};
+let lastTime=0;
+let hintTimer=0;
+
+function resetGame(){
+  player = {level:0, x:60, y:0, w:22, h:32, jumping:false, jumpT:0, invT:0, climbing:false, climbFrom:0, climbT:0, facing:1};
+  obstacles = [];
+  levelPassed = [false,false,false,false];
+  score = 0; hitsCount = 0; aura = 0;
+  gameActive = true; quizOpen=false; victoryDone=false;
+}
+
+/* ============ CANVAS SETUP ============ */
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+/* ============ UI REFS ============ */
+const langScreen=document.getElementById("langScreen");
+const nameScreen=document.getElementById("nameScreen");
+const nameTitle=document.getElementById("nameTitle");
+const nameInput=document.getElementById("nameInput");
+const btnStartGame=document.getElementById("btnStartGame");
+const gameScreen=document.getElementById("gameScreen");
+let playerName = "";
+const hudLevel=document.getElementById("hudLevel");
+const hudAura=document.getElementById("hudAura");
+const hudScore=document.getElementById("hudScore");
+const hintEl=document.getElementById("hint");
+const quizOverlay=document.getElementById("quizOverlay");
+const quizLevelTitle=document.getElementById("quizLevelTitle");
+const quizQuestion=document.getElementById("quizQuestion");
+const quizOptions=document.getElementById("quizOptions");
+const quizFeedback=document.getElementById("quizFeedback");
+const victoryOverlay=document.getElementById("victoryOverlay");
+const victoryTitle=document.getElementById("victoryTitle");
+const scoreLine=document.getElementById("scoreLine");
+const reflectionQ=document.getElementById("reflectionQ");
+const reflectionInput=document.getElementById("reflectionInput");
+const btnWhatsapp=document.getElementById("btnWhatsapp");
+const waBtnLabel=document.getElementById("waBtnLabel");
+
+function chooseLang(l){
+  lang = l; L = T[l];
+  ensureAudio();
+  langScreen.classList.add("hidden");
+  nameTitle.textContent = L.nameTitle;
+  nameInput.placeholder = L.namePlaceholder;
+  btnStartGame.textContent = L.startBtn;
+  nameScreen.classList.remove("hidden");
+  setTimeout(()=>nameInput.focus(), 50);
+}
+function startGame(){
+  playerName = nameInput.value.trim().slice(0,18) || L.defaultName;
+  nameScreen.classList.add("hidden");
+  gameScreen.classList.remove("hidden");
+  resetGame();
+  spawnInitialObstacles();
+  requestAnimationFrame(loop);
+}
+document.getElementById("btnES").addEventListener("click",()=>chooseLang("es"));
+document.getElementById("btnEN").addEventListener("click",()=>chooseLang("en"));
+btnStartGame.addEventListener("click", startGame);
+nameInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter") startGame(); });
+
+/* ============ CONTROLS ============ */
+function bindHold(id, onDown, onUp){
+  const el = document.getElementById(id);
+  const down=(e)=>{ e.preventDefault(); onDown(); };
+  const up=(e)=>{ e.preventDefault(); onUp&&onUp(); };
+  el.addEventListener("touchstart",down,{passive:false});
+  el.addEventListener("touchend",up,{passive:false});
+  el.addEventListener("touchcancel",up,{passive:false});
+  el.addEventListener("mousedown",down);
+  el.addEventListener("mouseup",up);
+  el.addEventListener("mouseleave",up);
+}
+bindHold("btnLeft", ()=>keys.left=true, ()=>keys.left=false);
+bindHold("btnRight", ()=>keys.right=true, ()=>keys.right=false);
+bindHold("btnJump", ()=>doJump());
+bindHold("btnLadder", ()=>keys.ladder=true, ()=>keys.ladder=false);
+
+window.addEventListener("keydown",(e)=>{
+  if(e.key==="ArrowLeft") keys.left=true;
+  if(e.key==="ArrowRight") keys.right=true;
+  if(e.key==="ArrowUp"||e.key===" ") doJump();
+  if(e.key==="Shift"||e.key==="l"||e.key==="L") keys.ladder=true;
+});
+window.addEventListener("keyup",(e)=>{
+  if(e.key==="ArrowLeft") keys.left=false;
+  if(e.key==="ArrowRight") keys.right=false;
+  if(e.key==="Shift"||e.key==="l"||e.key==="L") keys.ladder=false;
+});
+
+function doJump(){
+  if(!gameActive||quizOpen||player.climbing) return;
+  if(!player.jumping){ player.jumping=true; player.jumpT=0; sndJump(); }
+}
+
+/* ============ OBSTACLES ============ */
+function spawnObstacle(levelIdx){
+  const p = platforms[levelIdx];
+  if(levelIdx>=4) return;
+  const words = tempts[lang];
+  const speed = 26 + Math.random()*14 + levelIdx*4;
+  obstacles.push({
+    level:levelIdx,
+    x: Math.random()<0.5 ? p.x1+16 : p.x2-16,
+    y: p.y-10,
+    r: 11,
+    vx: (Math.random()<0.5?-1:1)*speed,
+    label: words[Math.floor(Math.random()*words.length)],
+    bob: Math.random()*Math.PI*2
+  });
+}
+function spawnInitialObstacles(){
+  for(let i=0;i<4;i++){ spawnObstacle(i); }
+}
+let spawnClock=[0,0,0,0];
+
+/* ============ UPDATE ============ */
+function update(dt){
+  if(!gameActive || quizOpen || victoryDone) return;
+
+  const p = platforms[player.level];
+
+  // horizontal movement (locked while climbing)
+  if(!player.climbing){
+    const spd = 130;
+    if(keys.left){ player.x -= spd*dt; player.facing=-1; }
+    if(keys.right){ player.x += spd*dt; player.facing=1; }
+    player.x = Math.max(p.x1+10, Math.min(p.x2-10, player.x));
+  }
+
+  // jump arc (visual + brief invulnerability)
+  if(player.jumping){
+    player.jumpT += dt;
+    if(player.jumpT>=0.5){ player.jumping=false; player.jumpT=0; }
+  }
+
+  // invincibility countdown
+  if(player.invT>0) player.invT -= dt;
+
+  // ladder climb
+  if(!player.climbing && keys.ladder && p.ladderX!==null){
+    const nearLadder = Math.abs(player.x - p.ladderX) < 14;
+    if(nearLadder){
+      if(levelPassed[player.level]){
+        player.climbing = true; player.climbFrom = player.level; player.climbT = 0;
+        sndClimb();
+      } else {
+        showHint(L.hint_locked);
+      }
+    }
+  }
+  if(player.climbing){
+    player.climbT += dt;
+    const dur = 0.9;
+    const from = platforms[player.climbFrom].y;
+    const to = platforms[player.climbFrom+1].y;
+    const t = Math.min(1, player.climbT/dur);
+    player.yOverride = from + (to-from)*t;
+    player.x = platforms[player.climbFrom].ladderX;
+    if(t>=1){
+      player.climbing=false;
+      player.level = player.climbFrom+1;
+      player.yOverride = null;
+      const np = platforms[player.level];
+      // llega justo donde termina la escalera; debe caminar hasta la siguiente
+      player.x = Math.max(np.x1+10, Math.min(np.x2-10, platforms[player.climbFrom].ladderX));
+      if(player.level===4){ triggerVictorySequence(); }
+    }
+  }
+
+  // obstacles
+  for(let i=0;i<spawnClock.length;i++){
+    if(i===player.level || Math.abs(i-player.level)<=1){
+      spawnClock[i]+=dt;
+      const interval = 4 - i*0.2;
+      const count = obstacles.filter(o=>o.level===i).length;
+      if(spawnClock[i]>interval && count<1){ spawnObstacle(i); spawnClock[i]=0; }
+    }
+  }
+  obstacles.forEach(o=>{
+    const pl = platforms[o.level];
+    o.x += o.vx*dt;
+    o.bob += dt*6;
+    if(o.x < pl.x1+12){ o.x = pl.x2-12; }
+    if(o.x > pl.x2-12){ o.x = pl.x1+12; }
+  });
+
+  // collision (only when on this level's platform, standing, not climbing, not jumping, not invincible)
+  if(!player.climbing && !player.jumping && player.invT<=0){
+    obstacles.forEach(o=>{
+      if(o.level!==player.level) return;
+      const dx = Math.abs(o.x - player.x);
+      if(dx < 20){
+        onHit();
+      }
+    });
+  }
+
+  // gem proximity -> auto quiz
+  if(!player.climbing && player.level<4 && p.ladderX!==null && !levelPassed[player.level]){
+    const gemX = p.ladderX;
+    if(Math.abs(player.x-gemX) < 22){
+      openQuiz(player.level);
+    } else if(Math.abs(player.x-gemX) < 60){
+      showHint(L.hint_gem);
+    }
+  } else if(!player.climbing && p.ladderX!==null && levelPassed[player.level]){
+    if(Math.abs(player.x-p.ladderX) < 60) showHint(L.hint_ladder);
+  }
+
+  if(hintTimer>0){ hintTimer-=dt; if(hintTimer<=0){ hintEl.style.opacity=0; } }
+}
+
+function showHint(msg){
+  hintEl.textContent = msg;
+  hintEl.style.opacity = 1;
+  hintTimer = 1.1;
+}
+
+function onHit(){
+  player.invT = 1.4;
+  hitsCount++;
+  sndHit();
+  if(player.level>0){
+    player.level -= 1;
+    const np = platforms[player.level];
+    player.x = Math.max(np.x1+30, Math.min(np.x2-30, player.x));
+  } else {
+    const np = platforms[0];
+    player.x = Math.max(np.x1+10, Math.min(np.x2-10, player.x - 30*player.facing));
+  }
+  updateHud();
+}
+
+/* ============ QUIZ ============ */
+function openQuiz(levelIdx){
+  if(quizOpen || levelIdx<0 || levelIdx>3) return;
+  quizOpen = true; quizLevelIdx = levelIdx;
+  const qd = L.quizzes[levelIdx];
+  quizLevelTitle.textContent = L.levelTitles[levelIdx];
+  quizQuestion.textContent = qd.q;
+  quizOptions.innerHTML = "";
+  quizFeedback.textContent = "";
+  quizFeedback.className = "feedback";
+  qd.opts.forEach((optText, idx)=>{
+    const b = document.createElement("button");
+    b.className = "optBtn";
+    b.textContent = optText;
+    b.addEventListener("click", ()=> answerQuiz(idx, b));
+    quizOptions.appendChild(b);
+  });
+  quizOverlay.classList.remove("hidden");
+}
+function answerQuiz(idx, btnEl){
+  const qd = L.quizzes[quizLevelIdx];
+  const opts = Array.from(quizOptions.children);
+  if(idx===qd.correct){
+    opts.forEach(o=>o.disabled=true);
+    btnEl.classList.add("correct");
+    quizFeedback.textContent = L.correctMsg;
+    quizFeedback.className = "feedback ok";
+    sndGemOk();
+    levelPassed[quizLevelIdx] = true;
+    aura += 1;
+    score += 250;
+    updateHud();
+    setTimeout(()=>{ quizOverlay.classList.add("hidden"); quizOpen=false; }, 900);
+  } else {
+    btnEl.classList.add("wrong");
+    quizFeedback.textContent = L.wrongMsg;
+    quizFeedback.className = "feedback bad";
+    sndWrong();
+    setTimeout(()=>{ btnEl.classList.remove("wrong"); }, 500);
+  }
+}
+
+/* ============ VICTORY ============ */
+function triggerVictorySequence(){
+  victoryDone = true;
+  gameActive = false;
+  sndFanfare();
+  victoryTitle.textContent = L.victoryTitle;
+  scoreLine.textContent = `${score} ${L.ptsLabel}`;
+  reflectionQ.textContent = L.reflectionQ;
+  waBtnLabel.textContent = L.waLabel;
+  btnWhatsapp.disabled = true;
+  setTimeout(()=> victoryOverlay.classList.remove("hidden"), 700);
+}
+reflectionInput.addEventListener("input",()=>{
+  btnWhatsapp.disabled = reflectionInput.value.trim().length < 3;
+});
+btnWhatsapp.addEventListener("click", ()=>{
+  const reflection = reflectionInput.value.trim();
+  if(reflection.length<3) return;
+  const msg = L.waTemplate(playerName, score, reflection);
+  const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
+  window.open(url, "_blank");
+});
+
+function updateHud(){
+  hudLevel.textContent = `${playerName} · ${L.hudLevel(Math.min(player.level+1,4))}`;
+  hudAura.textContent = `${L.auraLabel} ${aura}`;
+  hudScore.textContent = `${score} ${L.ptsLabel}`;
+}
+
+/* ============ RENDER ============ */
+function drawBackgroundStars(){
+  ctx.fillStyle="#04001a";
+  ctx.fillRect(0,0,CW,CH);
+  const g = ctx.createLinearGradient(0,0,0,CH);
+  g.addColorStop(0,"#1a0033"); g.addColorStop(0.55,"#0a0020"); g.addColorStop(1,"#000");
+  ctx.fillStyle=g; ctx.fillRect(0,0,CW,CH);
+  ctx.save();
+  for(let i=0;i<40;i++){
+    const sx=(i*97)%CW, sy=(i*53)%CH;
+    ctx.globalAlpha = 0.3+0.5*((i*31)%10)/10;
+    ctx.fillStyle = i%5===0?"#ff2ee6":"#00f0ff";
+    ctx.fillRect(sx,sy,2,2);
+  }
+  ctx.restore();
+}
+
+function drawPlatform(pl, idx){
+  const unlocked = idx===0 || levelPassed[idx-1];
+  ctx.fillStyle = unlocked ? "#241245" : "#160a26";
+  ctx.strokeStyle = "#00f0ff";
+  ctx.lineWidth=2;
+  ctx.shadowColor="#00f0ff"; ctx.shadowBlur = unlocked?10:2;
+  ctx.beginPath();
+  ctx.moveTo(pl.x1,pl.y);
+  ctx.lineTo(pl.x2,pl.y);
+  ctx.stroke();
+  ctx.fillRect(pl.x1, pl.y, pl.x2-pl.x1, 8);
+  ctx.shadowBlur=0;
+
+  // rocky texture ticks
+  ctx.strokeStyle="rgba(0,240,255,.25)";
+  for(let x=pl.x1+10;x<pl.x2;x+=18){ ctx.beginPath(); ctx.moveTo(x,pl.y+8); ctx.lineTo(x-6,pl.y+16); ctx.stroke(); }
+}
+
+function drawLadder(pl, idx){
+  if(pl.ladderX===null) return;
+  const upperY = platforms[idx+1].y;
+  const lowerY = pl.y;
+  const unlocked = levelPassed[idx];
+  ctx.strokeStyle = unlocked ? "#ffd680" : "#3a3a55";
+  ctx.lineWidth = 4;
+  ctx.shadowColor = unlocked ? "#ffb020" : "transparent";
+  ctx.shadowBlur = unlocked ? 8 : 0;
+  const x=pl.ladderX;
+  ctx.beginPath(); ctx.moveTo(x-9,lowerY); ctx.lineTo(x-9,upperY); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x+9,lowerY); ctx.lineTo(x+9,upperY); ctx.stroke();
+  for(let y=lowerY-6;y>upperY;y-=14){
+    ctx.beginPath(); ctx.moveTo(x-9,y); ctx.lineTo(x+9,y); ctx.stroke();
+  }
+  ctx.shadowBlur=0;
+
+  // gem
+  if(!levelPassed[idx]){
+    const gy = lowerY-22;
+    const pulse = 3+Math.sin(Date.now()/220)*2;
+    ctx.save();
+    ctx.translate(x,gy);
+    ctx.rotate(Date.now()/900);
+    ctx.fillStyle="#39ff9c";
+    ctx.shadowColor="#39ff9c"; ctx.shadowBlur=14+pulse;
+    ctx.beginPath();
+    ctx.moveTo(0,-10); ctx.lineTo(8,0); ctx.lineTo(0,10); ctx.lineTo(-8,0); ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+    ctx.shadowBlur=0;
+  } else {
+    // small permanent sparkle mark once passed
+    ctx.fillStyle="rgba(255,214,128,.6)";
+    ctx.font="10px monospace";
+    ctx.textAlign="center";
+    ctx.fillText("✨", x, lowerY-24);
+  }
+}
+
+function drawTemple(pl){
+  const cx=(pl.x1+pl.x2)/2, baseY=pl.y;
+  const glow = victoryDone ? 22 : 10;
+  ctx.save();
+  ctx.strokeStyle="#ffe9b0";
+  ctx.fillStyle="rgba(255,233,176,.08)";
+  ctx.shadowColor="#ffd680"; ctx.shadowBlur=glow;
+  ctx.lineWidth=2.4;
+  // base steps
+  ctx.strokeRect(cx-95, baseY-6, 190, 6);
+  ctx.strokeRect(cx-80, baseY-12, 160, 6);
+  // pillars
+  for(let i=-3;i<=3;i++){
+    if(i===0) continue;
+    const px = cx + i*24;
+    ctx.beginPath(); ctx.moveTo(px, baseY-12); ctx.lineTo(px, baseY-90); ctx.stroke();
+  }
+  // architrave
+  ctx.beginPath(); ctx.moveTo(cx-95, baseY-90); ctx.lineTo(cx+95, baseY-90); ctx.stroke();
+  // pediment (triangle)
+  ctx.beginPath();
+  ctx.moveTo(cx-100, baseY-90);
+  ctx.lineTo(cx, baseY-150);
+  ctx.lineTo(cx+100, baseY-90);
+  ctx.closePath();
+  ctx.fillStyle="rgba(255,214,128,.10)";
+  ctx.fill();
+  ctx.stroke();
+  // central star-like ornament (non-religious, geometric)
+  ctx.beginPath();
+  ctx.moveTo(cx, baseY-135); ctx.lineTo(cx+6, baseY-120); ctx.lineTo(cx, baseY-108); ctx.lineTo(cx-6, baseY-120);
+  ctx.closePath(); ctx.stroke();
+  ctx.restore();
+}
+
+function drawObstacle(o){
+  ctx.save();
+  const yy = o.y + Math.sin(o.bob)*2;
+  ctx.beginPath();
+  ctx.fillStyle = "#ff2ee6";
+  ctx.shadowColor="#ff2ee6"; ctx.shadowBlur=10;
+  ctx.arc(o.x, yy, o.r, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle="#1a0010";
+  ctx.beginPath(); ctx.arc(o.x, yy, o.r*0.4, 0, Math.PI*2); ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.fillStyle="#ffd680";
+  ctx.font="9px monospace";
+  ctx.textAlign="center";
+  ctx.fillText(o.label, o.x, yy+o.r+11);
+  ctx.restore();
+}
+
+function drawPlayer(){
+  let y = player.yOverride!==null && player.yOverride!==undefined ? player.yOverride : platforms[player.level].y;
+  let jumpOffset = 0;
+  if(player.jumping){
+    const t = player.jumpT/0.5;
+    jumpOffset = Math.sin(Math.PI*t) * 55;
+  }
+  const px = player.x, py = y - player.h - jumpOffset;
+  const flicker = player.invT>0 && Math.floor(Date.now()/90)%2===0;
+  if(flicker) return;
+
+  const glowSize = 6 + aura*5;
+  ctx.save();
+  ctx.shadowColor = "#00eaff";
+  ctx.shadowBlur = glowSize;
+  // body
+  ctx.fillStyle = "#0af0ff";
+  ctx.fillRect(px-player.w/2, py, player.w, player.h*0.62);
+  // head
+  ctx.beginPath();
+  ctx.fillStyle="#ffe0c2";
+  ctx.arc(px, py-6, 8, 0, Math.PI*2);
+  ctx.fill();
+  // legs
+  ctx.fillStyle="#0af0ff";
+  ctx.fillRect(px-player.w/2, py+player.h*0.62, player.w*0.4, player.h*0.4);
+  ctx.fillRect(px+player.w*0.1, py+player.h*0.62, player.w*0.4, player.h*0.4);
+  // aura ring if leveled
+  if(aura>0){
+    ctx.strokeStyle="rgba(255,214,128,.8)";
+    ctx.lineWidth=1.5;
+    ctx.beginPath();
+    ctx.arc(px, py+player.h*0.3, player.w*0.9+aura*1.5, 0, Math.PI*2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function render(){
+  drawBackgroundStars();
+  platforms.forEach((pl,idx)=>{
+    drawPlatform(pl, idx);
+    if(idx<4) drawLadder(pl, idx);
+  });
+  drawTemple(platforms[4]);
+  obstacles.forEach(drawObstacle);
+  drawPlayer();
+}
+
+/* ============ MAIN LOOP ============ */
+function loop(ts){
+  if(!lastTime) lastTime=ts;
+  const dt = Math.min(0.033,(ts-lastTime)/1000);
+  lastTime = ts;
+  update(dt);
+  render();
+  updateHud();
+  requestAnimationFrame(loop);
+}
+
+})();
+</script>
+</body>
+</html>

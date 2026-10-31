@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>BEAT FAITH: Runner de Salmos</title>
+<style>
+  :root{
+    --void:#0a0118;
+    --void-2:#150726;
+    --cyan:#00f0ff;
+    --magenta:#ff2ec4;
+    --gold:#ffd23f;
+    --purple:#7209b7;
+    --pink:#ff006e;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none;}
+  html,body{
+    margin:0; padding:0; width:100%; height:100%;
+    background:var(--void);
+    font-family:'Courier New', 'Consolas', monospace;
+    overflow:hidden;
+    touch-action:manipulation;
+  }
+  body{
+    display:flex; flex-direction:column;
+    min-height:100vh; min-height:100dvh;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(114,9,183,0.35), transparent 60%),
+      radial-gradient(ellipse at 20% 100%, rgba(255,0,110,0.25), transparent 55%),
+      radial-gradient(ellipse at 80% 100%, rgba(0,240,255,0.2), transparent 55%),
+      var(--void);
+    color:#fff;
+  }
+
+  /* ---------- HUD ---------- */
+  #hud{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:8px 12px;
+    background:linear-gradient(180deg, rgba(10,1,24,0.95), rgba(10,1,24,0.6));
+    border-bottom:2px solid var(--cyan);
+    box-shadow:0 0 20px rgba(0,240,255,0.5);
+    z-index:30;
+    font-size:clamp(11px,3vw,14px);
+    letter-spacing:1px;
+  }
+  #hud .stat{display:flex; flex-direction:column; align-items:center; min-width:60px;}
+  #hud .stat .label{font-size:0.7em; color:var(--magenta); text-transform:uppercase;}
+  #hud .stat .value{font-weight:bold; color:var(--gold); text-shadow:0 0 8px var(--gold);}
+  #hud #gemPips{display:flex; gap:4px;}
+  .pip{width:10px; height:10px; border-radius:2px; background:#3a2450; border:1px solid var(--cyan); transform:rotate(45deg);}
+  .pip.lit{background:var(--cyan); box-shadow:0 0 8px var(--cyan);}
+
+  /* ---------- GAME AREA ---------- */
+  #gameWrap{
+    position:relative; flex:1; width:100%; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+  }
+  #gameCanvas{
+    width:100%; height:100%;
+    display:block;
+    background:transparent;
+  }
+
+  #revelationBanner{
+    position:absolute; top:10px; left:50%; transform:translateX(-50%);
+    padding:6px 18px; border-radius:20px;
+    background:linear-gradient(90deg, var(--gold), #fff6c9, var(--gold));
+    color:#3a1a00; font-weight:bold; letter-spacing:2px;
+    box-shadow:0 0 25px var(--gold), 0 0 60px var(--gold);
+    opacity:0; pointer-events:none; transition:opacity 0.25s;
+    font-size:clamp(11px,3.4vw,15px);
+    z-index:25;
+    white-space:nowrap;
+  }
+  #revelationBanner.show{opacity:1; animation:pulseBanner 0.5s infinite alternate;}
+  @keyframes pulseBanner{ from{transform:translateX(-50%) scale(1);} to{transform:translateX(-50%) scale(1.06);} }
+
+  #screenFlash{
+    position:absolute; inset:0; background:var(--gold); opacity:0; pointer-events:none; z-index:40; mix-blend-mode:overlay;
+  }
+
+  /* ---------- CONTROLS ---------- */
+  #controls{
+    position:relative; z-index:20;
+    padding:14px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+    background:linear-gradient(0deg, rgba(10,1,24,1), rgba(10,1,24,0.85));
+    border-top:2px solid var(--magenta);
+    box-shadow:0 0 20px rgba(255,46,196,0.5);
+  }
+  #jumpBtn{
+    width:100%;
+    padding:22px 0;
+    border-radius:22px;
+    border:3px solid var(--cyan);
+    background:linear-gradient(145deg, #1a0a2e, #2d0f4a);
+    color:var(--cyan);
+    font-family:inherit;
+    font-weight:bold;
+    font-size:clamp(18px,6vw,26px);
+    letter-spacing:4px;
+    box-shadow:0 0 25px rgba(0,240,255,0.6), inset 0 0 20px rgba(0,240,255,0.2);
+    -webkit-user-select:none;
+    cursor:pointer;
+  }
+  #jumpBtn:active{
+    transform:scale(0.96);
+    background:linear-gradient(145deg, #2d0f4a, #1a0a2e);
+    box-shadow:0 0 45px var(--cyan), inset 0 0 30px rgba(0,240,255,0.4);
+  }
+  .mode-revelation #jumpBtn{
+    border-color:var(--gold); color:var(--gold);
+    box-shadow:0 0 35px var(--gold), inset 0 0 20px rgba(255,210,63,0.3);
+  }
+
+  /* ---------- OVERLAYS ---------- */
+  .overlay{
+    position:absolute; inset:0; z-index:50;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(5,0,15,0.92);
+    padding:18px;
+    backdrop-filter: blur(3px);
+  }
+  .hidden{display:none !important;}
+  .panel{
+    width:100%; max-width:420px;
+    background:linear-gradient(160deg, #150726, #1f0b38);
+    border:2px solid var(--cyan);
+    border-radius:18px;
+    padding:22px 18px;
+    box-shadow:0 0 40px rgba(0,240,255,0.4), 0 0 80px rgba(114,9,183,0.4);
+    text-align:center;
+    max-height:92vh; overflow-y:auto;
+  }
+  .panel h1{
+    font-size:clamp(20px,7vw,30px);
+    margin:0 0 4px;
+    background:linear-gradient(90deg, var(--cyan), var(--magenta), var(--gold));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    letter-spacing:3px;
+    text-shadow:0 0 20px rgba(0,240,255,0.3);
+  }
+  .panel h2{
+    font-size:clamp(15px,4.6vw,19px);
+    color:var(--gold); margin:2px 0 14px; letter-spacing:1.5px;
+  }
+  .panel p{font-size:clamp(12.5px,3.6vw,15px); line-height:1.5; color:#dcd3f5;}
+  .glow-divider{
+    height:2px; margin:14px 0;
+    background:linear-gradient(90deg, transparent, var(--cyan), var(--magenta), transparent);
+  }
+  input[type=text], textarea{
+    width:100%; padding:12px; margin-top:8px;
+    border-radius:10px; border:2px solid var(--purple);
+    background:#0f0620; color:#fff; font-family:inherit;
+    font-size:16px; resize:vertical;
+  }
+  input[type=text]:focus, textarea:focus{outline:none; border-color:var(--cyan); box-shadow:0 0 10px var(--cyan);}
+  .btn{
+    display:block; width:100%; margin-top:14px;
+    padding:14px 0; border:none; border-radius:12px;
+    font-family:inherit; font-weight:bold; font-size:clamp(14px,4vw,17px);
+    letter-spacing:2px; cursor:pointer;
+    background:linear-gradient(90deg, var(--cyan), var(--magenta));
+    color:#0a0118;
+    box-shadow:0 0 20px rgba(0,240,255,0.5);
+  }
+  .btn:active{transform:scale(0.97);}
+  .btn.gold{background:linear-gradient(90deg, var(--gold), #fff6c9); box-shadow:0 0 20px var(--gold);}
+  .btn.whatsapp{background:linear-gradient(90deg, #25d366, #128c7e); color:#fff;}
+  .btn.ghost{
+    background:transparent; border:2px solid var(--magenta); color:var(--magenta); box-shadow:none;
+  }
+
+  /* trivia options */
+  .optBtn{
+    display:block; width:100%; text-align:left;
+    padding:12px 14px; margin-top:10px;
+    border-radius:12px; border:2px solid var(--purple);
+    background:#150726; color:#e8e0ff;
+    font-family:inherit; font-size:clamp(12.5px,3.6vw,14.5px);
+    cursor:pointer;
+  }
+  .optBtn:active{transform:scale(0.98);}
+  .optBtn.correct{background:rgba(255,210,63,0.25); border-color:var(--gold); color:var(--gold);}
+  .optBtn.wrong{background:rgba(255,0,110,0.2); border-color:var(--pink); color:var(--pink);}
+  .optBtn:disabled{pointer-events:none;}
+
+  .portal-ring{
+    width:70px; height:70px; margin:0 auto 10px;
+    border-radius:50%;
+    border:4px solid var(--gold);
+    box-shadow:0 0 25px var(--gold), inset 0 0 25px var(--gold);
+    display:flex; align-items:center; justify-content:center;
+    font-size:30px;
+    animation:spinRing 3s linear infinite;
+  }
+  @keyframes spinRing{ from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+
+  /* Certificate */
+  #certCard{
+    border:2px solid var(--gold);
+    border-radius:14px;
+    padding:16px;
+    margin-top:14px;
+    background:linear-gradient(160deg, rgba(255,210,63,0.08), rgba(114,9,183,0.12));
+    text-align:left;
+  }
+  #certCard .cRow{display:flex; justify-content:space-between; margin:6px 0; font-size:13px;}
+  #certCard .cLabel{color:var(--cyan); letter-spacing:1px;}
+  #certCard .cVal{color:var(--gold); font-weight:bold;}
+  #certReflection{
+    margin-top:10px; padding:10px; border-left:3px solid var(--magenta);
+    font-style:italic; color:#e8e0ff; font-size:13px; background:rgba(255,46,196,0.06);
+    border-radius:0 8px 8px 0;
+  }
+
+  .rankBadge{
+    display:inline-block; padding:4px 12px; border-radius:20px;
+    background:linear-gradient(90deg, var(--gold), var(--magenta));
+    color:#0a0118; font-weight:bold; letter-spacing:1px; font-size:12px; margin-top:6px;
+  }
+
+  #startAvatarRow{display:flex; justify-content:center; gap:10px; margin:12px 0; font-size:28px;}
+
+  ::-webkit-scrollbar{width:6px;}
+  ::-webkit-scrollbar-thumb{background:var(--purple); border-radius:4px;}
+</style>
+</head>
+<body>
+
+<div id="hud">
+  <div class="stat">
+    <span class="label">Puntaje</span>
+    <span class="value" id="scoreVal">0</span>
+  </div>
+  <div class="stat">
+    <span class="label">Gemas</span>
+    <div id="gemPips">
+      <div class="pip" data-i="0"></div>
+      <div class="pip" data-i="1"></div>
+      <div class="pip" data-i="2"></div>
+    </div>
+  </div>
+  <div class="stat">
+    <span class="label">Revelación</span>
+    <span class="value" id="revealCount">0/3</span>
+  </div>
+</div>
+
+<div id="gameWrap">
+  <canvas id="gameCanvas"></canvas>
+  <div id="revelationBanner">✨ MODO REVELACIÓN ✨</div>
+  <div id="screenFlash"></div>
+
+  <!-- START OVERLAY -->
+  <div class="overlay" id="startOverlay">
+    <div class="panel">
+      <h1>BEAT FAITH</h1>
+      <h2>RUNNER DE SALMOS</h2>
+      <div id="startAvatarRow">🔥🕊️💎🎮</div>
+      <p>Corre por la pista neón, salta los obstáculos y recolecta <b style="color:var(--cyan)">Gemas de Fe</b>.
+      Cada 3 gemas se abre un <b style="color:var(--gold)">Portal de Revelación</b> con una pregunta de los Salmos.
+      ¡Respóndela bien y activa el modo dorado invencible!</p>
+      <div class="glow-divider"></div>
+      <input type="text" id="playerNameInput" placeholder="Escribe tu nombre, alumno/a" maxlength="20">
+      <button class="btn" id="startBtn">▶ INICIAR MISIÓN</button>
+    </div>
+  </div>
+
+  <!-- TRIVIA OVERLAY -->
+  <div class="overlay hidden" id="triviaOverlay">
+    <div class="panel">
+      <div class="portal-ring">📖</div>
+      <h2 id="triviaTitle">PORTAL DE REVELACIÓN</h2>
+      <p id="triviaQuestion" style="color:#fff; font-weight:bold;"></p>
+      <div id="triviaOptions"></div>
+      <p id="triviaFeedback" style="min-height:20px; font-weight:bold;"></p>
+    </div>
+  </div>
+
+  <!-- REFLECTION OVERLAY -->
+  <div class="overlay hidden" id="reflectionOverlay">
+    <div class="panel">
+      <h2>🏁 NIVEL DE REFLEXIÓN</h2>
+      <p>¿En qué área de tu vida necesitas que Dios sea tu <b style="color:var(--gold)">"roca y refugio"</b> esta semana?</p>
+      <textarea id="reflectionInput" rows="4" placeholder="Escribe tu reflexión personal..."></textarea>
+      <button class="btn gold" id="submitReflectionBtn">GENERAR MI CERTIFICADO</button>
+    </div>
+  </div>
+
+  <!-- CERTIFICATE OVERLAY -->
+  <div class="overlay hidden" id="certOverlay">
+    <div class="panel">
+      <h2>🏆 MISIÓN COMPLETADA</h2>
+      <div id="certCard">
+        <div class="cRow"><span class="cLabel">Alumno/a</span><span class="cVal" id="certName">-</span></div>
+        <div class="cRow"><span class="cLabel">Puntaje Total</span><span class="cVal" id="certScore">0</span></div>
+        <div class="cRow"><span class="cLabel">Rango</span><span class="cVal" id="certRank">-</span></div>
+        <div class="cRow"><span class="cLabel">Revelaciones</span><span class="cVal" id="certReveals">0/3</span></div>
+        <div id="certReflection"></div>
+      </div>
+      <button class="btn whatsapp" id="shareBtn">📲 Compartir con mi Maestro</button>
+      <button class="btn ghost" id="replayBtn">↺ Jugar de nuevo</button>
+    </div>
+  </div>
+</div>
+
+<div id="controls">
+  <button id="jumpBtn">SALTAR</button>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============ CONFIG ============ */
+  const WHATSAPP_NUMBER = ""; // configurable: deja vacío para que el usuario elija el chat, o pon "549XXXXXXXXXX"
+  const FINISH_DISTANCE = 5200; // distancia total del recorrido (px de mundo)
+  const GRAVITY = 0.62;
+  const JUMP_VELOCITY = -12.4;
+  const BASE_SPEED = 4.6;
+  const REVELATION_DURATION = 5000; // ms
+
+  const QUESTIONS = [
+    {
+      title: "PORTAL I · SALMO 18",
+      q: "Según el Salmo 18:2, ¿cuál de estas metáforas usa David para describir a Dios?",
+      opts: [
+        "Roca, fortaleza y libertador",
+        "Un rey lejano e inaccesible",
+        "Un viento pasajero"
+      ],
+      correct: 0
+    },
+    {
+      title: "PORTAL II · ADORACIÓN",
+      q: "El Obispo Dean M. Davies enseñó que la verdadera adoración a Dios es:",
+      opts: [
+        "Solo cumplir un horario el domingo",
+        "Un acto del corazón con amor, humildad y lealtad",
+        "Cantar sin prestar atención"
+      ],
+      correct: 1
+    },
+    {
+      title: "PORTAL III · SALMO 46",
+      q: "En el Salmo 46:10, ¿qué mandato de calma nos da el Señor para recargar fe?",
+      opts: [
+        '"Corred sin parar"',
+        '"Quedaos quietos, y sabed que yo soy Dios"',
+        '"Quejaos de los problemas"'
+      ],
+      correct: 1
+    }
+  ];
+
+  /* ============ AUDIO (Web Audio API, sintético) ============ */
+  let actx = null;
+  function ensureAudio(){
+    if(!actx){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      actx = new AC();
+    }
+    if(actx.state === "suspended") actx.resume();
+  }
+  function tone(freq, dur, type, vol, delay, glideTo){
+    if(!actx) return;
+    const t0 = actx.currentTime + (delay||0);
+    const osc = actx.createOscillator();
+    const gain = actx.createGain();
+    osc.type = type || "square";
+    osc.frequency.setValueAtTime(freq, t0);
+    if(glideTo) osc.frequency.exponentialRampToValueAtTime(glideTo, t0 + dur);
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(vol || 0.2, t0 + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(gain).connect(actx.destination);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.02);
+  }
+  function sndJump(){ tone(420, 0.14, "square", 0.18, 0, 720); }
+  function sndGem(){ tone(880, 0.09, "triangle", 0.2, 0, 1400); tone(1320,0.12,"sine",0.15,0.05); }
+  function sndPowerup(){
+    [0,0.08,0.16,0.24].forEach((d,i)=> tone(440 + i*220, 0.16, "sawtooth", 0.16, d, 660+i*220));
+  }
+  function sndError(){ tone(180, 0.28, "sawtooth", 0.22, 0, 80); }
+  function sndCrash(){ tone(120, 0.2, "square", 0.2, 0, 60); }
+  function sndFinish(){
+    [0,0.12,0.24,0.36].forEach((d,i)=> tone(523 + i*130, 0.2, "triangle", 0.18, d));
+  }
+
+  /* ============ CANVAS SETUP ============ */
+  const wrap = document.getElementById("gameWrap");
+  const canvas = document.getElementById("gameCanvas");
+  const ctx = canvas.getContext("2d");
+  let W = 0, H = 0, DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+  function resize(){
+    W = wrap.clientWidth;
+    H = wrap.clientHeight;
+    canvas.width = W * DPR;
+    canvas.height = H * DPR;
+    canvas.style.width = W + "px";
+    canvas.style.height = H + "px";
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    groundY = H * 0.72;
+  }
+  window.addEventListener("resize", resize);
+
+  /* ============ GAME STATE ============ */
+  let groundY = 300;
+  let running = false;
+  let paused = false;
+  let gameOver = false;
+  let distance = 0;
+  let worldX = 0;
+  let speed = BASE_SPEED;
+  let score = 0;
+  let gemsCollected = 0;
+  let gemPipCount = 0;
+  let questionsAsked = 0;
+  let revelationActive = false;
+  let revelationEndAt = 0;
+  let playerName = "";
+  let reflectionText = "";
+  let scoreForFinishTriggered = false;
+
+  const player = {
+    x: 0, y: 0, vy: 0, size: 30,
+    onGround: true,
+    rotation: 0,
+    trail: []
+  };
+
+  let obstacles = []; // {wx, w, h, type}
+  let gems = [];       // {wx, y, r, taken}
+  let particles = [];  // {x,y,vx,vy,life,color}
+  let nextObstacleAt = 500;
+  let nextGemAt = 300;
+  let lastQuestionGemMark = 0;
+
+  function resetGame(){
+    distance = 0; worldX = 0; speed = BASE_SPEED; score = 0;
+    gemsCollected = 0; gemPipCount = 0; questionsAsked = 0;
+    revelationActive = false; scoreForFinishTriggered = false;
+    obstacles = []; gems = []; particles = [];
+    nextObstacleAt = 480; nextGemAt = 260; lastQuestionGemMark = 0;
+    player.y = groundY - player.size; player.vy = 0; player.onGround = true;
+    gameOver = false; paused = false;
+    updateHUD();
+    document.body.classList.remove("mode-revelation");
+  }
+
+  function updateHUD(){
+    document.getElementById("scoreVal").textContent = Math.floor(score);
+    document.getElementById("revealCount").textContent = questionsAsked + "/3";
+    for(let i=0;i<3;i++){
+      const pip = document.querySelector('.pip[data-i="'+i+'"]');
+      pip.classList.toggle("lit", i < gemPipCount);
+    }
+  }
+
+  /* ============ INPUT ============ */
+  function doJump(){
+    if(!running || paused || gameOver) return;
+    if(player.onGround){
+      player.vy = JUMP_VELOCITY;
+      player.onGround = false;
+      sndJump();
+    }
+  }
+  const jumpBtn = document.getElementById("jumpBtn");
+  jumpBtn.addEventListener("touchstart", (e)=>{ e.preventDefault(); ensureAudio(); doJump(); }, {passive:false});
+  jumpBtn.addEventListener("mousedown", ()=>{ ensureAudio(); doJump(); });
+  window.addEventListener("keydown", (e)=>{
+    const tag = document.activeElement ? document.activeElement.tagName : "";
+    if(tag === "INPUT" || tag === "TEXTAREA") return; // deja escribir espacios y todo el texto con normalidad
+    if(e.code === "Space" || e.code === "ArrowUp"){ e.preventDefault(); ensureAudio(); doJump(); }
+  });
+  canvas.addEventListener("touchstart", (e)=>{ e.preventDefault(); ensureAudio(); doJump(); }, {passive:false});
+
+  /* ============ SPAWNING ============ */
+  function maybeSpawn(){
+    if(worldX + W + 400 > nextObstacleAt && nextObstacleAt < FINISH_DISTANCE - 200){
+      const type = Math.random() < 0.5 ? "spike" : "block";
+      obstacles.push({
+        wx: nextObstacleAt,
+        w: type === "spike" ? 34 : 40,
+        h: type === "spike" ? 34 : 46,
+        type,
+        destroyed:false
+      });
+      nextObstacleAt += 260 + Math.random()*220;
+    }
+    if(worldX + W + 400 > nextGemAt && nextGemAt < FINISH_DISTANCE - 150){
+      // altura dentro del alcance garantizado del salto (y también alcanzable corriendo agachado bajo el arco)
+      gems.push({ wx: nextGemAt, y: groundY - 22 - Math.random()*14, r: 13, taken:false });
+      nextGemAt += 150 + Math.random()*110;
+    }
+  }
+
+  /* ============ PARTICLES ============ */
+  function burst(x,y,color,count){
+    for(let i=0;i<(count||10);i++){
+      particles.push({
+        x, y,
+        vx:(Math.random()-0.5)*6,
+        vy:(Math.random()-0.5)*6 - 2,
+        life:1,
+        color
+      });
+    }
+  }
+
+  /* ============ COLLISION ============ */
+  function aabb(ax,ay,aw,ah,bx,by,bw,bh){
+    return ax < bx+bw && ax+aw > bx && ay < by+bh && ay+ah > by;
+  }
+
+  /* ============ MAIN LOOP ============ */
+  let lastT = 0;
+  function loop(t){
+    if(!lastT) lastT = t;
+    const dt = Math.min(t - lastT, 40);
+    lastT = t;
+    if(running && !paused && !gameOver){
+      update(dt);
+    }
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  function update(dt){
+    const dtScale = dt/16.67;
+
+    // revelation timer
+    if(revelationActive && performance.now() > revelationEndAt){
+      endRevelation();
+    }
+
+    speed = (revelationActive ? BASE_SPEED*1.9 : BASE_SPEED) + distance/FINISH_DISTANCE*2.2;
+    worldX += speed * dtScale;
+    distance = worldX;
+
+    // physics
+    player.vy += GRAVITY * dtScale;
+    player.y += player.vy * dtScale;
+    const floor = groundY - player.size;
+    if(player.y >= floor){
+      player.y = floor;
+      player.vy = 0;
+      player.onGround = true;
+    }
+    player.rotation += (player.onGround ? 0.02 : 0.14) * dtScale;
+
+    player.trail.push({x:player.x, y:player.y + player.size/2});
+    if(player.trail.length > 14) player.trail.shift();
+
+    maybeSpawn();
+
+    // obstacle collision
+    const px = player.x, py = player.y, ps = player.size;
+    for(const ob of obstacles){
+      if(ob.destroyed) continue;
+      const sx = ob.wx - worldX;
+      if(sx < -80 || sx > W+80) continue;
+      const oy = groundY - ob.h;
+      if(aabb(px,py,ps,ps, sx,oy,ob.w,ob.h)){
+        if(revelationActive){
+          ob.destroyed = true;
+          score += 40;
+          burst(sx+ob.w/2, oy+ob.h/2, "#ffd23f", 16);
+          sndCrash();
+        } else {
+          crash();
+        }
+      }
+    }
+
+    // gem collision
+    for(const g of gems){
+      if(g.taken) continue;
+      const sx = g.wx - worldX;
+      if(sx < -50 || sx > W+50) continue;
+      if(aabb(px,py,ps,ps, sx-g.r, g.y-g.r, g.r*2, g.r*2)){
+        g.taken = true;
+        gemsCollected++; gemPipCount++;
+        score += revelationActive ? 30 : 15;
+        burst(sx, g.y, "#00f0ff", 12);
+        sndGem();
+        if(gemPipCount >= 3 && questionsAsked < 3){
+          gemPipCount = 0;
+          openTrivia();
+        }
+      }
+    }
+
+    // particles
+    particles.forEach(p=>{ p.x += p.vx*dtScale; p.y += p.vy*dtScale; p.vy += 0.15*dtScale; p.life -= 0.035*dtScale; });
+    particles = particles.filter(p=>p.life>0);
+
+    // ambient score
+    score += 0.05 * dtScale * (revelationActive?2:1);
+
+    updateHUD();
+
+    if(distance >= FINISH_DISTANCE && !scoreForFinishTriggered){
+      scoreForFinishTriggered = true;
+      finishRun();
+    }
+  }
+
+  function crash(){
+    gameOver = true;
+    sndError();
+    burst(player.x+player.size/2, player.y+player.size/2, "#ff2ec4", 20);
+    flashScreen("#ff2ec4");
+    setTimeout(()=>{
+      // gentle respawn a bit back, keep momentum of the lesson going
+      gameOver = false;
+      score = Math.max(0, score-20);
+      obstacles.forEach(o=>{ const sx=o.wx-worldX; if(sx>-40 && sx<200) o.destroyed=true; });
+    }, 550);
+  }
+
+  /* ============ TRIVIA / REVELATION ============ */
+  function openTrivia(){
+    paused = true;
+    const idx = questionsAsked;
+    const data = QUESTIONS[idx];
+    document.getElementById("triviaTitle").textContent = data.title;
+    document.getElementById("triviaQuestion").textContent = data.q;
+    const optWrap = document.getElementById("triviaOptions");
+    optWrap.innerHTML = "";
+    document.getElementById("triviaFeedback").textContent = "";
+    data.opts.forEach((optText, i)=>{
+      const b = document.createElement("button");
+      b.className = "optBtn";
+      b.textContent = String.fromCharCode(65+i) + ") " + optText;
+      b.addEventListener("click", ()=> answerTrivia(i, data, b, optWrap));
+      optWrap.appendChild(b);
+    });
+    document.getElementById("triviaOverlay").classList.remove("hidden");
+  }
+
+  function answerTrivia(i, data, btnEl, optWrap){
+    const buttons = optWrap.querySelectorAll(".optBtn");
+    buttons.forEach(b=>b.disabled = true);
+    const feedback = document.getElementById("triviaFeedback");
+    questionsAsked++;
+    if(i === data.correct){
+      btnEl.classList.add("correct");
+      feedback.style.color = "var(--gold)";
+      feedback.textContent = "¡CORRECTO! Modo Revelación activado ✨";
+      sndPowerup();
+    } else {
+      btnEl.classList.add("wrong");
+      buttons[data.correct].classList.add("correct");
+      feedback.style.color = "var(--pink)";
+      feedback.textContent = "Respuesta incorrecta. La carrera continúa.";
+      sndError();
+    }
+    updateHUD();
+    setTimeout(()=>{
+      document.getElementById("triviaOverlay").classList.add("hidden");
+      paused = false;
+      if(i === data.correct) startRevelation();
+      if(questionsAsked >= 3 && distance < FINISH_DISTANCE*0.6){
+        // ensure finish stays reachable narratively; no-op, pacing handled by distance
+      }
+    }, 1400);
+  }
+
+  function startRevelation(){
+    revelationActive = true;
+    revelationEndAt = performance.now() + REVELATION_DURATION;
+    document.body.classList.add("mode-revelation");
+    document.getElementById("revelationBanner").classList.add("show");
+    flashScreen("#ffd23f");
+  }
+  function endRevelation(){
+    revelationActive = false;
+    document.body.classList.remove("mode-revelation");
+    document.getElementById("revelationBanner").classList.remove("show");
+  }
+
+  function flashScreen(color){
+    const f = document.getElementById("screenFlash");
+    f.style.background = color;
+    f.style.opacity = "0.55";
+    setTimeout(()=>{ f.style.transition = "opacity 0.4s"; f.style.opacity = "0"; setTimeout(()=>{f.style.transition="";},400); }, 40);
+  }
+
+  /* ============ RENDER ============ */
+  function render(){
+    ctx.clearRect(0,0,W,H);
+    drawBackground();
+    drawTrack();
+    drawGems();
+    drawObstacles();
+    drawParticles();
+    drawPlayer();
+  }
+
+  function drawBackground(){
+    // parallax neon grid horizon
+    const g = ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0, "rgba(20,4,40,0.0)");
+    g.addColorStop(1, "rgba(114,9,183,0.15)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,W,H);
+
+    ctx.save();
+    ctx.strokeStyle = revelationActive ? "rgba(255,210,63,0.25)" : "rgba(0,240,255,0.14)";
+    ctx.lineWidth = 1;
+    const gridSpacing = 46;
+    const offset = (worldX*0.4) % gridSpacing;
+    for(let x = -offset; x < W; x += gridSpacing){
+      ctx.beginPath(); ctx.moveTo(x, groundY-140); ctx.lineTo(x, groundY); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawTrack(){
+    // glow ground line
+    ctx.save();
+    const grad = ctx.createLinearGradient(0, groundY, 0, groundY+40);
+    grad.addColorStop(0, revelationActive ? "rgba(255,210,63,0.9)" : "rgba(0,240,255,0.85)");
+    grad.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, groundY, W, 40);
+
+    ctx.strokeStyle = revelationActive ? "#ffd23f" : "#00f0ff";
+    ctx.lineWidth = 3;
+    ctx.shadowColor = revelationActive ? "#ffd23f" : "#00f0ff";
+    ctx.shadowBlur = 14;
+    ctx.beginPath(); ctx.moveTo(0, groundY); ctx.lineTo(W, groundY); ctx.stroke();
+    ctx.restore();
+
+    // track ticks
+    ctx.save();
+    ctx.strokeStyle = "rgba(255,46,196,0.35)";
+    ctx.lineWidth = 2;
+    const tickSpacing = 60;
+    const offset = worldX % tickSpacing;
+    for(let x = -offset; x < W; x += tickSpacing){
+      ctx.beginPath(); ctx.moveTo(x, groundY+6); ctx.lineTo(x+14, groundY+6); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawGems(){
+    ctx.save();
+    ctx.font = (28) + "px sans-serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    gems.forEach(g=>{
+      if(g.taken) return;
+      const sx = g.wx - worldX;
+      if(sx < -40 || sx > W+40) return;
+      const bob = Math.sin((worldX+g.wx)*0.01)*5;
+      ctx.save();
+      ctx.shadowColor = "#00f0ff"; ctx.shadowBlur = 18;
+      ctx.fillText("💎", sx, g.y+bob);
+      ctx.restore();
+    });
+    ctx.restore();
+  }
+
+  function drawObstacles(){
+    obstacles.forEach(ob=>{
+      if(ob.destroyed) return;
+      const sx = ob.wx - worldX;
+      if(sx < -80 || sx > W+80) return;
+      const oy = groundY - ob.h;
+      ctx.save();
+      ctx.shadowColor = "#ff2ec4"; ctx.shadowBlur = 16;
+      if(ob.type === "spike"){
+        ctx.fillStyle = "#1a0a2e";
+        ctx.strokeStyle = "#ff2ec4";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(sx, groundY);
+        ctx.lineTo(sx+ob.w/2, oy);
+        ctx.lineTo(sx+ob.w, groundY);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+      } else {
+        ctx.fillStyle = "#1a0a2e";
+        ctx.strokeStyle = "#ff2ec4";
+        ctx.lineWidth = 2.5;
+        roundRect(ctx, sx, oy, ob.w, ob.h, 6);
+        ctx.fill(); ctx.stroke();
+      }
+      ctx.restore();
+    });
+  }
+
+  function roundRect(c,x,y,w,h,r){
+    c.beginPath();
+    c.moveTo(x+r,y);
+    c.arcTo(x+w,y,x+w,y+h,r);
+    c.arcTo(x+w,y+h,x,y+h,r);
+    c.arcTo(x,y+h,x,y,r);
+    c.arcTo(x,y,x+w,y,r);
+    c.closePath();
+  }
+
+  function drawParticles(){
+    particles.forEach(p=>{
+      ctx.save();
+      ctx.globalAlpha = Math.max(p.life,0);
+      ctx.fillStyle = p.color;
+      ctx.shadowColor = p.color; ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.arc(p.x, p.y, 3.2, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+    });
+  }
+
+  function drawPlayer(){
+    // trail
+    player.trail.forEach((pt,i)=>{
+      ctx.save();
+      ctx.globalAlpha = (i/player.trail.length)*0.35;
+      ctx.fillStyle = revelationActive ? "#ffd23f" : "#00f0ff";
+      ctx.beginPath();
+      ctx.arc(pt.x + player.size/2, pt.y, player.size*0.32, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    });
+
+    ctx.save();
+    ctx.translate(player.x + player.size/2, player.y + player.size/2);
+    ctx.rotate(player.rotation);
+    const glow = revelationActive ? "#ffd23f" : "#00f0ff";
+    ctx.shadowColor = glow;
+    ctx.shadowBlur = revelationActive ? 30 : 20;
+    // diamond body
+    const s = player.size/2;
+    const grad = ctx.createLinearGradient(-s,-s,s,s);
+    if(revelationActive){
+      grad.addColorStop(0, "#fff6c9"); grad.addColorStop(1, "#ffd23f");
+    } else {
+      grad.addColorStop(0, "#ff2ec4"); grad.addColorStop(1, "#00f0ff");
+    }
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(0,-s); ctx.lineTo(s,0); ctx.lineTo(0,s); ctx.lineTo(-s,0);
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+
+    // emoji accent above
+    ctx.save();
+    ctx.font = "16px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(revelationActive ? "👑" : "🔥", player.x + player.size/2, player.y - 8);
+    ctx.restore();
+  }
+
+  /* ============ FINISH & FLOW ============ */
+  function finishRun(){
+    running = false;
+    sndFinish();
+    setTimeout(()=>{
+      document.getElementById("reflectionOverlay").classList.remove("hidden");
+    }, 500);
+  }
+
+  function computeRank(finalScore){
+    if(finalScore >= 420) return "⚡ CENTINELA DE LA ROCA";
+    if(finalScore >= 260) return "🛡️ GUERRERO DE FE";
+    if(finalScore >= 140) return "🌱 PEREGRINO FIEL";
+    return "🕯️ BUSCADOR DE LUZ";
+  }
+
+  document.getElementById("startBtn").addEventListener("click", ()=>{
+    ensureAudio();
+    const nameInput = document.getElementById("playerNameInput").value.trim();
+    playerName = (nameInput || "Alumno/a").replace(/[^a-zA-Z0-9 áéíóúÁÉÍÓÚñÑ]/g,"").slice(0,20);
+    document.getElementById("startOverlay").classList.add("hidden");
+    resetGame();
+    player.x = W*0.18;
+    running = true;
+  });
+
+  document.getElementById("submitReflectionBtn").addEventListener("click", ()=>{
+    const val = document.getElementById("reflectionInput").value.trim();
+    reflectionText = val || "Confiar en que Dios es mi roca y refugio cada día.";
+    document.getElementById("reflectionOverlay").classList.add("hidden");
+    showCertificate();
+  });
+
+  function showCertificate(){
+    document.getElementById("certName").textContent = playerName;
+    const finalScore = Math.floor(score);
+    document.getElementById("certScore").textContent = finalScore + " PTS";
+    document.getElementById("certRank").textContent = computeRank(finalScore);
+    document.getElementById("certReveals").textContent = questionsAsked + "/3";
+    document.getElementById("certReflection").textContent = "\u201C" + reflectionText + "\u201D";
+    document.getElementById("certOverlay").classList.remove("hidden");
+  }
+
+  document.getElementById("shareBtn").addEventListener("click", ()=>{
+    const finalScore = Math.floor(score);
+    const msg = "¡Hola Maestro! Completé la Misión BEAT FAITH: SALMOS 🎮✨. Mi puntaje fue: " + finalScore + " PTS. Mi compromiso personal: " + reflectionText;
+    const url = "https://wa.me/" + WHATSAPP_NUMBER + "?text=" + encodeURIComponent(msg);
+    window.open(url, "_blank");
+  });
+
+  document.getElementById("replayBtn").addEventListener("click", ()=>{
+    document.getElementById("certOverlay").classList.add("hidden");
+    document.getElementById("startOverlay").classList.remove("hidden");
+  });
+
+  /* ============ INIT ============ */
+  resize();
+  player.x = W*0.18;
+  player.y = groundY - player.size;
+  requestAnimationFrame(loop);
+
+})();
+</script>
+</body>
+</html>

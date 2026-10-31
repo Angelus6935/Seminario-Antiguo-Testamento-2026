@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>El Valle del Estribillo</title>
+<style>
+  :root{
+    --bg:#0a0e17;
+    --cyan:#22d3ee;
+    --amber:#fbbf24;
+    --neon:#a78bfa;
+    --panel:#111827;
+    --panel2:#1a2333;
+    --text:#e5e7eb;
+    --danger:#f87171;
+    --good:#34d399;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none;}
+  html,body{
+    margin:0; padding:0; width:100%; height:100%;
+    background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    overflow:hidden; overscroll-behavior:none;
+  }
+  #app{
+    position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    height:100vh; height:100dvh; width:100vw;
+  }
+  #gameWrap{position:relative; margin:0 auto; background:#000;}
+  #gameCanvas{background:linear-gradient(180deg,#0a0e17,#141b2b); display:block; touch-action:none; border-radius:0; width:100%; height:100%;}
+
+  .screen{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:24px; padding-top:max(24px, env(safe-area-inset-top)); padding-bottom:max(24px, env(safe-area-inset-bottom));
+    text-align:center; z-index:20; background:radial-gradient(circle at 50% 20%, #1a2333 0%, #060810 80%);
+    overflow-y:auto; -webkit-overflow-scrolling:touch;
+  }
+  .hidden{display:none !important;}
+
+  h1.title{
+    font-size:clamp(28px,7vw,44px); margin:0 0 8px 0;
+    background:linear-gradient(90deg,var(--cyan),var(--amber));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    letter-spacing:1px;
+  }
+  .subtitle{color:#9ca3af; font-size:clamp(13px,3.5vw,16px); margin-bottom:28px; max-width:480px; line-height:1.5;}
+
+  button.btn{
+    font-family:inherit; font-size:16px; font-weight:600; color:#0a0e17;
+    background:linear-gradient(90deg,var(--cyan),var(--amber));
+    border:none; border-radius:14px; padding:14px 28px; margin:8px; cursor:pointer;
+    box-shadow:0 6px 18px rgba(34,211,238,0.25); transition:transform .12s ease;
+  }
+  button.btn:active{transform:scale(0.95);}
+  button.btn.secondary{
+    background:var(--panel2); color:var(--text); border:1px solid #2b3550;
+    box-shadow:none;
+  }
+
+  input.textInput, textarea.textInput{
+    font-family:inherit; font-size:15px; width:min(90vw,420px); padding:12px 14px;
+    border-radius:12px; border:1px solid #2b3550; background:var(--panel);
+    color:var(--text); margin:6px 0 16px 0; resize:none;
+  }
+  textarea.textInput{min-height:70px;}
+
+  /* HUD */
+  #hud{
+    position:absolute; top:0; left:0; right:0; padding:10px 14px; z-index:15;
+    display:flex; justify-content:space-between; align-items:flex-start; pointer-events:none;
+  }
+  #hopeBarWrap{
+    width:110px; height:12px; background:#1a2333; border-radius:8px; overflow:hidden;
+    border:1px solid #2b3550;
+  }
+  #hopeBar{height:100%; width:100%; background:linear-gradient(90deg,var(--cyan),var(--neon)); transition:width .25s ease;}
+  #levelLabel{
+    font-size:12px; color:#9ca3af; background:rgba(10,14,23,0.6); padding:4px 10px; border-radius:20px;
+    border:1px solid #2b3550;
+  }
+
+  /* Touch controls */
+  #controls{
+    position:absolute; bottom:0; left:0; right:0; z-index:15; display:flex;
+    justify-content:space-between; align-items:flex-end; padding:18px; pointer-events:none;
+  }
+  #dpad{
+    display:grid; grid-template-columns:52px 52px 52px; grid-template-rows:52px 52px 52px; gap:4px;
+    pointer-events:auto;
+  }
+  .dbtn{
+    background:rgba(26,35,51,0.85); border:1px solid #2b3550; border-radius:12px;
+    display:flex; align-items:center; justify-content:center; color:var(--cyan); font-size:20px;
+  }
+  #actionBtn{
+    width:76px; height:76px; border-radius:50%; pointer-events:auto;
+    background:radial-gradient(circle at 35% 30%, var(--amber), #b45309);
+    border:2px solid #fde68a; color:#1a1200; font-weight:800; font-size:13px;
+    display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(251,191,36,.4);
+  }
+  #actionBtn.hidden-force{opacity:0; pointer-events:none;}
+
+  /* Narrative caption */
+  #narrativeBox{
+    position:absolute; left:0; right:0; bottom:0; z-index:18; padding:20px 20px 90px 20px;
+    background:linear-gradient(0deg, rgba(6,8,16,0.96) 60%, rgba(6,8,16,0));
+    display:flex; flex-direction:column; align-items:center; text-align:center;
+  }
+  #narrativeText{
+    max-width:560px; font-size:clamp(14px,3.8vw,17px); line-height:1.6; color:#f1f5f9;
+    min-height:70px;
+  }
+  #narrativeName{color:var(--amber); font-weight:700; font-size:13px; letter-spacing:1px; margin-bottom:6px;}
+  #narrativeTap{color:#64748b; font-size:12px; margin-top:10px;}
+
+  /* Trivia parchment */
+  #triviaOverlay{
+    position:absolute; left:0; right:0; top:0; bottom:0; z-index:25;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+    background:rgba(6,8,16,0.55);
+  }
+  #triviaCard{
+    width:min(92vw,440px); background:linear-gradient(160deg,#241b0f,#1c150c);
+    border:2px solid var(--amber); border-radius:16px; padding:20px; box-shadow:0 10px 40px rgba(0,0,0,.5);
+  }
+  #triviaCard .label{color:var(--amber); font-size:11px; letter-spacing:2px; margin-bottom:8px;}
+  #triviaQuestion{font-size:16px; line-height:1.5; margin-bottom:16px; color:#fef3c7;}
+  .triviaOption{
+    display:block; width:100%; text-align:left; padding:12px 14px; margin:8px 0;
+    background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.35); border-radius:10px;
+    color:#fef3c7; font-family:inherit; font-size:14px; cursor:pointer;
+  }
+  .triviaOption.correct{background:rgba(52,211,153,0.25); border-color:var(--good);}
+  .triviaOption.wrong{background:rgba(248,113,113,0.25); border-color:var(--danger);}
+  #triviaFeedback{font-size:13px; margin-top:10px; min-height:18px; color:#d1d5db;}
+
+  /* Flash message (level 4 one-liners) */
+  #flashMsg{
+    position:absolute; top:44%; left:50%; transform:translate(-50%,-50%); z-index:22;
+    font-size:clamp(14px,4vw,18px); color:var(--good); text-align:center; max-width:80vw;
+    text-shadow:0 0 12px rgba(52,211,153,0.6); pointer-events:none; opacity:0; transition:opacity .3s ease;
+  }
+  #flashMsg.show{opacity:1;}
+
+  /* Epilogue / result */
+  .refl-q{max-width:520px; text-align:left; margin:0 auto 6px auto; font-size:14px; color:#cbd5e1;}
+  #resultCard{
+    width:min(92vw,420px); border-radius:20px; padding:26px 22px; margin-top:10px;
+    background:linear-gradient(160deg,#1a1030,#0d1424 60%);
+    border:1px solid rgba(167,139,250,0.5); box-shadow:0 0 50px rgba(167,139,250,0.15);
+  }
+  #resultCard .rlabel{font-size:11px; letter-spacing:3px; color:var(--neon); margin-bottom:4px;}
+  #resultCard .rname{font-size:22px; font-weight:800; color:#fff; margin-bottom:14px;}
+  #resultCard .rscore{
+    font-size:44px; font-weight:900; margin:6px 0 2px 0;
+    background:linear-gradient(90deg,var(--cyan),var(--amber));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  #resultCard .rscoreLabel{font-size:11px; color:#94a3b8; letter-spacing:2px; margin-bottom:18px;}
+  #resultCard .rrefl{font-size:12.5px; color:#cbd5e1; text-align:left; background:rgba(255,255,255,0.04);
+    border-radius:10px; padding:10px 12px; margin:6px 0; line-height:1.4;}
+  #resultCard .rverse{font-size:13px; color:var(--amber); margin-top:16px; font-style:italic; line-height:1.5;}
+
+  .footer-note{font-size:11px; color:#4b5563; margin-top:18px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- PANTALLA DE TITULO -->
+  <div id="screen-title" class="screen">
+    <h1 class="title">EL VALLE DEL ESTRIBILLO</h1>
+    <div class="subtitle">Luz Paso a Paso &middot; Parte 2<br>Adan y Eva descienden al valle. La montana quedo atras, pero el camino de la vida no es una sola cima.</div>
+    <button class="btn" id="btnStart">Comenzar la travesia</button>
+    <div class="footer-note">Salmo 136 &middot; Para siempre es su misericordia</div>
+  </div>
+
+  <!-- NOMBRE -->
+  <div id="screen-name" class="screen hidden">
+    <h1 class="title" style="font-size:26px;">Antes de bajar al valle...</h1>
+    <div class="subtitle">Como te llamas? Tu nombre se guardara en tu Estribillo Personal al final.</div>
+    <input class="textInput" id="playerNameInput" maxlength="18" placeholder="Tu nombre">
+    <button class="btn" id="btnNameContinue">Continuar</button>
+  </div>
+
+  <!-- CANVAS DE JUEGO Y CAPAS (alineadas exactamente al area real del canvas) -->
+  <div id="gameWrap" class="hidden">
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="hud" class="hidden">
+      <div id="levelLabel">Nivel 1 &middot; El Valle Helado</div>
+      <div id="hopeBarWrap"><div id="hopeBar"></div></div>
+    </div>
+
+    <div id="flashMsg"></div>
+
+    <div id="narrativeBox" class="hidden">
+      <div id="narrativeName"></div>
+      <div id="narrativeText"></div>
+      <div id="narrativeTap">Toca para continuar</div>
+    </div>
+
+    <div id="triviaOverlay" class="hidden">
+      <div id="triviaCard">
+        <div class="label">PERGAMINO SAGRADO</div>
+        <div id="triviaQuestion"></div>
+        <div id="triviaOptions"></div>
+        <div id="triviaFeedback"></div>
+      </div>
+    </div>
+
+    <div id="controls" class="hidden">
+      <div id="dpad">
+        <div></div><div class="dbtn" data-dir="up">&#9650;</div><div></div>
+        <div class="dbtn" data-dir="left">&#9664;</div><div></div><div class="dbtn" data-dir="right">&#9654;</div>
+        <div></div><div class="dbtn" data-dir="down">&#9660;</div><div></div>
+      </div>
+      <div id="actionBtn">LUZ</div>
+    </div>
+  </div>
+
+  <!-- EPILOGO -->
+  <div id="screen-epilogue" class="screen hidden">
+    <h1 class="title" style="font-size:24px;">Escribiendo tu propio estribillo</h1>
+    <div class="subtitle">Salmo 136:26 &mdash; "Alabad al Dios de los cielos, porque para siempre es su misericordia."</div>
+
+    <div class="refl-q">1. Un momento donde sentiste la ayuda, consuelo o proteccion de Dios:</div>
+    <textarea class="textInput" id="refl1" placeholder="Escribe aqui..."></textarea>
+
+    <div class="refl-q">2. Que dirias despues de recordar ese momento? ("...porque para siempre es su misericordia")</div>
+    <textarea class="textInput" id="refl2" placeholder="Escribe aqui..."></textarea>
+
+    <div class="refl-q">3. Con quien vas a compartir esta experiencia esta semana?</div>
+    <textarea class="textInput" id="refl3" placeholder="Escribe aqui..."></textarea>
+
+    <button class="btn" id="btnReveal">Ver mi Resultado</button>
+  </div>
+
+  <!-- RESULTADO -->
+  <div id="screen-result" class="screen hidden">
+    <div id="resultCard">
+      <div class="rlabel">TU ESTRIBILLO PERSONAL</div>
+      <div class="rname" id="rName">-</div>
+      <div class="rscore" id="rScore">0</div>
+      <div class="rscoreLabel">PUNTOS DE MISERICORDIA</div>
+      <div class="rrefl" id="rRefl1"></div>
+      <div class="rrefl" id="rRefl2"></div>
+      <div class="rrefl" id="rRefl3"></div>
+      <div class="rverse">"Porque para siempre es su misericordia" &mdash; Salmo 136</div>
+    </div>
+    <button class="btn" id="btnWhatsapp">Compartir por WhatsApp</button>
+    <button class="btn secondary" id="btnScreenshot">Modo Captura (Certificado)</button>
+    <button class="btn secondary" id="btnRestart">Jugar de nuevo</button>
+  </div>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ======================= CONFIG ======================= */
+var CONFIG = {
+  WHATSAPP_NUMBER: "5491100000000", // mismo numero que juegos anteriores - reemplazar si corresponde
+  GAME_TITLE: "El Valle del Estribillo"
+};
+
+/* ======================= UTIL ======================= */
+function $(id){ return document.getElementById(id); }
+function shuffle(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+function cleanText(s){
+  return (s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ").trim();
+}
+function lerp(a,b,t){ return a+(b-a)*t; }
+function clamp(v,mi,ma){ return Math.max(mi,Math.min(ma,v)); }
+function dist(x1,y1,x2,y2){ return Math.hypot(x1-x2,y1-y2); }
+
+/* ======================= AUDIO (Web Audio synth) ======================= */
+var AudioEngine = (function(){
+  var ctx = null;
+  function ensure(){
+    if(!ctx){
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if(AC) ctx = new AC();
+    }
+    return ctx;
+  }
+  function tone(freq, dur, type, vol){
+    var c = ensure(); if(!c) return;
+    var o = c.createOscillator();
+    var g = c.createGain();
+    o.type = type || "sine";
+    o.frequency.value = freq;
+    g.gain.value = (vol||0.15);
+    o.connect(g); g.connect(c.destination);
+    var now = c.currentTime;
+    g.gain.setValueAtTime(g.gain.value, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+    o.start(now);
+    o.stop(now + dur);
+  }
+  return {
+    hit: function(){ tone(180,0.15,"sawtooth",0.12); },
+    collect: function(){ tone(660,0.1,"triangle",0.14); tone(880,0.12,"triangle",0.1); },
+    shoot: function(){ tone(1200,0.08,"square",0.08); },
+    correct: function(){ tone(523,0.1,"sine",0.15); setTimeout(function(){tone(784,0.15,"sine",0.15);},90); },
+    wrong: function(){ tone(160,0.25,"sawtooth",0.15); },
+    transition: function(){ tone(300,0.3,"sine",0.1); tone(450,0.35,"sine",0.08); },
+    resolve: function(){ ensure(); }
+  };
+})();
+
+/* ======================= TRIVIA DATA (solo del PPTX) ======================= */
+var TRIVIA = {
+  l1: {
+    q: "Segun el Elder Jeffrey R. Holland, como es la misericordia de Dios?",
+    options: ["Condicional a nuestro esfuerzo","Inagotable","Limitada a los momentos dificiles","Reservada solo para Israel"],
+    correct: 1
+  },
+  l2: {
+    q: "Segun Salmo 136:23, de que se acordo Dios de nosotros?",
+    options: ["De nuestros aciertos y victorias","De nuestras oraciones perfectas","De nuestro abatimiento","De nuestro esfuerzo constante"],
+    correct: 2
+  },
+  l3: {
+    q: "Que elige hacer Peter Parker con los villanos quebrantados (Spider-Man: No Way Home)?",
+    options: ["Destruirlos","Ignorarlos","Encerrarlos para siempre","Curarlos y darles una segunda oportunidad"],
+    correct: 3
+  },
+  l4: {
+    q: "Cuantas veces se repite \"porque para siempre es su misericordia\" en el Salmo 136?",
+    options: ["12 veces","19 veces","26 veces","33 veces"],
+    correct: 2
+  }
+};
+
+/* ======================= NARRATIVE TEXT (solo de la historia) ======================= */
+var NARR = {
+  l1_intro: {name:"", text:"Tras haber alcanzado la cima de la montana y ver el amanecer con la lampara de la palabra, Adan y Eva continuaron su travesia. El camino de la vida no es una sola montana; descendieron a un valle denso y rocoso donde el cansancio, el peso de sus propios errores y la inclemencia del terreno comenzaron a pasarles factura."},
+  l1_outro: {name:"ADAN", text:"Eva, he fallado demasiadas veces. Temo que hayamos agotado la paciencia del Cielo. Siento como si estuviera atrapado en una noche infinita, esperando un amanecer que nunca llega. Que pasa si esta vez la luz ya no regresa para nosotros?"},
+  l2_intro: {name:"", text:"En lugar de reprocharle, Eva abrio nuevamente el antiguo manuscrito. No buscaron una regla ni una ley dura, sino una promesa grabada con letras de oro."},
+  l2_mid: {name:"EVA", text:"Escucha esto, Adan: \"El es el que se acordo de nosotros en nuestro abatimiento...\" Dios no nos busca solo cuando estamos victoriosos en la cima de la montana. Su mirada esta puesta en nosotros exactamente aqui, cuando sentimos que tocamos fondo."},
+  l2_outro: {name:"", text:"Un destello calido atraveso la sombra de la noche. No era la luz de una lampara que ellos mismos encendian con su esfuerzo, sino una mano de luz celestial que descendia directamente hacia ellos para levantarlos."},
+  l3_intro: {name:"", text:"Al avanzar un poco mas, se encontraron con un enorme arco de piedra que bloqueaba el canon. Sobre el dintel no habia juicios ni condenas, sino una inscripcion viva que recordaba las grandes victorias del pasado."},
+  l3_outro: {name:"", text:"Comprendieron que el Senor no habia preparado ese camino para dejarlos fuera por sus imperfecciones. Cada paso del camino era un diseno de misericordia para darles una segunda, tercera y eterna oportunidad de redencion."},
+  l4_intro: {name:"", text:"Al cruzar el portal, las sombras del valle intentaron susurrarles una ultima mentira: \"Su paciencia tiene un limite\". Pero Adan y Eva, tomados de la mano, comenzaron a cantar un estribillo que resono en todas las paredes del canon."},
+  l4_outro: {name:"", text:"Con cada repeticion del estribillo, la pesadez en el pecho de Adan se disolvio por completo. Ya no le temian a la noche, porque sabian que, sin importar cuantas veces cayeran en el camino, Su misericordia estaria alli para siempre."}
+};
+
+var REFRAIN_LINES = [
+  "Nos dio la vida y nos cuido en el desierto...",
+  "Nos levanto cuando caimos por nuestros propios errores...",
+  "Nos prometio un Redentor y nunca nos dejo solos..."
+];
+
+/* ======================= GAME STATE ======================= */
+var canvas = $("gameCanvas");
+var ctx = canvas.getContext("2d");
+var W=360, H=640; // internal resolution, scaled by CSS via resize()
+var DPR = window.devicePixelRatio || 1;
+
+var playerName = "";
+var hiddenScore = 0;      // oculto durante todo el juego
+var hope = 100;           // barra de esperanza (visual, no numerica en HUD como puntaje)
+var refrainCount = 0;     // contador de cristales nivel 4 (oculto)
+
+var input = {up:false,down:false,left:false,right:false,action:false};
+
+var scene = "title"; // title, name, level, narrative, trivia, epilogue, result
+var currentLevel = 1;
+var running = false;
+
+/* pareja de personajes - control dual: se mueven juntos, Eva sigue a Adan con offset suave */
+var pair = {
+  x: 60, y: 320, // Adan (lider)
+  followX: 30, followY: 320, // Eva (sigue)
+  facing: 1,
+  speed: 2.2
+};
+
+var entities = []; // sombras, gemas, grabados, manuscrito
+var particles = [];
+var levelTimer = 0;
+var levelDone = false;
+var canShoot = false;
+var waveCleared = true;
+var engravingsTouched = 0;
+var gemsTotal = 6;
+var gemsCollected = 0;
+var lastTriviaAnswered = {l1:false,l2:false,l3:false,l4:false};
+
+/* ======================= RESIZE ======================= */
+var gameWrap = null;
+function resize(){
+  if(!gameWrap) gameWrap = $("gameWrap");
+  var maxW = Math.min(window.innerWidth, 480);
+  var maxH = window.innerHeight;
+  var aspect = 9/16;
+  var cw = maxW, ch = cw/aspect;
+  if(ch > maxH){ ch = maxH; cw = ch*aspect; }
+  gameWrap.style.width = cw+"px";
+  gameWrap.style.height = ch+"px";
+  canvas.style.width = cw+"px";
+  canvas.style.height = ch+"px";
+  DPR = window.devicePixelRatio || 1;
+  canvas.width = W*DPR;
+  canvas.height = H*DPR;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+window.addEventListener("resize", resize);
+window.addEventListener("orientationchange", function(){ setTimeout(resize, 200); });
+
+/* ======================= DRAW HELPERS: CHIBI CHARACTERS ======================= */
+function drawChibi(x,y,facing,palette,bob){
+  // palette: {skin, hair, tunic, accent}
+  ctx.save();
+  ctx.translate(x,y+bob);
+  ctx.scale(facing,1);
+
+  // sombra en el piso
+  ctx.save();
+  ctx.globalAlpha = 0.25;
+  ctx.fillStyle = "#000";
+  ctx.beginPath();
+  ctx.ellipse(0, 34, 14, 4, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+
+  // cuerpo / tunica (triangulo suave)
+  ctx.fillStyle = palette.tunic;
+  ctx.beginPath();
+  ctx.moveTo(-9,32);
+  ctx.quadraticCurveTo(-13,6,-6,-2);
+  ctx.quadraticCurveTo(0,-6,6,-2);
+  ctx.quadraticCurveTo(13,6,9,32);
+  ctx.closePath();
+  ctx.fill();
+
+  // detalle cinturon
+  ctx.fillStyle = palette.accent;
+  ctx.fillRect(-8,14,16,3);
+
+  // cabeza grande (chibi)
+  ctx.fillStyle = palette.skin;
+  ctx.beginPath();
+  ctx.arc(0,-16,13,0,Math.PI*2);
+  ctx.fill();
+
+  // cabello
+  ctx.fillStyle = palette.hair;
+  ctx.beginPath();
+  ctx.arc(0,-20,13.5,Math.PI*1.05,Math.PI*1.95);
+  ctx.fill();
+  if(palette.longHair){
+    ctx.beginPath();
+    ctx.ellipse(9,-10,4,14,0.3,0,Math.PI*2);
+    ctx.fill();
+  }
+
+  // ojos grandes estilo anime/chibi
+  ctx.fillStyle = "#fff";
+  ctx.beginPath(); ctx.ellipse(4,-16,3.4,4.2,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(-4,-16,2.6,3.4,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle = palette.eye;
+  ctx.beginPath(); ctx.arc(4.6,-15.5,1.9,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(-3.6,-15.5,1.5,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle="#fff";
+  ctx.beginPath(); ctx.arc(5.3,-16.4,0.6,0,Math.PI*2); ctx.fill();
+
+  // aura sutil (identidad del personaje)
+  ctx.globalAlpha = 0.18;
+  ctx.strokeStyle = palette.accent;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(0,-4,22,0,Math.PI*2);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  ctx.restore();
+}
+
+var ADAN_PALETTE = {skin:"#f2c9a0", hair:"#3b2415", tunic:"#d97706", accent:"#fbbf24", eye:"#78350f", longHair:false};
+var EVA_PALETTE  = {skin:"#f6d3b0", hair:"#241a3b", tunic:"#0891b2", accent:"#22d3ee", eye:"#0e7490", longHair:true};
+
+function drawSombra(x,y,t,scale,glowing){
+  ctx.save();
+  ctx.translate(x,y);
+  var wob = Math.sin(t*3)*3;
+  ctx.globalAlpha = 0.85;
+  ctx.fillStyle = glowing ? "rgba(167,139,250,0.5)" : "rgba(15,15,25,0.85)";
+  ctx.beginPath();
+  ctx.ellipse(0, wob, 12*scale, 15*scale, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(167,139,250,0.6)";
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  // ojos tenues
+  ctx.fillStyle = "rgba(200,200,255,0.8)";
+  ctx.beginPath(); ctx.arc(-4*scale, wob-2, 1.6*scale,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(4*scale, wob-2, 1.6*scale,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function drawGem(x,y,t){
+  ctx.save();
+  ctx.translate(x,y);
+  var bob = Math.sin(t*2)*4;
+  ctx.translate(0,bob);
+  ctx.rotate(Math.sin(t)*0.15);
+  var grad = ctx.createLinearGradient(-8,-10,8,10);
+  grad.addColorStop(0,"#fef3c7");
+  grad.addColorStop(1,"#22d3ee");
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.moveTo(0,-11); ctx.lineTo(8,-2); ctx.lineTo(4,11); ctx.lineTo(-4,11); ctx.lineTo(-8,-2);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle="rgba(255,255,255,0.6)"; ctx.lineWidth=1; ctx.stroke();
+  ctx.restore();
+}
+
+function drawManuscript(x,y,t){
+  ctx.save();
+  ctx.translate(x,y+Math.sin(t*1.5)*3);
+  ctx.fillStyle = "#e7d3a8";
+  ctx.fillRect(-12,-8,24,16);
+  ctx.strokeStyle = "#92400e";
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(-12,-8,24,16);
+  ctx.fillStyle = "#92400e";
+  for(var i=0;i<3;i++){ ctx.fillRect(-8, -4+i*4, 16, 1); }
+  ctx.restore();
+}
+
+function drawEngraving(x,y,touched){
+  ctx.save();
+  ctx.translate(x,y);
+  ctx.fillStyle = touched ? "rgba(251,191,36,0.9)" : "rgba(100,116,139,0.7)";
+  ctx.beginPath();
+  ctx.arc(0,0,16,Math.PI,0);
+  ctx.lineTo(16,20); ctx.lineTo(-16,20); ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = touched ? "#fde68a" : "#334155";
+  ctx.lineWidth = 2; ctx.stroke();
+  ctx.restore();
+}
+
+function drawBackground(level, t){
+  var g = ctx.createLinearGradient(0,0,0,H);
+  if(level===1){ g.addColorStop(0,"#0b1220"); g.addColorStop(1,"#1a2333"); }
+  else if(level===2){ g.addColorStop(0, lerp01("#0b1220","#3b2410",warmProgress)); g.addColorStop(1, lerp01("#1a2333","#7c2d12",warmProgress)); }
+  else if(level===3){ g.addColorStop(0,"#1a1230"); g.addColorStop(1,"#241a3b"); }
+  else { g.addColorStop(0,"#0d1b2a"); g.addColorStop(1,"#123047"); }
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,W,H);
+
+  // niebla / particulas de fondo
+  ctx.save();
+  ctx.globalAlpha = 0.12;
+  for(var i=0;i<6;i++){
+    var fx = ((t*8 + i*90) % (W+120)) - 60;
+    var fy = 80 + i*90;
+    ctx.fillStyle = "#94a3b8";
+    ctx.beginPath();
+    ctx.ellipse(fx, fy, 70, 18, 0,0,Math.PI*2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // rocas base
+  ctx.fillStyle = "rgba(0,0,0,0.25)";
+  for(var r=0;r<5;r++){
+    ctx.beginPath();
+    ctx.ellipse(r*90+30, H-30, 40, 14, 0,0,Math.PI*2);
+    ctx.fill();
+  }
+}
+function hex2rgb(h){ h=h.replace("#",""); return [parseInt(h.substr(0,2),16),parseInt(h.substr(2,2),16),parseInt(h.substr(4,2),16)]; }
+function lerp01(c1,c2,t){
+  var a=hex2rgb(c1), b=hex2rgb(c2);
+  var r=Math.round(lerp(a[0],b[0],t)), g=Math.round(lerp(a[1],b[1],t)), bl=Math.round(lerp(a[2],b[2],t));
+  return "rgb("+r+","+g+","+bl+")";
+}
+
+/* ======================= SCENE MANAGEMENT ======================= */
+function showOnly(ids){
+  var all = ["screen-title","screen-name","gameWrap","hud","controls","narrativeBox","triviaOverlay","screen-epilogue","screen-result"];
+  all.forEach(function(id){
+    var el = $(id);
+    if(ids.indexOf(id)>=0) el.classList.remove("hidden");
+    else el.classList.add("hidden");
+  });
+}
+
+function startGame(){
+  scene = "level";
+  currentLevel = 1;
+  hope = 100;
+  hiddenScore = 0;
+  showNarrative(NARR.l1_intro, function(){ initLevel(1); });
+}
+
+/* ---------- Narrative captions ---------- */
+var narrCallback = null;
+function showNarrative(entry, cb){
+  scene = "narrative";
+  running = false;
+  showOnly(["gameWrap","narrativeBox"]);
+  $("narrativeName").textContent = entry.name || "";
+  typeText(entry.text);
+  narrCallback = cb;
+}
+var typeTimer = null;
+function typeText(full){
+  var el = $("narrativeText");
+  el.textContent = "";
+  var i = 0;
+  clearInterval(typeTimer);
+  typeTimer = setInterval(function(){
+    el.textContent = full.slice(0,i);
+    i++;
+    if(i>full.length) clearInterval(typeTimer);
+  }, 16);
+}
+$("narrativeBox").addEventListener("click", function(){
+  clearInterval(typeTimer);
+  var cb = narrCallback;
+  narrCallback = null;
+  if(cb) cb();
+});
+
+/* ---------- Trivia ---------- */
+var triviaCallback = null;
+function showTrivia(key, cb){
+  scene = "trivia";
+  running = false;
+  var data = TRIVIA[key];
+  var idxs = shuffle([0,1,2,3]);
+  var optsHtml = "";
+  $("triviaQuestion").textContent = data.q;
+  var wrap = $("triviaOptions");
+  wrap.innerHTML = "";
+  $("triviaFeedback").textContent = "";
+  idxs.forEach(function(origIdx){
+    var btn = document.createElement("button");
+    btn.className = "triviaOption";
+    btn.textContent = data.options[origIdx];
+    btn.addEventListener("click", function(){
+      var buttons = wrap.querySelectorAll(".triviaOption");
+      buttons.forEach(function(b){ b.style.pointerEvents="none"; });
+      if(origIdx === data.correct){
+        btn.classList.add("correct");
+        AudioEngine.correct();
+        $("triviaFeedback").textContent = "Correcto. La luz avanza contigo.";
+        hiddenScore += 15;
+      } else {
+        btn.classList.add("wrong");
+        AudioEngine.wrong();
+        $("triviaFeedback").textContent = "No es esa, pero la travesia continua.";
+        buttons.forEach(function(b,i2){
+          if(idxs[i2]===data.correct) b.classList.add("correct");
+        });
+      }
+      setTimeout(function(){
+        $("triviaOverlay").classList.add("hidden");
+        var cb2 = triviaCallback;
+        triviaCallback = null;
+        if(cb2) cb2();
+      }, 1100);
+    });
+    wrap.appendChild(btn);
+  });
+  $("triviaOverlay").classList.remove("hidden");
+  triviaCallback = cb;
+}
+
+/* ---------- Flash message ---------- */
+function flashMessage(msg){
+  var el = $("flashMsg");
+  el.textContent = msg;
+  el.classList.add("show");
+  setTimeout(function(){ el.classList.remove("show"); }, 1400);
+}
+
+/* ======================= LEVEL INIT ======================= */
+var warmProgress = 0; // 0..1 transicion de paleta en nivel 2
+
+function initLevel(n){
+  currentLevel = n;
+  levelTimer = 0;
+  levelDone = false;
+  entities = [];
+  particles = [];
+  pair.x = 50; pair.y = H-90;
+  pair.followX = 22; pair.followY = H-90;
+  canShoot = false;
+  waveCleared = true;
+  engravingsTouched = 0;
+  gemsCollected = 0;
+  warmProgress = 0;
+  hope = 100;
+
+  $("levelLabel").textContent = ({
+    1:"Nivel 1 - El Valle Helado",
+    2:"Nivel 2 - El Rescate",
+    3:"Nivel 3 - El Portal",
+    4:"Nivel 4 - El Canon del Estribillo"
+  })[n];
+
+  if(n===1){
+    for(var i=0;i<4;i++){
+      entities.push({type:"sombra", x: 120+i*70, y: 100+ (i%2)*220, phase: Math.random()*10, speed: 0.9+Math.random()*0.4});
+    }
+    entities.push({type:"goal", x: W-40, y: H-100, w:30,h:30, locked:true});
+  } else if(n===2){
+    entities.push({type:"manuscript", x: 90, y: H-110, taken:false});
+    entities.push({type:"goal", x: W-40, y: H-100, w:30,h:30, locked:true});
+  } else if(n===3){
+    entities.push({type:"engraving", x: 70, y: 180, id:0, touched:false});
+    entities.push({type:"engraving", x: W-70, y: 300, id:1, touched:false});
+    entities.push({type:"engraving", x: W/2, y: 440, id:2, touched:false});
+    entities.push({type:"goal", x: W-40, y: 60, w:30,h:30, locked:true});
+  } else if(n===4){
+    for(var g2=0; g2<gemsTotal; g2++){
+      entities.push({type:"gem", x: 60+ (g2%3)*120, y: 100+ Math.floor(g2/3)*220 + 40, id:g2, taken:false});
+    }
+    for(var s2=0; s2<3; s2++){
+      entities.push({type:"sombra", x: 150+s2*60, y: 200+s2*80, phase: Math.random()*10, speed:0.7+Math.random()*0.5});
+    }
+    entities.push({type:"goal", x: W-40, y: H-100, w:30,h:30, locked:true});
+  }
+
+  $("actionBtn").classList.toggle("hidden-force", n!==2);
+
+  showOnly(["gameWrap","hud","controls"]);
+  scene = "level";
+  running = true;
+  lastTime = 0;
+  requestAnimationFrame(loop);
+}
+
+function resumeLevel(){
+  scene = "level";
+  running = true;
+  lastTime = 0;
+  requestAnimationFrame(loop);
+}
+
+/* ======================= LEVEL UPDATE ======================= */
+var rayShots = [];
+
+function updatePair(dt){
+  var dx=0, dy=0;
+  if(input.left){ dx=-1; pair.facing=-1; }
+  if(input.right){ dx=1; pair.facing=1; }
+  if(input.up){ dy=-1; }
+  if(input.down){ dy=1; }
+  var len = Math.hypot(dx,dy) || 1;
+  dx/=len; dy/=len;
+  pair.x = clamp(pair.x + dx*pair.speed*dt, 20, W-20);
+  pair.y = clamp(pair.y + dy*pair.speed*dt, 40, H-40);
+  // Eva sigue a Adan (control dual: se mueven juntos, tomados de la mano)
+  var followTargetX = pair.x - pair.facing*26;
+  var followTargetY = pair.y + 4;
+  pair.followX = lerp(pair.followX, followTargetX, 0.12);
+  pair.followY = lerp(pair.followY, followTargetY, 0.12);
+}
+
+function trySpawnWave(){
+  entities.forEach(function(e){
+    if(e.type==="manuscript" && e.taken===false) return;
+  });
+  for(var i=0;i<5;i++){
+    entities.push({type:"sombra", x: 40+Math.random()*(W-80), y: 60+Math.random()*(H-260), phase: Math.random()*10, speed:1+Math.random()*0.6, wave:true});
+  }
+  waveCleared = false;
+}
+
+function countWaveSombras(){
+  return entities.filter(function(e){ return e.type==="sombra" && e.wave; }).length;
+}
+
+function updateLevel(dt,t){
+  updatePair(dt);
+
+  // disparo
+  if(input.action && canShoot){
+    input.action = false;
+    AudioEngine.shoot();
+    rayShots.push({x: pair.x, y: pair.y-10, dir: pair.facing, t:0});
+  }
+  rayShots.forEach(function(r){ r.x += r.dir*7; r.t+=dt; });
+  rayShots = rayShots.filter(function(r){ return r.x>-20 && r.x<W+20 && r.t<2; });
+
+  entities.forEach(function(e){
+    if(e.type==="sombra"){
+      // persecucion real hacia la pareja, con ondulacion organica encima
+      var toX = pair.x - e.x, toY = pair.y - e.y;
+      var d = Math.hypot(toX,toY) || 1;
+      var chaseSpeed = (e.speed||0.8) * 0.4 * (e.wave?1.15:1);
+      e.x += (toX/d) * chaseSpeed * dt;
+      e.y += (toY/d) * chaseSpeed * dt;
+      e.x += Math.cos(t*1.3 + e.phase)*0.3;
+      e.y += Math.sin(t*2 + e.phase)*0.3;
+    }
+  });
+
+  // colisiones sombra-jugador (niveles 1 y 4)
+  if(currentLevel===1 || currentLevel===4){
+    entities.forEach(function(e){
+      if(e.type!=="sombra") return;
+      if(dist(e.x,e.y,pair.x,pair.y) < 20 || dist(e.x,e.y,pair.followX,pair.followY) < 18){
+        hope = clamp(hope - 0.6, 0, 100);
+        $("hopeBar").style.width = hope+"%";
+        e.x += (Math.random()-0.5)*30;
+        e.y += (Math.random()-0.5)*30;
+      }
+    });
+  }
+
+  // colisiones rayo-sombra (nivel 2)
+  if(canShoot){
+    rayShots.forEach(function(r){
+      entities.forEach(function(e){
+        if(e.type==="sombra" && dist(r.x,r.y,e.x,e.y) < 16){
+          e.dead = true;
+          r.t = 999;
+          AudioEngine.hit();
+          hiddenScore += 3;
+        }
+      });
+    });
+    entities = entities.filter(function(e){ return !e.dead; });
+    if(!waveCleared && countWaveSombras()===0){
+      waveCleared = true;
+      // limpiar la oleada revela la plataforma y desbloquea la meta (sin trivia adicional)
+      var goalL2 = entities.find(function(e){ return e.type==="goal"; });
+      if(goalL2) goalL2.locked = false;
+    }
+  }
+
+  // paleta calida nivel 2 tras tomar manuscrito
+  if(currentLevel===2){
+    var manu = entities.find(function(e){return e.type==="manuscript";});
+    if(manu && manu.taken){ warmProgress = clamp(warmProgress + dt*0.01, 0, 1); }
+  }
+
+  // recoleccion manuscrito
+  if(currentLevel===2){
+    entities.forEach(function(e){
+      if(e.type==="manuscript" && !e.taken && dist(e.x,e.y,pair.x,pair.y) < 22){
+        e.taken = true;
+        AudioEngine.collect();
+        showTrivia("l2", function(){
+          showNarrative(NARR.l2_mid, function(){
+            canShoot = true;
+            $("actionBtn").classList.remove("hidden-force");
+            trySpawnWave();
+            resumeLevel();
+          });
+        });
+      }
+    });
+  }
+
+  // grabados nivel 3
+  if(currentLevel===3){
+    entities.forEach(function(e){
+      if(e.type==="engraving" && !e.touched && dist(e.x,e.y,pair.x,pair.y) < 24){
+        e.touched = true;
+        engravingsTouched++;
+        AudioEngine.collect();
+        if(engravingsTouched===1){
+          showTrivia("l3", function(){ resumeLevel(); });
+        }
+        if(engravingsTouched===3){
+          // brillo de area: elimina sombras (si hubiera) y abre el arco
+          triggerAreaGlow();
+          var goal = entities.find(function(g){return g.type==="goal";});
+          if(goal) goal.locked=false;
+        }
+      }
+    });
+  }
+
+  // gemas nivel 4
+  if(currentLevel===4){
+    entities.forEach(function(e){
+      if(e.type==="gem" && !e.taken && dist(e.x,e.y,pair.x,pair.y) < 20){
+        e.taken = true;
+        gemsCollected++;
+        AudioEngine.collect();
+        hiddenScore += 5;
+        // elimina sombras cercanas
+        entities.forEach(function(s){
+          if(s.type==="sombra" && dist(s.x,s.y,e.x,e.y) < 90){ s.dead = true; }
+        });
+        entities = entities.filter(function(s){ return !s.dead; });
+        if(gemsCollected < gemsTotal){
+          flashMessage(REFRAIN_LINES[(gemsCollected-1) % REFRAIN_LINES.length]);
+        }
+        if(gemsCollected === gemsTotal){
+          showTrivia("l4", function(){
+            var goal2 = entities.find(function(g){return g.type==="goal";});
+            if(goal2) goal2.locked=false;
+            resumeLevel();
+          });
+        }
+      }
+    });
+  }
+
+  // meta
+  var goalEntity = entities.find(function(e){ return e.type==="goal"; });
+  if(goalEntity && !goalEntity.locked && dist(goalEntity.x,goalEntity.y,pair.x,pair.y) < 26 && !levelDone){
+    levelDone = true;
+    onLevelComplete();
+  }
+  // nivel 1: al acercarse a la roca gris, dispara la trivia antes de habilitar la meta
+  if(currentLevel===1 && goalEntity && !goalEntity.triviaAsked && dist(goalEntity.x,goalEntity.y,pair.x,pair.y) < 60){
+    goalEntity.triviaAsked = true;
+    showTrivia("l1", function(){
+      goalEntity.locked = false;
+      resumeLevel();
+    });
+  }
+}
+
+var glowFX = 0;
+function triggerAreaGlow(){
+  glowFX = 1;
+  entities.forEach(function(e){
+    if(e.type==="sombra") e.dead = true;
+  });
+  entities = entities.filter(function(e){ return !e.dead; });
+}
+
+function onLevelComplete(){
+  running = false;
+  var outroMap = {1:"l1_outro",2:"l2_outro",3:"l3_outro",4:"l4_outro"};
+  var introNext = {1:"l2_intro",2:"l3_intro",3:"l4_intro",4:null};
+  var lvl = currentLevel;
+
+  showNarrative(NARR[outroMap[lvl]], function(){
+    if(lvl<4){
+      showNarrative(NARR[introNext[lvl]], function(){ initLevel(lvl+1); });
+    } else {
+      goEpilogue();
+    }
+  });
+}
+
+/* ======================= RENDER ======================= */
+function renderLevel(t){
+  drawBackground(currentLevel, t);
+
+  entities.forEach(function(e){
+    if(e.type==="sombra") drawSombra(e.x,e.y,t+e.phase, e.wave?0.9:1, glowFX>0);
+    else if(e.type==="gem") { if(!e.taken) drawGem(e.x,e.y,t); }
+    else if(e.type==="manuscript"){ if(!e.taken) drawManuscript(e.x,e.y,t); }
+    else if(e.type==="engraving") drawEngraving(e.x,e.y,e.touched);
+    else if(e.type==="goal"){
+      ctx.save();
+      ctx.globalAlpha = e.locked ? 0.35 : 0.9;
+      ctx.fillStyle = e.locked ? "#475569" : "#fbbf24";
+      ctx.beginPath();
+      ctx.arc(e.x,e.y,14,0,Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+  });
+
+  rayShots.forEach(function(r){
+    ctx.save();
+    ctx.strokeStyle = "rgba(251,191,36,0.9)";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(r.x - r.dir*14, r.y);
+    ctx.lineTo(r.x + r.dir*14, r.y);
+    ctx.stroke();
+    ctx.restore();
+  });
+
+  if(glowFX>0){
+    ctx.save();
+    ctx.globalAlpha = glowFX*0.5;
+    var rg = ctx.createRadialGradient(pair.x,pair.y,10,pair.x,pair.y,220);
+    rg.addColorStop(0,"rgba(255,255,255,0.9)");
+    rg.addColorStop(1,"rgba(255,255,255,0)");
+    ctx.fillStyle = rg;
+    ctx.fillRect(0,0,W,H);
+    ctx.restore();
+    glowFX -= 0.02;
+    if(glowFX<0) glowFX=0;
+  }
+
+  var bob1 = Math.sin(t*6)*2;
+  var bob2 = Math.sin(t*6+1)*2;
+  drawChibi(pair.followX, pair.followY, pair.facing, EVA_PALETTE, bob2);
+  drawChibi(pair.x, pair.y, pair.facing, ADAN_PALETTE, bob1);
+}
+
+/* ======================= MAIN LOOP ======================= */
+var lastTime = 0;
+function loop(ts){
+  if(!running) return;
+  if(!lastTime) lastTime = ts;
+  var dt = Math.min((ts-lastTime)/16.67, 2.2);
+  lastTime = ts;
+  var t = ts/1000;
+
+  updateLevel(dt, t);
+  renderLevel(t);
+
+  requestAnimationFrame(loop);
+}
+
+/* ======================= INPUT ======================= */
+function bindHold(el, dir){
+  var set = function(v){ return function(e){ e.preventDefault(); input[dir]=v; }; };
+  el.addEventListener("touchstart", set(true), {passive:false});
+  el.addEventListener("touchend", set(false), {passive:false});
+  el.addEventListener("touchcancel", set(false), {passive:false});
+  el.addEventListener("mousedown", set(true));
+  el.addEventListener("mouseup", set(false));
+  el.addEventListener("mouseleave", set(false));
+}
+document.querySelectorAll(".dbtn").forEach(function(el){
+  bindHold(el, el.getAttribute("data-dir"));
+});
+var actionEl = $("actionBtn");
+actionEl.addEventListener("touchstart", function(e){ e.preventDefault(); input.action = true; }, {passive:false});
+actionEl.addEventListener("mousedown", function(e){ input.action = true; });
+
+// teclado (fallback desktop)
+window.addEventListener("keydown", function(e){
+  if(e.key==="ArrowUp") input.up=true;
+  if(e.key==="ArrowDown") input.down=true;
+  if(e.key==="ArrowLeft") input.left=true;
+  if(e.key==="ArrowRight") input.right=true;
+  if(e.key===" ") input.action=true;
+});
+window.addEventListener("keyup", function(e){
+  if(e.key==="ArrowUp") input.up=false;
+  if(e.key==="ArrowDown") input.down=false;
+  if(e.key==="ArrowLeft") input.left=false;
+  if(e.key==="ArrowRight") input.right=false;
+});
+
+/* ======================= EPILOGUE / RESULT ======================= */
+function goEpilogue(){
+  scene = "epilogue";
+  showOnly(["screen-epilogue"]);
+}
+
+function computeReflectionScore(text){
+  var c = cleanText(text);
+  if(c.length===0) return 0;
+  if(c.length<12) return 8;
+  if(c.length<40) return 16;
+  return 24;
+}
+
+$("btnReveal").addEventListener("click", function(){
+  var r1 = $("refl1").value, r2=$("refl2").value, r3=$("refl3").value;
+  if(cleanText(r1).length===0 && cleanText(r2).length===0 && cleanText(r3).length===0){
+    alert("Escribe al menos una reflexion antes de continuar.");
+    return;
+  }
+  var reflScore = computeReflectionScore(r1)+computeReflectionScore(r2)+computeReflectionScore(r3);
+  var total = hiddenScore + reflScore + Math.round(hope*0.3);
+  total = Math.max(total, 26); // nunca menos que el numero simbolico del salmo
+
+  $("rName").textContent = playerName || "Peregrino del Valle";
+  $("rScore").textContent = total;
+  $("rRefl1").textContent = cleanText(r1) ? ("\"" + r1.trim() + "\"") : "";
+  $("rRefl2").textContent = cleanText(r2) ? ("\"" + r2.trim() + "\"") : "";
+  $("rRefl3").textContent = cleanText(r3) ? ("\"" + r3.trim() + "\"") : "";
+  [$("rRefl1"),$("rRefl2"),$("rRefl3")].forEach(function(el){
+    if(!el.textContent) el.style.display="none"; else el.style.display="block";
+  });
+
+  scene = "result";
+  showOnly(["screen-result"]);
+});
+
+$("btnWhatsapp").addEventListener("click", function(){
+  var msg = "Complete El Valle del Estribillo (Salmo 136) y obtuve " + $("rScore").textContent + " puntos de misericordia. Para siempre es su misericordia!";
+  var url = "https://wa.me/" + CONFIG.WHATSAPP_NUMBER + "?text=" + encodeURIComponent(msg);
+  window.open(url, "_blank");
+});
+
+$("btnScreenshot").addEventListener("click", function(){
+  document.querySelectorAll(".btn").forEach(function(b){
+    if(b.id!=="btnRestart") b.style.visibility="hidden";
+  });
+  alert("Modo captura activo. Toma una captura de pantalla ahora para tu certificado.");
+});
+
+$("btnRestart").addEventListener("click", function(){
+  location.reload();
+});
+
+/* ======================= START FLOW ======================= */
+$("btnStart").addEventListener("click", function(){
+  AudioEngine.resolve();
+  showOnly(["screen-name"]);
+});
+$("btnNameContinue").addEventListener("click", function(){
+  playerName = cleanText($("playerNameInput").value) || "Peregrino";
+  resize();
+  startGame();
+});
+
+resize();
+})();
+</script>
+</body>
+</html>

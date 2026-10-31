@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Ascensión a la Luz: El Camino de Isaías 25</title>
+<style>
+  :root{
+    --dark1:#070515; --dark2:#120b2e; --neon-cyan:#3ef7ff; --neon-amber:#ffb84d;
+    --gold:#ffe9b3; --panel:#0e0a24; --panel-line:rgba(62,247,255,0.35);
+  }
+  *{box-sizing:border-box; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; touch-action:manipulation;}
+  html,body{
+    margin:0; padding:0; width:100%; height:100%; overflow:hidden;
+    background:#000; font-family:'Trebuchet MS','Segoe UI',Arial,sans-serif; color:#eef3ff;
+    position:fixed; inset:0;
+  }
+  #app{position:fixed; inset:0; width:100%; height:100%; overflow:hidden; touch-action:none;}
+  .screen{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:radial-gradient(ellipse at 50% 0%, #201250 0%, var(--dark1) 70%); padding:18px; text-align:center;}
+  .hidden{display:none !important;}
+
+  /* ---------- START SCREEN ---------- */
+  #startScreen h1{
+    font-size:clamp(22px,5.5vw,40px); letter-spacing:2px; margin:0 0 4px 0;
+    color:var(--gold); text-shadow:0 0 14px rgba(255,184,77,0.7), 0 0 30px rgba(255,184,77,0.35);
+  }
+  #startScreen h2{font-size:clamp(13px,3vw,18px); font-weight:400; color:var(--neon-cyan); margin:0 0 20px 0; letter-spacing:3px;}
+  .card{
+    background:linear-gradient(180deg, rgba(20,14,48,0.9), rgba(8,6,26,0.95));
+    border:1px solid var(--panel-line); border-radius:16px; padding:22px 24px;
+    box-shadow:0 0 40px rgba(62,247,255,0.12), inset 0 0 20px rgba(62,247,255,0.05);
+    width:min(420px,92vw);
+  }
+  .field{margin-bottom:14px; text-align:left;}
+  .field label{display:block; font-size:12px; letter-spacing:1px; color:var(--neon-cyan); margin-bottom:6px; text-transform:uppercase;}
+  .field input[type=text]{
+    width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--panel-line);
+    background:#050311; color:#fff; font-size:16px; outline:none;
+  }
+  .field input[type=text]:focus{border-color:var(--neon-cyan); box-shadow:0 0 10px rgba(62,247,255,0.5);}
+  .lang-toggle{display:flex; gap:8px;}
+  .lang-btn{
+    flex:1; padding:10px; border-radius:10px; border:1px solid var(--panel-line); background:#050311;
+    color:#cfe8ff; font-size:14px; font-weight:bold; cursor:pointer;
+  }
+  .lang-btn.active{background:linear-gradient(135deg,var(--neon-cyan),#1a7fbf); color:#01131a; border-color:var(--neon-cyan);}
+  #startInstructions{font-size:12.5px; color:#a9b8dd; line-height:1.5; margin:10px 0 16px 0;}
+  .big-btn{
+    display:block; width:100%; padding:15px 18px; border-radius:12px; border:none; cursor:pointer;
+    background:linear-gradient(135deg, var(--neon-amber), #ff7a3d); color:#1a0a00; font-weight:bold;
+    font-size:16px; letter-spacing:1px; box-shadow:0 6px 0 #a34a10, 0 0 22px rgba(255,184,77,0.5);
+    transition:transform .05s;
+  }
+  .big-btn:active{transform:translateY(4px); box-shadow:0 2px 0 #a34a10, 0 0 22px rgba(255,184,77,0.5);}
+  .warn-msg{color:#ff7d7d; font-size:12px; margin-top:8px; min-height:14px;}
+
+  /* ---------- GAME SCREEN ---------- */
+  #gameScreen{padding:0; justify-content:flex-start;}
+  #canvasWrap{position:relative; width:100%; flex:1; display:flex; align-items:center; justify-content:center; background:#000;}
+  #gameCanvas{width:100%; height:100%; max-width:100vw; max-height:100vh; image-rendering:pixelated; touch-action:none; display:block;}
+
+  #hud{
+    position:absolute; top:0; left:0; right:0; display:flex; justify-content:space-between; align-items:flex-start;
+    padding:10px 12px; pointer-events:none; z-index:5; gap:6px;
+  }
+  #hudLeft{display:flex; flex-direction:column; gap:6px; align-items:flex-start;}
+  #hudName{font-size:12px; background:rgba(5,3,17,0.65); border:1px solid var(--panel-line); border-radius:8px; padding:6px 10px; color:var(--neon-cyan);}
+  #hudHearts{font-size:15px; background:rgba(5,3,17,0.65); border:1px solid var(--panel-line); border-radius:8px; padding:5px 10px; letter-spacing:2px;}
+  #hudRight{display:flex; flex-direction:column; gap:6px; align-items:flex-end;}
+  #hudPowers{display:flex; gap:6px; background:rgba(5,3,17,0.65); border:1px solid var(--panel-line); border-radius:8px; padding:6px 8px; pointer-events:none;}
+  .power-slot{
+    width:22px; height:22px; border-radius:50%; border:1.5px solid rgba(255,255,255,0.3);
+    display:flex; align-items:center; justify-content:center; font-size:12px; background:rgba(255,255,255,0.05); color:transparent;
+  }
+  .power-slot.on{
+    border-color:var(--neon-amber); background:radial-gradient(circle, var(--gold), var(--neon-amber));
+    color:#3a1c00; box-shadow:0 0 10px var(--neon-amber);
+  }
+  #musicToggle{
+    pointer-events:auto; width:30px; height:30px; border-radius:50%; border:1px solid var(--panel-line);
+    background:rgba(5,3,17,0.65); color:var(--neon-cyan); font-size:14px; display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+
+  #eventBanner{
+    position:absolute; top:36%; left:50%; transform:translate(-50%,-50%) scale(0.8); z-index:15;
+    font-size:clamp(20px,5.5vw,34px); font-weight:bold; letter-spacing:2px; text-align:center;
+    color:var(--gold); text-shadow:0 0 20px rgba(255,233,179,0.9), 0 0 40px rgba(255,184,77,0.6);
+    opacity:0; pointer-events:none; transition:opacity .3s, transform .3s; white-space:nowrap;
+  }
+  #eventBanner.show{opacity:1; transform:translate(-50%,-50%) scale(1);}
+
+  #controls{
+    position:absolute; bottom:0; left:0; right:0; display:flex; justify-content:space-between; align-items:flex-end;
+    padding:16px; pointer-events:none; z-index:5;
+  }
+  #dpad{display:flex; gap:10px; pointer-events:auto;}
+  #actionZone{display:flex; gap:10px; align-items:flex-end; pointer-events:auto;}
+  .ctrl-btn{
+    width:60px; height:60px; border-radius:50%; border:2px solid var(--panel-line);
+    background:rgba(15,10,40,0.55); color:var(--neon-cyan); font-size:24px; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 0 14px rgba(62,247,255,0.25); user-select:none; -webkit-user-select:none;
+  }
+  .ctrl-btn.pressed{background:rgba(62,247,255,0.35); transform:scale(0.94);}
+  #jumpBtn{width:78px; height:78px; font-size:13px; letter-spacing:1px; border-color:var(--neon-amber); color:var(--neon-amber); box-shadow:0 0 16px rgba(255,184,77,0.35);}
+  #jumpBtn.pressed{background:rgba(255,184,77,0.35); transform:scale(0.94);}
+  #attackBtn{width:66px; height:66px; font-size:12px; letter-spacing:1px; border-color:#ff6fd8; color:#ff6fd8; box-shadow:0 0 16px rgba(255,111,216,0.35);}
+  #attackBtn.pressed{background:rgba(255,111,216,0.35); transform:scale(0.94);}
+  #attackBtn.locked{opacity:0.3; filter:grayscale(1);}
+
+  /* ---------- TRIVIA MODAL ---------- */
+  #triviaModal{
+    position:absolute; inset:0; background:rgba(2,1,10,0.85); z-index:20;
+    display:flex; align-items:center; justify-content:center; padding:16px;
+  }
+  #triviaBox{
+    width:min(480px,94vw); background:linear-gradient(180deg,#161036,#0a0720); border:1px solid var(--neon-cyan);
+    border-radius:16px; padding:20px; box-shadow:0 0 40px rgba(62,247,255,0.3); max-height:92vh; overflow-y:auto;
+  }
+  #triviaBox.bonus-style{border-color:#ff9df0; box-shadow:0 0 40px rgba(255,157,240,0.35);}
+  #triviaBox.shake{animation:shake .4s;}
+  @keyframes shake{ 10%,90%{transform:translateX(-4px);} 20%,80%{transform:translateX(6px);} 30%,50%,70%{transform:translateX(-8px);} 40%,60%{transform:translateX(8px);} }
+  #triviaGateName{color:var(--neon-amber); font-size:13px; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:6px; text-align:center;}
+  #triviaRef{color:var(--neon-cyan); font-size:11px; text-align:center; margin-bottom:10px; opacity:0.85;}
+  #triviaQuestion{font-size:16px; line-height:1.4; margin-bottom:16px; text-align:center;}
+  .trivia-option{
+    display:block; width:100%; text-align:left; padding:12px 14px; margin-bottom:10px; border-radius:10px;
+    border:1px solid var(--panel-line); background:#0c0925; color:#eef3ff; font-size:14px; cursor:pointer;
+  }
+  .trivia-option:active{background:#161045;}
+  .trivia-option.correct{background:#0f3d1c; border-color:#5cff8f; color:#c9ffd8;}
+  .trivia-option.wrong{background:#3d0f0f; border-color:#ff5c5c; color:#ffd0d0;}
+  #triviaFeedback{min-height:20px; text-align:center; font-size:13px; font-weight:bold; margin-top:4px;}
+
+  /* ---------- CERTIFICATE SCREEN ---------- */
+  #certScreen{overflow-y:auto;}
+  #certCardWrap{width:min(460px,94vw); background:linear-gradient(180deg,#241a4d,#0a0720); border:2px solid var(--gold);
+    border-radius:18px; padding:22px; box-shadow:0 0 50px rgba(255,233,179,0.35); margin:10px 0;}
+  #certCardWrap h2{color:var(--gold); font-size:clamp(16px,4vw,22px); margin:0 0 4px 0; text-shadow:0 0 14px rgba(255,233,179,0.6);}
+  #certCardWrap .sub{color:var(--neon-cyan); font-size:12px; letter-spacing:2px; margin-bottom:14px;}
+  #certName{font-size:20px; font-weight:bold; color:#fff; margin:10px 0;}
+  #certPowersRow{display:flex; justify-content:center; gap:10px; margin:14px 0;}
+  .cert-power{width:34px; height:34px; border-radius:50%; background:radial-gradient(circle,var(--gold),var(--neon-amber));
+    box-shadow:0 0 12px var(--neon-amber); display:flex; align-items:center; justify-content:center; font-size:16px; color:#3a1c00;}
+  #reflectionArea{
+    width:100%; min-height:80px; border-radius:10px; border:1px solid var(--panel-line); background:#050311;
+    color:#fff; padding:10px; font-size:14px; font-family:inherit; resize:none;
+  }
+  .cert-footer{font-size:11px; color:#a9b8dd; margin-top:12px;}
+  #certScore{font-size:20px; font-weight:bold; color:var(--gold); margin-top:10px; text-shadow:0 0 14px rgba(255,233,179,0.6); letter-spacing:1px;}
+  #certButtons{width:min(460px,94vw); display:flex; flex-direction:column; gap:10px; margin-bottom:20px;}
+  .secondary-btn{
+    padding:12px; border-radius:10px; border:1px solid var(--panel-line); background:transparent; color:var(--neon-cyan);
+    font-size:14px; cursor:pointer;
+  }
+
+  /* ---------- FULLSCREEN SHARE VIEW ---------- */
+  #shareFullscreen{
+    position:fixed; inset:0; background:#000; z-index:50; display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+  }
+  #shareFullscreen img{max-width:94vw; max-height:80vh; border-radius:14px; box-shadow:0 0 30px rgba(255,233,179,0.3);}
+  #shareHint{color:#eef3ff; font-size:13px; text-align:center; margin-top:16px; padding:0 24px; line-height:1.5;}
+  #shareCloseBtn{
+    position:absolute; top:14px; right:14px; width:34px; height:34px; border-radius:50%; border:1px solid rgba(255,255,255,0.4);
+    background:rgba(0,0,0,0.5); color:#fff; font-size:16px; display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+
+  #loadingLine{font-size:11px; color:#6c7aa8; margin-top:14px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- START SCREEN -->
+  <div id="startScreen" class="screen">
+    <h1 id="titleMain">ASCENSIÓN A LA LUZ</h1>
+    <h2 id="titleSub">EL CAMINO DE ISAÍAS 25</h2>
+    <div class="card">
+      <div class="field">
+        <label id="lblLang">Idioma / Language</label>
+        <div class="lang-toggle">
+          <button class="lang-btn active" data-lang="es" id="btnLangEs" type="button">ESPAÑOL</button>
+          <button class="lang-btn" data-lang="en" id="btnLangEn" type="button">ENGLISH</button>
+        </div>
+      </div>
+      <div class="field">
+        <label id="lblName">Nombre del Estudiante</label>
+        <input type="text" id="studentName" maxlength="28" autocomplete="off" placeholder="Escribe tu nombre...">
+      </div>
+      <p id="startInstructions"></p>
+      <button class="big-btn" id="startBtn" type="button">INICIAR JUEGO</button>
+      <div class="warn-msg" id="nameWarn"></div>
+    </div>
+    <div id="loadingLine">🎮 Un solo archivo · Sin dependencias externas</div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="gameScreen" class="screen hidden">
+    <div id="canvasWrap">
+      <canvas id="gameCanvas" width="960" height="540"></canvas>
+      <div id="eventBanner"></div>
+      <div id="hud">
+        <div id="hudLeft">
+          <div id="hudName"></div>
+          <div id="hudHearts"></div>
+        </div>
+        <div id="hudRight">
+          <div id="musicToggle">🔊</div>
+          <div id="hudPowers">
+            <div class="power-slot" id="ps0">★</div>
+            <div class="power-slot" id="ps1">★</div>
+            <div class="power-slot" id="ps2">★</div>
+            <div class="power-slot" id="ps3">★</div>
+          </div>
+        </div>
+      </div>
+      <div id="controls">
+        <div id="dpad">
+          <div class="ctrl-btn" id="btnLeft">◀</div>
+          <div class="ctrl-btn" id="btnRight">▶</div>
+        </div>
+        <div id="actionZone">
+          <div class="ctrl-btn locked" id="attackBtn">✨</div>
+          <div class="ctrl-btn" id="jumpBtn">SALTAR</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRIVIA MODAL -->
+  <div id="triviaModal" class="hidden">
+    <div id="triviaBox">
+      <div id="triviaGateName"></div>
+      <div id="triviaRef"></div>
+      <div id="triviaQuestion"></div>
+      <div id="triviaOptions"></div>
+      <div id="triviaFeedback"></div>
+    </div>
+  </div>
+
+  <!-- CERTIFICATE SCREEN -->
+  <div id="certScreen" class="screen hidden">
+    <div id="certCardWrap">
+      <h2 id="certTitle">¡ASCENSIÓN COMPLETADA! - ISAÍAS 25</h2>
+      <div class="sub" id="certSub">CERTIFICADO DE VICTORIA</div>
+      <div id="certStudentLbl" style="font-size:12px;color:#a9b8dd;">Alumno(a):</div>
+      <div id="certName"></div>
+      <div id="certPowersRow">
+        <div class="cert-power">✦</div><div class="cert-power">✦</div><div class="cert-power">✦</div><div class="cert-power">✦</div>
+      </div>
+      <div style="text-align:left;">
+        <label id="reflectionLbl" style="display:block;font-size:12px;color:var(--neon-cyan);margin-bottom:6px;">¿Cómo puedes hacer para traer la luz de Dios a tu vida?</label>
+        <textarea id="reflectionArea" maxlength="240" placeholder=""></textarea>
+      </div>
+      <div class="cert-footer" id="certDate"></div>
+      <div id="certScore" class="hidden"></div>
+    </div>
+    <div id="certButtons">
+      <button class="big-btn" id="shareBtn" type="button">📸 PREPARAR CAPTURA / COMPARTIR</button>
+      <button class="secondary-btn" id="restartBtn" type="button">↺ Jugar de nuevo</button>
+    </div>
+  </div>
+
+  <!-- FULLSCREEN SHARE VIEW -->
+  <div id="shareFullscreen" class="hidden">
+    <div id="shareCloseBtn">✕</div>
+    <img id="shareImg" alt="Certificado">
+    <div id="shareHint"></div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ================= TRANSLATIONS ================= */
+const T = {
+  es:{
+    titleMain:"ASCENSIÓN A LA LUZ", titleSub:"EL CAMINO DE ISAÍAS 25",
+    lblLang:"Idioma / Language", lblName:"Nombre del Estudiante",
+    namePlaceholder:"Escribe tu nombre...",
+    startInstructions:"Muévete y salta con los controles táctiles. Los enemigos necesitan 2 disparos para caer. Recoge las 4 Gemas de Poder para desbloquear disparo doble, vuelo, disparo certero y el Poder del Sol. Las Gemas de Luz te dan corazones extra.",
+    startBtn:"INICIAR JUEGO", nameWarn:"Por favor escribe tu nombre para comenzar",
+    powerNames:["PODER DEL DISPARO DOBLE","PODER DE VUELO CELESTIAL","PODER DEL RAYO CERTERO","PODER DEL SOL"],
+    powerRefs:["Isaías 25:4","Isaías 25:6","Isaías 25:8","Isaías 25:9"],
+    powerLabel:"GEMA DE PODER",
+    bonusLabel:"GEMA DE LUZ",
+    correctMsg:"¡CORRECTO! Poder desbloqueado ✦",
+    correctBonusMsg:"¡CORRECTO! Corazón de luz obtenido ✦",
+    wrongMsg:"Inténtalo de nuevo...",
+    wrongBonusMsg:"La gema se desvanece... ¡sigue adelante!",
+    heavenBanner:"⚡ PODER DEL CIELO ⚡",
+    sunBanner:"☀️ ¡LLEGA EL SOL! ☀️",
+    certTitle:"¡ASCENSIÓN COMPLETADA! - ISAÍAS 25",
+    certSub:"CERTIFICADO DE VICTORIA",
+    certStudentLbl:"Alumno(a):",
+    reflectionLbl:"¿Cómo puedes hacer para traer la luz de Dios a tu vida?",
+    reflectionPlaceholder:"Escribe tu respuesta...",
+    shareBtn:"📸 PREPARAR CAPTURA / COMPARTIR",
+    restartBtn:"↺ Jugar de nuevo",
+    shareHintIOS:"Mantén presionada la imagen para guardar en Fotos, o toma una captura de pantalla (Botón lateral + Volumen) y compártela por WhatsApp.",
+    shareHintGeneric:"Mantén presionada la imagen para guardar, o toma una captura de pantalla.",
+    powersLabel:"Poderes",
+    dateLabel:"Fecha",
+    scoreLabel:"PUNTAJE FINAL"
+  },
+  en:{
+    titleMain:"ASCENT TO THE LIGHT", titleSub:"THE PATH OF ISAIAH 25",
+    lblLang:"Idioma / Language", lblName:"Student Name",
+    namePlaceholder:"Type your name...",
+    startInstructions:"Move and jump with the touch controls. Enemies take 2 shots to fall. Collect the 4 Power Gems to unlock double shot, flight, true-aimed shots, and the Power of the Sun. Light Gems give you extra hearts.",
+    startBtn:"START GAME", nameWarn:"Please type your name to begin",
+    powerNames:["POWER OF THE DOUBLE SHOT","POWER OF CELESTIAL FLIGHT","POWER OF THE TRUE-AIMED RAY","POWER OF THE SUN"],
+    powerRefs:["Isaiah 25:4","Isaiah 25:6","Isaiah 25:8","Isaiah 25:9"],
+    powerLabel:"POWER GEM",
+    bonusLabel:"LIGHT GEM",
+    correctMsg:"CORRECT! Power unlocked ✦",
+    correctBonusMsg:"CORRECT! Light heart obtained ✦",
+    wrongMsg:"Try again...",
+    wrongBonusMsg:"The gem fades away... keep going!",
+    heavenBanner:"⚡ POWER OF HEAVEN ⚡",
+    sunBanner:"☀️ THE SUN ARRIVES! ☀️",
+    certTitle:"ASCENT COMPLETE! - ISAIAH 25",
+    certSub:"CERTIFICATE OF VICTORY",
+    certStudentLbl:"Student:",
+    reflectionLbl:"How can you bring God's light into your life?",
+    reflectionPlaceholder:"Write your answer...",
+    shareBtn:"📸 PREPARE SCREENSHOT / SHARE",
+    restartBtn:"↺ Play again",
+    shareHintIOS:"Press and hold the image to save it to Photos, or take a screenshot (Side button + Volume) and share it on WhatsApp.",
+    shareHintGeneric:"Press and hold the image to save it, or take a screenshot.",
+    powersLabel:"Powers",
+    dateLabel:"Date",
+    scoreLabel:"FINAL SCORE"
+  }
+};
+
+/* The 4 Power Gem trivias (Isaiah 25:4,6,8,9) */
+const POWER_QUESTIONS = {
+  es:[
+    {q:"¿Cómo describe Isaías al Señor frente a la aflicción y las tormentas?",
+     opts:["Como un espectador distante.","Como fortaleza al necesitado, refugio contra el turbión y sombra contra el calor.","Como una prueba que debemos resolver sin Su ayuda."], correct:1},
+    {q:"¿Qué representa el 'banquete de manjares suculentos' que el Señor preparará?",
+     opts:["Una fiesta terrenal para pocos elegidos.","El gozo, la abundancia y la celebración eterna de Su salvación para todos los pueblos.","Un mandato estricto sin espacio para la alegría."], correct:1},
+    {q:"¿Qué victoria absoluta promete el Señor en Isaías 25:8?",
+     opts:["Que los problemas económicos desaparecerán.","Que destruirá a la muerte para siempre y enjugará toda lágrima.","Que nunca más sentiremos dolor durante la vida terrenal."], correct:1},
+    {q:"¿Qué proclamaremos con gozo en aquel día según el verso 9?",
+     opts:["'He aquí, este es nuestro Dios, le hemos esperado, y nos salvará.'","'Lo logramos completamente solos por nuestro propio esfuerzo.'","'La espera fue demasiado larga y sin sentido.'"], correct:0}
+  ],
+  en:[
+    {q:"How does Isaiah describe the Lord during distress and storms?",
+     opts:["As a distant observer.","As a strength to the needy, a refuge from the storm, and a shadow from heat.","As a test we must solve without His help."], correct:1},
+    {q:"What does the 'feast of fat things' prepared by the Lord represent?",
+     opts:["An earthly party for a chosen few.","Joy, abundance, and the eternal celebration of His salvation for all people.","A strict commandment with no room for joy."], correct:1},
+    {q:"What ultimate victory does the Lord promise in Isaiah 25:8?",
+     opts:["That financial difficulties will disappear.","That He will swallow up death in victory and wipe away all tears.","That we will never feel physical pain again in this life."], correct:1},
+    {q:"What will we joyfully proclaim in that day according to verse 9?",
+     opts:["'Lo, this is our God; we have waited for him, and he will save us.'","'We achieved this completely on our own through our own strength.'","'The wait was too long and meaningless.'"], correct:0}
+  ]
+};
+
+/* 6 Light Gem trivias (Isaiah 25:1,2,3,5,7,10) - bonus, hearts only */
+const BONUS_QUESTIONS = {
+  es:[
+    {ref:"Isaías 25:1", q:"Al comenzar el capítulo 25, ¿qué actitud muestra el profeta hacia Dios?",
+     opts:["Se queja por sus dificultades.","Exalta y alaba el nombre de Dios por sus obras maravillosas.","Pide que Dios se explique."], correct:1},
+    {ref:"Isaías 25:2", q:"Según Isaías 25:2, ¿qué sucede con la ciudad del orgullo y la soberbia?",
+     opts:["Se convierte en un montón de ruinas.","Se vuelve la capital del mundo.","Recibe una recompensa especial."], correct:0},
+    {ref:"Isaías 25:3", q:"¿Qué harán las naciones fuertes al ver el poder de Dios, según el versículo 3?",
+     opts:["Lo ignorarán por completo.","Le temerán y le darán gloria.","Intentarán destruirlo."], correct:1},
+    {ref:"Isaías 25:5", q:"¿Cómo actúa Dios frente al ruido y la soberbia de los extraños, según el versículo 5?",
+     opts:["Los deja crecer sin límite.","Los apacigua, como el calor se calma con la sombra de una nube.","Se une a ellos."], correct:1},
+    {ref:"Isaías 25:7", q:"¿Qué promete Dios destruir 'en este monte' según Isaías 25:7?",
+     opts:["El velo que cubre a todas las naciones.","Las montañas mismas.","El sol y la luna."], correct:0},
+    {ref:"Isaías 25:10", q:"¿Qué se dice que hará la mano del Señor 'en este monte' según el versículo 10?",
+     opts:["Alejarse para siempre.","Reposar.","Esconderse de su pueblo."], correct:1}
+  ],
+  en:[
+    {ref:"Isaiah 25:1", q:"At the start of chapter 25, what attitude does the prophet show toward God?",
+     opts:["He complains about his hardships.","He exalts and praises God's name for His wonderful works.","He asks God to explain Himself."], correct:1},
+    {ref:"Isaiah 25:2", q:"According to Isaiah 25:2, what happens to the city of pride?",
+     opts:["It becomes a heap of ruins.","It becomes the capital of the world.","It receives a special reward."], correct:0},
+    {ref:"Isaiah 25:3", q:"What will the strong nations do when they see God's power, according to verse 3?",
+     opts:["They will ignore it completely.","They will fear Him and glorify Him.","They will try to destroy Him."], correct:1},
+    {ref:"Isaiah 25:5", q:"How does God deal with the noise and pride of strangers, according to verse 5?",
+     opts:["He lets it grow without limit.","He subdues it, like heat is calmed by the shadow of a cloud.","He joins them."], correct:1},
+    {ref:"Isaiah 25:7", q:"What does God promise to destroy 'in this mountain' according to Isaiah 25:7?",
+     opts:["The veil that covers all nations.","The mountains themselves.","The sun and the moon."], correct:0},
+    {ref:"Isaiah 25:10", q:"What is said the Lord's hand will do 'in this mountain' according to verse 10?",
+     opts:["Depart forever.","Rest.","Hide from His people."], correct:1}
+  ]
+};
+
+function shuffledQuestion(qObj){
+  const idx = [0,1,2];
+  for(let i=idx.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    const tmp = idx[i]; idx[i]=idx[j]; idx[j]=tmp;
+  }
+  return { q: qObj.q, ref: qObj.ref, opts: idx.map(i=>qObj.opts[i]), correct: idx.indexOf(qObj.correct) };
+}
+
+/* ================= STATE ================= */
+let lang = "es";
+let playerName = "";
+let started = false;
+let gameOver = false;
+let gameStartTime = 0;
+let score = 0;
+let timeBonusFinal = 0;
+let modalOpen = false;
+let activePowerGem = null;
+let currentQuestion = null;
+
+const GW = 960, GH = 540;
+const GRAVITY = 0.55;
+const MOVE_SPEED = 4.3;
+const JUMP_VEL = -12.6;
+const FALL_LIMIT_Y = 720;
+const WORLD_WIDTH = 6300;
+const FINISH_X = 6220;
+
+const PLAYER_EMOJI = "🏃🏻\u200d♂️";
+const GEM_EMOJI = "💠";
+const BONUS_EMOJI = "💎";
+const GHOST_EMOJI = "👻";
+const OGRE_EMOJI = "👹";
+const SHOT_EMOJI = "✨";
+
+/* Ground / platform segments {x, w, y}. Gaps kept small (<=140px) before flight is unlocked. */
+const platforms = [
+  {x:0,    w:600, y:460},
+  {x:710,  w:200, y:460},
+  {x:1030, w:220, y:430},
+  {x:1380, w:220, y:430},
+  {x:1720, w:220, y:460},
+  {x:2070, w:250, y:460},
+  {x:2450, w:260, y:430},   // Power Gem 1 (Double Shot) sits above here
+  {x:2980, w:280, y:400},   // -- flight-required gap before this platform
+  {x:3540, w:280, y:400},   // Power Gem 2 (Flight) sits above the previous platform
+  {x:3970, w:300, y:430},   // Power Gem 3 (True Aim + Heaven Power)
+  {x:4570, w:320, y:400},
+  {x:5040, w:300, y:430},
+  {x:5600, w:250, y:400},   // Power Gem 4 (Sun Power)
+  {x:6010, w:280, y:430}    // temple platform, finish line
+];
+
+let checkpoint = {x:60, y:380};
+
+const player = {
+  x:60, y:380, w:26, h:34, vx:0, vy:0, onGround:false, jumpsUsed:0, maxJumps:1, facing:1,
+  hearts:3, maxHearts:3, invuln:0, hasAttack:false, doubleShot:false, canFly:false, homingShots:false,
+  attackCooldown:0
+};
+
+const input = {left:false, right:false, jumpPressed:false, jumpHeld:false, attackPressed:false};
+
+/* Enemies to dodge or shoot down (2 hits each in normal conditions) */
+function mkGhost(baseX, baseY, amp, t0){ return {type:"ghost", baseX, baseY, x:baseX, y:baseY, amp, t:t0, alive:true, hp:2}; }
+function mkOgre(x, minX, maxX, y, speed, dir){ return {type:"ogre", x, minX, maxX, y, speed, dir, alive:true, hp:2}; }
+
+const enemies = [
+  mkGhost(1650, 400, 60, 0.2),
+  mkOgre(1780, 1730, 1920, 434, 1.3, 1),
+  mkGhost(2850, 380, 90, 1.4),
+  mkOgre(3620, 3560, 3800, 374, 1.5, 1),
+  mkGhost(4700, 350, 70, 2.1),
+  mkOgre(5100, 5060, 5300, 404, 1.4, -1),
+  mkGhost(5950, 350, 70, 0.7)
+];
+
+/* 4 Power Gems - each carries one of the main trivia questions and grants a real ability */
+const powerGems = [
+  {id:0, x:1130, y:360, w:30, h:30, collected:false, qIndex:0, key:"doubleshot"},
+  {id:1, x:2560, y:360, w:30, h:30, collected:false, qIndex:1, key:"flight"},
+  {id:2, x:4080, y:360, w:30, h:30, collected:false, qIndex:2, key:"heaven"},
+  {id:3, x:5700, y:330, w:30, h:30, collected:false, qIndex:3, key:"sun"}
+];
+
+/* 6 Light Gems - bonus trivia, grant extra hearts only */
+const bonusGems = [
+  {id:0, x:550,  y:420, w:26, h:26, collected:false, qIndex:0},
+  {id:1, x:1450, y:360, w:26, h:26, collected:false, qIndex:1},
+  {id:2, x:2150, y:400, w:26, h:26, collected:false, qIndex:2},
+  {id:3, x:3080, y:330, w:26, h:26, collected:false, qIndex:3},
+  {id:4, x:4680, y:330, w:26, h:26, collected:false, qIndex:4},
+  {id:5, x:6100, y:360, w:26, h:26, collected:false, qIndex:5}
+];
+
+const projectiles = [];
+const effects = [];
+
+let cameraX = 0;
+let raf = null;
+let lastTime = 0;
+
+/* ================= AUDIO ================= */
+let audioCtx = null;
+let musicEnabled = true;
+let musicTimer = null;
+let musicStep = 0;
+const MUSIC_NOTES = [146.83,174.61,220.0,261.63,293.66,261.63,220.0,174.61]; // D3 F3 A3 C4 D4 C4 A3 F3
+
+function initAudio(){
+  if(audioCtx) return;
+  try{
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(AC) audioCtx = new AC();
+  }catch(e){ audioCtx = null; }
+}
+function resumeAudio(){ if(audioCtx && audioCtx.state === "suspended"){ audioCtx.resume().catch(()=>{}); } }
+function tone(freq, dur, type, vol){
+  if(!audioCtx) return;
+  try{
+    const t0 = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type || "sine";
+    osc.frequency.setValueAtTime(freq, t0);
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(vol||0.18, t0+0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(t0);
+    osc.stop(t0+dur+0.02);
+  }catch(e){}
+}
+function sfxJump(){ tone(520,0.16,"square",0.11); }
+function sfxLand(){ tone(180,0.08,"sine",0.07); }
+function sfxCorrect(){ tone(660,0.12,"triangle",0.15); setTimeout(()=>tone(880,0.16,"triangle",0.15),110); setTimeout(()=>tone(1180,0.22,"triangle",0.16),230); }
+function sfxWrong(){ tone(160,0.22,"sawtooth",0.13); }
+function sfxHit(){ tone(110,0.18,"sawtooth",0.16); }
+function sfxShoot(){ tone(880,0.07,"square",0.08); }
+function sfxEnemyHit(){ tone(400,0.07,"square",0.1); }
+function sfxEnemyDown(){ tone(300,0.1,"triangle",0.13); setTimeout(()=>tone(500,0.12,"triangle",0.13),80); }
+function sfxGem(){ tone(1046,0.1,"sine",0.12); setTimeout(()=>tone(1568,0.14,"sine",0.12),90); }
+function sfxThunder(){ tone(90,0.3,"sawtooth",0.2); setTimeout(()=>tone(70,0.35,"sawtooth",0.18),120); setTimeout(()=>tone(1400,0.1,"square",0.1),140); }
+function sfxSunburst(){ [660,880,1046,1318,1568].forEach((f,i)=>setTimeout(()=>tone(f,0.3,"triangle",0.14), i*90)); }
+function sfxVictory(){
+  const seq=[523,659,784,1046,1318];
+  seq.forEach((f,i)=>setTimeout(()=>tone(f,0.28,"triangle",0.17), i*160));
+}
+function scheduleMusicStep(){
+  if(started && !gameOver && audioCtx && musicEnabled){
+    const freq = MUSIC_NOTES[musicStep % MUSIC_NOTES.length];
+    tone(freq, 0.16, "triangle", 0.045);
+    if(musicStep % 4 === 0){ tone(freq/2, 0.32, "sine", 0.05); }
+    musicStep++;
+  }
+  musicTimer = setTimeout(scheduleMusicStep, 190);
+}
+function startMusic(){ if(musicTimer) return; musicStep=0; scheduleMusicStep(); }
+function stopMusic(){ if(musicTimer){ clearTimeout(musicTimer); musicTimer=null; } }
+
+document.getElementById("musicToggle").addEventListener("click", ()=>{
+  musicEnabled = !musicEnabled;
+  document.getElementById("musicToggle").textContent = musicEnabled ? "🔊" : "🔇";
+});
+
+/* ================= UI SETUP ================= */
+function applyLang(){
+  const t = T[lang];
+  document.getElementById("titleMain").textContent = t.titleMain;
+  document.getElementById("titleSub").textContent = t.titleSub;
+  document.getElementById("lblLang").textContent = t.lblLang;
+  document.getElementById("lblName").textContent = t.lblName;
+  document.getElementById("studentName").placeholder = t.namePlaceholder;
+  document.getElementById("startInstructions").textContent = t.startInstructions;
+  document.getElementById("startBtn").textContent = t.startBtn;
+  document.getElementById("certTitle").textContent = t.certTitle;
+  document.getElementById("certSub").textContent = t.certSub;
+  document.getElementById("certStudentLbl").textContent = t.certStudentLbl;
+  document.getElementById("reflectionLbl").textContent = t.reflectionLbl;
+  document.getElementById("reflectionArea").placeholder = t.reflectionPlaceholder;
+  document.getElementById("shareBtn").textContent = t.shareBtn;
+  document.getElementById("restartBtn").textContent = t.restartBtn;
+  document.title = t.titleMain + " - " + t.titleSub;
+}
+document.getElementById("btnLangEs").addEventListener("click", ()=>{ lang="es"; setActiveLangBtn(); applyLang(); });
+document.getElementById("btnLangEn").addEventListener("click", ()=>{ lang="en"; setActiveLangBtn(); applyLang(); });
+function setActiveLangBtn(){
+  document.getElementById("btnLangEs").classList.toggle("active", lang==="es");
+  document.getElementById("btnLangEn").classList.toggle("active", lang==="en");
+}
+applyLang();
+
+function startGameHandler(e){
+  if(e) e.preventDefault();
+  if(started) return;
+  const nameInput = document.getElementById("studentName");
+  const name = nameInput.value.trim();
+  if(!name){
+    document.getElementById("nameWarn").textContent = T[lang].nameWarn;
+    return;
+  }
+  playerName = name;
+  started = true;
+  gameStartTime = performance.now();
+  initAudio();
+  resumeAudio();
+  document.getElementById("hudName").textContent = playerName;
+  document.getElementById("startScreen").classList.add("hidden");
+  document.getElementById("gameScreen").classList.remove("hidden");
+  updateHeartsHud();
+  resizeCanvas();
+  lastTime = performance.now();
+  raf = requestAnimationFrame(loop);
+  startMusic();
+}
+const startBtn = document.getElementById("startBtn");
+startBtn.addEventListener("click", startGameHandler);
+startBtn.addEventListener("touchstart", startGameHandler, {passive:false});
+
+/* ================= TOUCH / KEYBOARD CONTROLS ================= */
+function bindHold(el, onDown, onUp){
+  const down=(e)=>{ e.preventDefault(); el.classList.add("pressed"); onDown(); };
+  const up=(e)=>{ if(e) e.preventDefault(); el.classList.remove("pressed"); onUp(); };
+  el.addEventListener("touchstart", down, {passive:false});
+  el.addEventListener("touchend", up, {passive:false});
+  el.addEventListener("touchcancel", up, {passive:false});
+  el.addEventListener("mousedown", down);
+  el.addEventListener("mouseup", up);
+  el.addEventListener("mouseleave", up);
+}
+bindHold(document.getElementById("btnLeft"), ()=>input.left=true, ()=>input.left=false);
+bindHold(document.getElementById("btnRight"), ()=>input.right=true, ()=>input.right=false);
+bindHold(document.getElementById("jumpBtn"), ()=>{ input.jumpPressed=true; input.jumpHeld=true; }, ()=>{ input.jumpHeld=false; });
+bindHold(document.getElementById("attackBtn"), ()=>{ input.attackPressed=true; }, ()=>{});
+
+document.addEventListener("keydown",(e)=>{
+  if(e.code==="ArrowLeft"||e.code==="KeyA") input.left=true;
+  if(e.code==="ArrowRight"||e.code==="KeyD") input.right=true;
+  if(e.code==="Space"||e.code==="ArrowUp"||e.code==="KeyW"){ if(!input.jumpHeld) input.jumpPressed=true; input.jumpHeld=true; }
+  if(e.code==="KeyF"||e.code==="KeyJ") input.attackPressed=true;
+});
+document.addEventListener("keyup",(e)=>{
+  if(e.code==="ArrowLeft"||e.code==="KeyA") input.left=false;
+  if(e.code==="ArrowRight"||e.code==="KeyD") input.right=false;
+  if(e.code==="Space"||e.code==="ArrowUp"||e.code==="KeyW") input.jumpHeld=false;
+});
+
+/* ================= CANVAS SETUP ================= */
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+function resizeCanvas(){
+  const wrap = document.getElementById("canvasWrap");
+  const rect = wrap.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio||1, 2);
+  const targetRatio = GW/GH;
+  let cssW = rect.width, cssH = rect.width/targetRatio;
+  if(cssH > rect.height){ cssH = rect.height; cssW = rect.height*targetRatio; }
+  canvas.style.width = cssW+"px";
+  canvas.style.height = cssH+"px";
+  canvas.width = Math.round(GW*dpr);
+  canvas.height = Math.round(GH*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener("resize", resizeCanvas);
+window.addEventListener("orientationchange", ()=>setTimeout(resizeCanvas,200));
+
+/* ================= HELPERS ================= */
+function getSupport(px, pw){
+  let result = null;
+  for(const p of platforms){
+    if(px + pw > p.x + 4 && px < p.x + p.w - 4){
+      if(result === null || p.y < result) result = p.y;
+    }
+  }
+  return result;
+}
+function aabb(ax,ay,aw,ah,bx,by,bw,bh){
+  return ax < bx+bw && ax+aw > bx && ay < by+bh && ay+ah > by;
+}
+function findNearestEnemy(excludeEn){
+  let best=null, bestD=Infinity;
+  for(const en of enemies){
+    if(!en.alive || en===excludeEn) continue;
+    const d = Math.hypot(en.x-player.x, en.y-player.y);
+    if(d<bestD){ bestD=d; best=en; }
+  }
+  return best;
+}
+
+/* ================= HUD ================= */
+function updateHudPowers(){
+  for(let i=0;i<4;i++){ document.getElementById("ps"+i).classList.toggle("on", powerGems[i].collected); }
+}
+function updateHeartsHud(){
+  let s = "";
+  for(let i=0;i<player.maxHearts;i++){ s += (i<player.hearts) ? "❤️" : "🤍"; }
+  document.getElementById("hudHearts").textContent = s;
+}
+function updateAttackButton(){
+  document.getElementById("attackBtn").classList.toggle("locked", !player.hasAttack);
+}
+function showBanner(text){
+  const el = document.getElementById("eventBanner");
+  el.textContent = text;
+  el.classList.add("show");
+  clearTimeout(showBanner._t);
+  showBanner._t = setTimeout(()=>{ el.classList.remove("show"); }, 2200);
+}
+
+/* ================= GAME LOGIC ================= */
+function applyPowerReward(idx){
+  if(idx===0){ player.doubleShot = true; }
+  else if(idx===1){ player.canFly = true; }
+  else if(idx===2){ player.homingShots = true; triggerSkyPower(5, T[lang].heavenBanner, false); }
+  else if(idx===3){ triggerSkyPower(4, T[lang].sunBanner, true); }
+  if(!player.hasAttack){ player.hasAttack = true; updateAttackButton(); }
+  updateHudPowers();
+}
+function applyBonusReward(){
+  if(player.maxHearts < 5){
+    player.maxHearts++;
+    player.hearts = Math.min(player.hearts+1, player.maxHearts);
+    updateHeartsHud();
+  }
+}
+function triggerSkyPower(count, bannerText, isSun){
+  const spawnX = Math.min(player.x + 190, WORLD_WIDTH - 160);
+  for(let i=0;i<count;i++){
+    const ex = spawnX + i*70;
+    const ground = getSupport(ex-15, 30) || 430;
+    const ey = ground - 32;
+    if(i % 2 === 0){
+      enemies.push(mkOgre(ex, ex-30, ex+30, ground-4, 1.2, 1));
+    } else {
+      enemies.push(mkGhost(ex, ey, 45, i));
+    }
+  }
+  showBanner(bannerText);
+  if(isSun) sfxSunburst(); else sfxThunder();
+  setTimeout(()=>{
+    for(const en of enemies){
+      if(en.alive){
+        effects.push({type: isSun ? "sunflash" : "lightning", x:en.x, y:en.y, ttl: isSun?900:420, maxTtl: isSun?900:420});
+        score += 30;
+      }
+      en.alive = false;
+    }
+    if(isSun){ effects.push({type:"sunflash", x:player.x, y:0, ttl:1000, maxTtl:1000}); }
+  }, 1300);
+}
+function respawnPlayer(){
+  player.x = checkpoint.x;
+  player.y = checkpoint.y;
+  player.vx = 0; player.vy = 0;
+  player.jumpsUsed = 0;
+  player.invuln = 1500;
+}
+function damagePlayer(fromX){
+  if(player.invuln > 0 || gameOver) return;
+  player.hearts--;
+  player.invuln = 1200;
+  player.vy = -7;
+  player.vx = (player.x < fromX) ? -5 : 5;
+  sfxHit();
+  updateHeartsHud();
+  if(player.hearts <= 0){
+    setTimeout(()=>{ respawnPlayer(); player.hearts = player.maxHearts; updateHeartsHud(); }, 350);
+  }
+}
+
+/* ---- Power Gem trivia (retry until correct — these unlock the 4 core powers) ---- */
+function openPowerTrivia(gem){
+  if(modalOpen) return;
+  modalOpen = true;
+  activePowerGem = gem;
+  const t = T[lang];
+  currentQuestion = shuffledQuestion(POWER_QUESTIONS[lang][gem.qIndex]);
+  document.getElementById("triviaBox").classList.remove("bonus-style");
+  document.getElementById("triviaGateName").textContent = t.powerLabel + " · " + t.powerNames[gem.qIndex];
+  document.getElementById("triviaRef").textContent = t.powerRefs[gem.qIndex];
+  renderTriviaOptions(currentQuestion, (chosenIdx, btnEl)=>answerPowerTrivia(gem, chosenIdx, btnEl));
+  document.getElementById("triviaModal").classList.remove("hidden");
+}
+function answerPowerTrivia(gem, chosenIdx, btnEl){
+  const allBtns = document.querySelectorAll("#triviaOptions .trivia-option");
+  allBtns.forEach(b=>b.style.pointerEvents="none");
+  if(chosenIdx === currentQuestion.correct){
+    btnEl.classList.add("correct");
+    document.getElementById("triviaFeedback").style.color = "#5cff8f";
+    document.getElementById("triviaFeedback").textContent = T[lang].correctMsg;
+    sfxCorrect();
+    score += 100;
+    setTimeout(()=>{
+      gem.collected = true;
+      applyPowerReward(gem.qIndex);
+      document.getElementById("triviaModal").classList.add("hidden");
+      modalOpen = false; activePowerGem = null;
+    }, 900);
+  } else {
+    btnEl.classList.add("wrong");
+    allBtns[currentQuestion.correct].classList.add("correct");
+    document.getElementById("triviaFeedback").style.color = "#ff7d7d";
+    document.getElementById("triviaFeedback").textContent = T[lang].wrongMsg;
+    sfxWrong();
+    const box = document.getElementById("triviaBox");
+    box.classList.remove("shake"); void box.offsetWidth; box.classList.add("shake");
+    setTimeout(()=>{
+      document.getElementById("triviaModal").classList.add("hidden");
+      modalOpen = false;
+      openPowerTrivia(gem);
+    }, 1100);
+  }
+}
+
+/* ---- Bonus Light Gem trivia (single try, hearts only) ---- */
+function openBonusTrivia(gem){
+  if(modalOpen) return;
+  modalOpen = true;
+  const t = T[lang];
+  const qData = BONUS_QUESTIONS[lang][gem.qIndex];
+  currentQuestion = shuffledQuestion(qData);
+  document.getElementById("triviaBox").classList.add("bonus-style");
+  document.getElementById("triviaGateName").textContent = "💎 " + t.bonusLabel;
+  document.getElementById("triviaRef").textContent = qData.ref;
+  renderTriviaOptions(currentQuestion, (chosenIdx, btnEl)=>answerBonusTrivia(gem, chosenIdx, btnEl));
+  document.getElementById("triviaModal").classList.remove("hidden");
+}
+function answerBonusTrivia(gem, chosenIdx, btnEl){
+  const allBtns = document.querySelectorAll("#triviaOptions .trivia-option");
+  allBtns.forEach(b=>b.style.pointerEvents="none");
+  gem.collected = true;
+  if(chosenIdx === currentQuestion.correct){
+    btnEl.classList.add("correct");
+    document.getElementById("triviaFeedback").style.color = "#5cff8f";
+    document.getElementById("triviaFeedback").textContent = T[lang].correctBonusMsg;
+    sfxGem();
+    score += 50;
+    applyBonusReward();
+  } else {
+    btnEl.classList.add("wrong");
+    allBtns[currentQuestion.correct].classList.add("correct");
+    document.getElementById("triviaFeedback").style.color = "#ffcf7d";
+    document.getElementById("triviaFeedback").textContent = T[lang].wrongBonusMsg;
+    sfxWrong();
+  }
+  setTimeout(()=>{
+    document.getElementById("triviaModal").classList.add("hidden");
+    document.getElementById("triviaBox").classList.remove("bonus-style");
+    modalOpen = false;
+  }, 1000);
+}
+
+function renderTriviaOptions(q, onAnswer){
+  document.getElementById("triviaQuestion").textContent = q.q;
+  const optsWrap = document.getElementById("triviaOptions");
+  optsWrap.innerHTML = "";
+  document.getElementById("triviaFeedback").textContent = "";
+  q.opts.forEach((optText, i)=>{
+    const b = document.createElement("button");
+    b.className = "trivia-option";
+    b.type = "button";
+    b.textContent = optText;
+    b.addEventListener("click", ()=>onAnswer(i, b));
+    optsWrap.appendChild(b);
+  });
+}
+
+/* ================= UPDATE LOOP ================= */
+function update(dt){
+  if(!started || gameOver || modalOpen) return;
+
+  if(input.left && !input.right){ player.vx = -MOVE_SPEED; player.facing=-1; }
+  else if(input.right && !input.left){ player.vx = MOVE_SPEED; player.facing=1; }
+  else { player.vx = 0; }
+
+  if(input.jumpPressed){
+    if(player.jumpsUsed < player.maxJumps){
+      player.vy = JUMP_VEL; player.jumpsUsed++; sfxJump();
+    }
+    input.jumpPressed = false;
+  }
+  if(player.canFly && input.jumpHeld){
+    player.vy -= 0.9;
+    if(player.vy < -6) player.vy = -6;
+  }
+
+  if(input.attackPressed){
+    if(player.hasAttack && player.attackCooldown <= 0){
+      spawnProjectile();
+      player.attackCooldown = 260;
+    }
+    input.attackPressed = false;
+  }
+  if(player.attackCooldown > 0) player.attackCooldown -= dt;
+  if(player.invuln > 0) player.invuln -= dt;
+
+  player.vy += GRAVITY;
+  if(player.vy > 18) player.vy = 18;
+
+  let nextX = Math.max(0, Math.min(player.x + player.vx, WORLD_WIDTH - player.w));
+  player.x = nextX;
+
+  let nextY = player.y + player.vy;
+  const support = getSupport(player.x, player.w);
+  const wasOnGround = player.onGround;
+  player.onGround = false;
+  if(support !== null){
+    if(player.y + player.h <= support + 2 && nextY + player.h >= support){
+      nextY = support - player.h;
+      player.vy = 0;
+      player.onGround = true;
+      if(!wasOnGround) sfxLand();
+      player.jumpsUsed = 0;
+    }
+  }
+  player.y = nextY;
+
+  if(player.y > FALL_LIMIT_Y){ respawnPlayer(); }
+
+  updatePowerGems();
+  updateBonusGems();
+  updateEnemies(dt);
+  updateProjectiles(dt);
+  updateEffects(dt);
+
+  if(player.x + player.w >= FINISH_X && powerGems.every(g=>g.collected)){ triggerVictory(); }
+
+  cameraX = Math.max(0, Math.min(player.x - GW/2, WORLD_WIDTH - GW));
+}
+
+function updatePowerGems(){
+  for(const gem of powerGems){
+    if(gem.collected) continue;
+    if(aabb(player.x, player.y, player.w, player.h, gem.x-gem.w/2, gem.y-gem.h/2, gem.w, gem.h)){
+      openPowerTrivia(gem);
+    }
+  }
+}
+function updateBonusGems(){
+  for(const gem of bonusGems){
+    if(gem.collected) continue;
+    if(aabb(player.x, player.y, player.w, player.h, gem.x-gem.w/2, gem.y-gem.h/2, gem.w, gem.h)){
+      openBonusTrivia(gem);
+    }
+  }
+}
+function updateEnemies(dt){
+  for(const en of enemies){
+    if(!en.alive) continue;
+    if(en.type === "ghost"){
+      en.t += dt*0.0022;
+      en.x = en.baseX + Math.sin(en.t)*en.amp;
+      en.y = en.baseY + Math.cos(en.t*1.3)*en.amp*0.4;
+    } else if(en.type === "ogre"){
+      en.x += en.dir*en.speed;
+      if(en.x < en.minX){ en.x = en.minX; en.dir = 1; }
+      if(en.x > en.maxX){ en.x = en.maxX; en.dir = -1; }
+    }
+    const ew = 30, eh = 30;
+    if(player.invuln <= 0 && aabb(player.x, player.y, player.w, player.h, en.x-ew/2, en.y-eh/2, ew, eh)){
+      damagePlayer(en.x);
+    }
+  }
+}
+function spawnProjectile(){
+  sfxShoot();
+  const speed = 9.5;
+  const originX = player.x + player.w/2;
+  if(player.homingShots){
+    const target = findNearestEnemy();
+    let vx = speed*player.facing, vy = 0;
+    if(target){
+      const dx = target.x-originX, dy = target.y-(player.y+player.h/2);
+      const d = Math.hypot(dx,dy)||1;
+      vx = dx/d*speed; vy = dy/d*speed;
+    }
+    projectiles.push({x:originX, y:player.y+player.h/2-4, vx, vy, target: target||null, homing:true, ttl:110});
+    if(player.doubleShot){
+      projectiles.push({x:originX, y:player.y+player.h/2+6, vx, vy, target: target||null, homing:true, ttl:110});
+    }
+  } else {
+    projectiles.push({x:originX, y:player.y+player.h/2-4, vx:speed*player.facing, vy:0, target:null, homing:false, ttl:110});
+    if(player.doubleShot){
+      projectiles.push({x:originX, y:player.y+player.h/2+6, vx:speed*player.facing, vy:0, target:null, homing:false, ttl:110});
+    }
+  }
+}
+function updateProjectiles(){
+  for(let i=projectiles.length-1; i>=0; i--){
+    const p = projectiles[i];
+    if(p.homing && p.target && p.target.alive){
+      const dx = p.target.x-p.x, dy = p.target.y-p.y;
+      const d = Math.hypot(dx,dy)||1;
+      const spd = 9.5;
+      p.vx = dx/d*spd; p.vy = dy/d*spd;
+    }
+    p.x += p.vx; p.y += p.vy;
+    p.ttl--;
+    if(p.ttl<=0 || p.x < cameraX-60 || p.x > cameraX+GW+60 || p.y < -60 || p.y > GH+60){
+      projectiles.splice(i,1); continue;
+    }
+    let hit = false;
+    for(const en of enemies){
+      if(!en.alive) continue;
+      const ew=30, eh=30;
+      if(aabb(p.x-6,p.y-6,12,12, en.x-ew/2, en.y-eh/2, ew, eh)){
+        en.hp = (en.hp===undefined?2:en.hp) - 1;
+        if(en.hp<=0){ en.alive=false; sfxEnemyDown(); score += 30; } else { sfxEnemyHit(); }
+        hit = true;
+        break;
+      }
+    }
+    if(hit){ projectiles.splice(i,1); }
+  }
+}
+function updateEffects(dt){
+  for(let i=effects.length-1;i>=0;i--){
+    effects[i].ttl -= dt;
+    if(effects[i].ttl<=0) effects.splice(i,1);
+  }
+}
+
+/* ================= RENDER ================= */
+function lerpColor(c1, c2, t){
+  const a = c1.match(/\w\w/g).map(h=>parseInt(h,16));
+  const b = c2.match(/\w\w/g).map(h=>parseInt(h,16));
+  const r = a.map((v,i)=>Math.round(v+(b[i]-v)*t));
+  return "#"+r.map(v=>v.toString(16).padStart(2,"0")).join("");
+}
+function drawLightning(x,y,ttl,maxTtl){
+  const alpha = Math.max(0, ttl/maxTtl);
+  ctx.save();
+  ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
+  ctx.shadowColor = "#aef7ff"; ctx.shadowBlur = 20;
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(x,0);
+  const segs = 6;
+  let cx = x;
+  for(let i=1;i<=segs;i++){
+    const cy = y*(i/segs);
+    cx = x + (Math.random()-0.5)*30;
+    ctx.lineTo(cx,cy);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+function drawSunFlash(ttl,maxTtl){
+  const alpha = Math.max(0, ttl/maxTtl)*0.85;
+  ctx.save();
+  const g = ctx.createRadialGradient(GW/2,GH/2,10,GW/2,GH/2,GW*0.85);
+  g.addColorStop(0, `rgba(255,250,220,${alpha})`);
+  g.addColorStop(1, `rgba(255,250,220,0)`);
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,GW,GH);
+  ctx.restore();
+}
+
+function render(){
+  const progress = Math.max(0, Math.min(1, player.x / WORLD_WIDTH));
+  const skyTop = lerpColor("#05031a", "#ffd98a", progress);
+  const skyBottom = lerpColor("#1a1040", "#ff9d5c", progress);
+
+  const grad = ctx.createLinearGradient(0,0,0,GH);
+  grad.addColorStop(0, skyTop);
+  grad.addColorStop(1, skyBottom);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,GW,GH);
+
+  if(progress < 0.85){
+    ctx.fillStyle = `rgba(255,255,255,${0.6*(1-progress)})`;
+    for(let i=0;i<40;i++){
+      const sx = (i*137 + cameraX*0.15) % GW;
+      const sy = (i*53) % (GH*0.6);
+      ctx.fillRect(sx, sy, 2, 2);
+    }
+  }
+  if(progress > 0.4){
+    const glowX = GW*0.8;
+    const glowR = 60 + progress*120;
+    const g2 = ctx.createRadialGradient(glowX, 90, 10, glowX, 90, glowR);
+    g2.addColorStop(0, `rgba(255,240,200,${0.5*progress})`);
+    g2.addColorStop(1, "rgba(255,240,200,0)");
+    ctx.fillStyle = g2;
+    ctx.fillRect(0,0,GW,GH);
+  }
+
+  ctx.fillStyle = "rgba(20,14,50,0.55)";
+  drawMountainLayer(cameraX*0.3, 0.55, 40);
+  ctx.fillStyle = "rgba(30,20,70,0.45)";
+  drawMountainLayer(cameraX*0.55, 0.42, 90);
+
+  ctx.save();
+  ctx.translate(-cameraX, 0);
+
+  for(const p of platforms){
+    if(p.x+p.w < cameraX-50 || p.x > cameraX+GW+50) continue;
+    const pgrad = ctx.createLinearGradient(0,p.y,0,p.y+16);
+    pgrad.addColorStop(0, "#3ef7ff");
+    pgrad.addColorStop(1, "#0e0a24");
+    ctx.fillStyle = pgrad;
+    ctx.fillRect(p.x, p.y, p.w, 16);
+    ctx.fillStyle = "#120b2e";
+    ctx.fillRect(p.x, p.y+16, p.w, GH-p.y-16);
+  }
+
+  // bonus gems
+  ctx.font = "24px serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  for(const gem of bonusGems){
+    if(gem.collected) continue;
+    if(gem.x < cameraX-40 || gem.x > cameraX+GW+40) continue;
+    const bob = Math.sin(performance.now()*0.004 + gem.id)*4;
+    ctx.save();
+    ctx.shadowColor = "#ff9df0"; ctx.shadowBlur = 12;
+    ctx.fillText(BONUS_EMOJI, gem.x, gem.y+bob);
+    ctx.restore();
+  }
+  // power gems
+  ctx.font = "30px serif";
+  for(const gem of powerGems){
+    if(gem.collected) continue;
+    if(gem.x < cameraX-40 || gem.x > cameraX+GW+40) continue;
+    const bob = Math.sin(performance.now()*0.005 + gem.id)*6;
+    ctx.save();
+    ctx.shadowColor = "#ffb84d"; ctx.shadowBlur = 18;
+    ctx.fillText(GEM_EMOJI, gem.x, gem.y+bob);
+    ctx.restore();
+  }
+
+  // enemies
+  ctx.font = "30px serif";
+  for(const en of enemies){
+    if(!en.alive) continue;
+    if(en.x < cameraX-50 || en.x > cameraX+GW+50) continue;
+    ctx.fillText(en.type === "ghost" ? GHOST_EMOJI : OGRE_EMOJI, en.x, en.y);
+  }
+
+  // projectiles
+  ctx.font = "18px serif";
+  for(const p of projectiles){
+    ctx.fillText(SHOT_EMOJI, p.x, p.y);
+  }
+
+  // sky-power effects (lightning in world space)
+  for(const fx of effects){
+    if(fx.type === "lightning") drawLightning(fx.x, fx.y, fx.ttl, fx.maxTtl);
+  }
+
+  // temple
+  if(FINISH_X-60 < cameraX+GW){
+    ctx.fillStyle = "#fff3d6";
+    ctx.beginPath();
+    ctx.moveTo(FINISH_X-40, 430);
+    ctx.lineTo(FINISH_X, 340);
+    ctx.lineTo(FINISH_X+40, 430);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillRect(FINISH_X-30, 380, 60, 50);
+  }
+
+  // player emoji (mirrored from its native orientation, then flipped again by facing)
+  ctx.save();
+  const flicker = player.invuln > 0 && Math.floor(performance.now()/100)%2===0;
+  ctx.globalAlpha = flicker ? 0.35 : 1;
+  const bob = player.onGround && (input.left||input.right) ? Math.sin(performance.now()*0.02)*3 : 0;
+  ctx.translate(player.x + player.w/2, player.y + player.h/2 + bob);
+  ctx.scale(-player.facing, 1);
+  ctx.font = "32px serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.shadowColor = "#3ef7ff";
+  ctx.shadowBlur = 10;
+  ctx.fillText(PLAYER_EMOJI, 0, 0);
+  ctx.restore();
+  ctx.globalAlpha = 1;
+
+  ctx.restore();
+
+  // sun-power flash (screen space, drawn after camera translate is restored)
+  for(const fx of effects){
+    if(fx.type === "sunflash") drawSunFlash(fx.ttl, fx.maxTtl);
+  }
+}
+
+function drawMountainLayer(offset, heightFactor, baseY){
+  ctx.beginPath();
+  ctx.moveTo(0, GH);
+  const step = 160;
+  for(let x=-step; x<=GW+step; x+=step){
+    const wx = x + offset;
+    const h = baseY + Math.abs(Math.sin(wx*0.004))*90*heightFactor;
+    ctx.lineTo(x, GH - h);
+  }
+  ctx.lineTo(GW, GH);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function loop(now){
+  const dt = Math.min(40, now - lastTime);
+  lastTime = now;
+  update(dt);
+  render();
+  if(!gameOver) raf = requestAnimationFrame(loop);
+}
+
+/* ================= VICTORY / CERTIFICATE ================= */
+function triggerVictory(){
+  if(gameOver) return;
+  gameOver = true;
+  stopMusic();
+  sfxVictory();
+  const elapsedSec = (performance.now() - gameStartTime) / 1000;
+  timeBonusFinal = Math.max(0, Math.round(1500 - elapsedSec*3));
+  setTimeout(()=>{
+    document.getElementById("gameScreen").classList.add("hidden");
+    document.getElementById("certScreen").classList.remove("hidden");
+    document.getElementById("certName").textContent = playerName;
+    const t = T[lang];
+    const now = new Date();
+    document.getElementById("certDate").textContent = t.dateLabel+": "+now.toLocaleDateString(lang==="es"?"es-ES":"en-US");
+  }, 600);
+}
+function computeTotalScore(){
+  const reflectionLen = document.getElementById("reflectionArea").value.trim().length;
+  return score + timeBonusFinal + (reflectionLen * 3);
+}
+function updateScoreDisplay(){
+  const el = document.getElementById("certScore");
+  el.classList.remove("hidden");
+  el.textContent = T[lang].scoreLabel + ": " + computeTotalScore();
+}
+document.getElementById("reflectionArea").addEventListener("input", ()=>{
+  if(!document.getElementById("certScore").classList.contains("hidden")) updateScoreDisplay();
+});
+document.getElementById("restartBtn").addEventListener("click", ()=>{ window.location.reload(); });
+
+/* ================= CERTIFICATE CANVAS RENDER ================= */
+function buildCertificateCanvas(){
+  const W = 1000, H = 1400;
+  const c = document.createElement("canvas");
+  c.width = W; c.height = H;
+  const cx = c.getContext("2d");
+  const t = T[lang];
+
+  const bg = cx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0, "#241a4d");
+  bg.addColorStop(1, "#05031a");
+  cx.fillStyle = bg;
+  cx.fillRect(0,0,W,H);
+
+  cx.strokeStyle = "#ffe9b3";
+  cx.lineWidth = 6;
+  cx.strokeRect(30,30,W-60,H-60);
+  cx.strokeStyle = "rgba(62,247,255,0.5)";
+  cx.lineWidth = 2;
+  cx.strokeRect(46,46,W-92,H-92);
+
+  const sun = cx.createRadialGradient(W/2, 220, 20, W/2, 220, 260);
+  sun.addColorStop(0, "rgba(255,240,200,0.65)");
+  sun.addColorStop(1, "rgba(255,240,200,0)");
+  cx.fillStyle = sun;
+  cx.fillRect(0,0,W,H);
+
+  cx.fillStyle = "#ffe9b3";
+  cx.textAlign = "center";
+  cx.font = "bold 30px 'Trebuchet MS', Arial, sans-serif";
+  cx.fillText(lang==="es" ? "CERTIFICADO DE VICTORIA" : "CERTIFICATE OF VICTORY", W/2, 150);
+
+  cx.font = "bold 44px 'Trebuchet MS', Arial, sans-serif";
+  wrapText(cx, t.certTitle, W/2, 230, W-160, 50);
+
+  cx.fillStyle = "#3ef7ff";
+  cx.font = "20px 'Trebuchet MS', Arial, sans-serif";
+  cx.fillText(t.certStudentLbl, W/2, 400);
+
+  cx.fillStyle = "#ffffff";
+  cx.font = "bold 46px 'Trebuchet MS', Arial, sans-serif";
+  cx.fillText(playerName, W/2, 460);
+
+  const px0 = W/2 - 3*70;
+  for(let i=0;i<4;i++){
+    const px = px0 + i*140 + 70;
+    const py = 560;
+    const g = cx.createRadialGradient(px,py,4,px,py,44);
+    g.addColorStop(0,"#ffe9b3");
+    g.addColorStop(1,"#ffb84d");
+    cx.fillStyle = g;
+    cx.beginPath();
+    cx.arc(px,py,40,0,Math.PI*2);
+    cx.fill();
+    cx.fillStyle = "#3a1c00";
+    cx.font = "bold 30px Arial";
+    cx.fillText("✦", px, py+10);
+  }
+  cx.fillStyle = "#a9b8dd";
+  cx.font = "16px Arial";
+  cx.fillText(t.powersLabel + " 4/4", W/2, 650);
+
+  cx.fillStyle = "#cfe8ff";
+  cx.font = "18px 'Trebuchet MS', Arial, sans-serif";
+  const refsLine = t.powerRefs.join("   •   ");
+  cx.fillText(refsLine, W/2, 700);
+
+  const reflection = document.getElementById("reflectionArea").value.trim();
+  if(reflection){
+    cx.fillStyle = "#ffe9b3";
+    cx.font = "italic 22px 'Trebuchet MS', Arial, sans-serif";
+    wrapText(cx, "\u201c"+reflection+"\u201d", W/2, 800, W-200, 34);
+  }
+
+  cx.fillStyle = "#6c7aa8";
+  cx.font = "14px Arial";
+  const now = new Date();
+  cx.fillText((t.dateLabel+": "+now.toLocaleDateString(lang==="es"?"es-ES":"en-US")), W/2, H-70);
+  cx.fillText(lang==="es"?"Ascensión a la Luz · El Camino de Isaías 25":"Ascent to the Light · The Path of Isaiah 25", W/2, H-44);
+
+  cx.fillStyle = "#ffe9b3";
+  cx.font = "bold 22px 'Trebuchet MS', Arial, sans-serif";
+  cx.fillText(t.scoreLabel + ": " + computeTotalScore(), W/2, H-110);
+
+  return c;
+}
+function wrapText(cx, text, x, y, maxWidth, lineHeight){
+  const words = text.split(" ");
+  let line = "";
+  let curY = y;
+  for(let i=0;i<words.length;i++){
+    const testLine = line + words[i] + " ";
+    if(cx.measureText(testLine).width > maxWidth && i>0){
+      cx.fillText(line, x, curY);
+      line = words[i] + " ";
+      curY += lineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+  cx.fillText(line, x, curY);
+}
+
+/* ================= SHARE FLOW ================= */
+function isIOS(){
+  const ua = navigator.userAgent || "";
+  const iOSDevice = /iPad|iPhone|iPod/.test(ua);
+  const iPadOS13 = navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+  return iOSDevice || iPadOS13;
+}
+document.getElementById("shareBtn").addEventListener("click", async ()=>{
+  updateScoreDisplay();
+  const certCanvas = buildCertificateCanvas();
+  const dataUrl = certCanvas.toDataURL("image/png");
+
+  if(isIOS()){ showFullscreenShare(dataUrl); return; }
+
+  certCanvas.toBlob(async (blob)=>{
+    if(!blob){ showFullscreenShare(dataUrl); return; }
+    const file = new File([blob], "certificado_isaias25.png", {type:"image/png"});
+    let shared = false;
+    try{
+      if(navigator.canShare && navigator.canShare({files:[file]})){
+        await navigator.share({ files:[file], title: T[lang].certTitle, text: T[lang].certTitle + " - " + playerName });
+        shared = true;
+      }
+    }catch(e){ shared = false; }
+    if(!shared){ showFullscreenShare(dataUrl); }
+  }, "image/png");
+});
+function showFullscreenShare(dataUrl){
+  document.getElementById("shareImg").src = dataUrl;
+  document.getElementById("shareHint").textContent = isIOS() ? T[lang].shareHintIOS : T[lang].shareHintGeneric;
+  document.getElementById("shareFullscreen").classList.remove("hidden");
+}
+document.getElementById("shareCloseBtn").addEventListener("click", ()=>{
+  document.getElementById("shareFullscreen").classList.add("hidden");
+});
+
+/* ================= INIT ================= */
+resizeCanvas();
+updateHudPowers();
+updateAttackButton();
+
+})();
+</script>
+</body>
+</html>

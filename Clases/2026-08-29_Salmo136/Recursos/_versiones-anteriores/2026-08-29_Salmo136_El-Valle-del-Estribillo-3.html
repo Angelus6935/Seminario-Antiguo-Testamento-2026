@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>El Valle del Estribillo</title>
+<style>
+  :root{
+    --mint:#fbbf24;
+    --mint-dark:#b45309;
+    --cyan:#22d3ee;
+    --night:#0a0e17;
+    --night2:#141b2b;
+    --night3:#1a2333;
+    --text:#eaf7f3;
+    --muted:#94a3b8;
+    --danger:#f87171;
+    --gold:#fbbf24;
+    --card:#111827;
+    --border: rgba(251,191,36,0.28);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: radial-gradient(circle at 20% 0%, #163062 0%, var(--night) 55%, #060a17 100%);
+    color:var(--text);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    overflow:hidden;
+  }
+  #app{
+    width:100%;
+    max-width:480px;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    padding:14px 14px 18px;
+    position:relative;
+  }
+  .screen{ display:none; flex-direction:column; gap:14px; animation: fadeIn .4s ease; }
+  .screen.active{ display:flex; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+
+  h1{
+    font-size:1.4rem;
+    text-align:center;
+    margin:4px 0 0;
+    background:linear-gradient(90deg,var(--mint),var(--cyan));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    letter-spacing:0.5px;
+  }
+  .subtitle{ text-align:center; color:var(--muted); font-size:0.82rem; margin-top:-8px;}
+  .logo-orb{
+    width:70px; height:70px; margin:4px auto 0;
+    border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, var(--cyan), var(--mint) 60%, var(--night3) 100%);
+    box-shadow: 0 0 30px rgba(251,191,36,0.5), inset 0 0 20px rgba(0,0,0,0.3);
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.8rem;
+  }
+  .card{
+    background: linear-gradient(160deg, var(--card), var(--night2));
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:14px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+  }
+  label{ font-size:0.8rem; color:var(--muted); display:block; margin-bottom:6px; }
+  input[type=text], textarea{
+    width:100%;
+    background:var(--night3);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:12px;
+    color:var(--text);
+    font-size:1rem;
+    outline:none;
+  }
+  textarea{ resize:vertical; min-height:76px; font-family:inherit; }
+  input[type=text]:focus, textarea:focus{ border-color:var(--cyan); box-shadow:0 0 0 3px rgba(56,224,216,0.15); }
+
+  .lang-row{ display:flex; gap:10px; }
+  .lang-btn{
+    flex:1; padding:12px 8px; border-radius:10px; border:1px solid var(--border);
+    background:var(--night3); color:var(--muted); font-weight:600; text-align:center;
+    cursor:pointer; transition:.2s;
+  }
+  .lang-btn.selected{
+    background:linear-gradient(135deg,var(--mint),var(--cyan)); color:#062018;
+    border-color:transparent; box-shadow:0 4px 14px rgba(251,191,36,0.35);
+  }
+
+  .btn{
+    display:block; width:100%; padding:14px; border:none; border-radius:12px;
+    font-size:1rem; font-weight:700; cursor:pointer;
+    background:linear-gradient(135deg,var(--mint),var(--cyan)); color:#062018;
+    box-shadow:0 6px 18px rgba(251,191,36,0.3);
+    transition:transform .15s ease;
+  }
+  .btn:active{ transform:scale(0.97); }
+  .btn.secondary{ background:var(--night3); color:var(--text); border:1px solid var(--border); box-shadow:none; }
+  .whatsapp-btn{ background:linear-gradient(135deg,#25D366,#128C7E); color:#fff; }
+
+  .instructions{ font-size:0.82rem; color:var(--muted); line-height:1.5; }
+  .instructions b{ color:var(--text); }
+
+  /* ===== GAME SCREEN ===== */
+  #screen-game{ padding:0; gap:0; position:relative; }
+  #game-wrap{
+    position:relative;
+    width:100%;
+    aspect-ratio: 2 / 3;
+    border-radius:16px;
+    overflow:hidden;
+    border:1px solid var(--border);
+    box-shadow:0 8px 26px rgba(0,0,0,0.4);
+    background:#0b1229;
+  }
+  canvas{ width:100%; height:100%; display:block; touch-action:none; }
+
+  #hud-top{
+    position:absolute; top:8px; left:8px; right:8px;
+    display:flex; justify-content:space-between; align-items:flex-start;
+    pointer-events:none; z-index:5;
+  }
+  .hud-pill{
+    background:rgba(6,10,22,0.65);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:5px 12px;
+    font-size:0.72rem;
+    font-weight:700;
+    display:flex; align-items:center; gap:6px;
+    backdrop-filter: blur(3px);
+  }
+  #power-icons{ display:flex; gap:4px; }
+  .power-icon{ opacity:0.25; font-size:0.95rem; }
+  .power-icon.active{ opacity:1; filter: drop-shadow(0 0 4px rgba(251,191,36,0.8)); }
+
+  #controls{
+    position:absolute; bottom:10px; left:8px; right:8px;
+    display:flex; justify-content:space-between; align-items:flex-end;
+    z-index:5;
+  }
+  .dpad{ display:flex; gap:8px; }
+  .ctrl-btn{
+    width:56px; height:56px; border-radius:16px;
+    background:rgba(24,37,82,0.75);
+    border:1px solid var(--border);
+    color:var(--text);
+    font-size:1.4rem;
+    display:flex; align-items:center; justify-content:center;
+    backdrop-filter: blur(3px);
+  }
+  .action-btns{ display:flex; flex-direction:column; gap:8px; align-items:flex-end; }
+  .ctrl-btn.jump{ width:64px; height:64px; background:rgba(251,191,36,0.25); border-color:var(--mint); }
+  .ctrl-btn.fire{ width:52px; height:52px; background:rgba(255,157,77,0.25); border-color:var(--gold); display:none; }
+  .ctrl-btn.active-touch{ transform:scale(0.9); background:rgba(56,224,216,0.35); }
+
+  #toast{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    background:rgba(6,10,22,0.85); border:1px solid var(--cyan);
+    border-radius:14px; padding:14px 18px; max-width:82%;
+    text-align:center; font-size:0.85rem; line-height:1.5;
+    z-index:8; display:none;
+  }
+
+  /* ===== TRIVIA MODAL ===== */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(3,6,16,0.8);
+    display:none; align-items:center; justify-content:center; z-index:50; padding:20px;
+    backdrop-filter: blur(2px);
+  }
+  .modal-overlay.active{ display:flex; }
+  .modal-card{
+    width:100%; max-width:420px;
+    background:linear-gradient(160deg,#132049,#0c1533);
+    border:1px solid var(--cyan); border-radius:18px; padding:20px;
+    box-shadow:0 0 40px rgba(56,224,216,0.25);
+  }
+  .modal-tag{ color:var(--gold); font-size:0.75rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;}
+  .modal-power{ color:var(--cyan); font-size:0.72rem; font-weight:600; margin-bottom:10px; }
+  .modal-q{ font-size:1rem; margin-bottom:14px; line-height:1.4; }
+  .option{
+    display:block; width:100%; text-align:left; background:var(--night3);
+    border:1px solid var(--border); color:var(--text); padding:13px 14px;
+    border-radius:12px; margin-bottom:10px; cursor:pointer; font-size:0.92rem; line-height:1.4;
+  }
+  .option:disabled{ opacity:0.5; }
+  .feedback-box{
+    border-radius:12px; padding:12px 14px; font-size:0.88rem; line-height:1.4;
+    border:1px solid var(--border); background:var(--night3);
+  }
+  .feedback-box.good{ border-color:var(--mint); }
+  .feedback-box.bad{ border-color:var(--danger); }
+
+  /* ===== FINAL ===== */
+  .final-score{
+    text-align:center; font-size:2.2rem; font-weight:800;
+    background:linear-gradient(90deg,var(--mint),var(--cyan));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .final-rank{ text-align:center; font-size:1.05rem; font-weight:700; color:var(--gold); margin-top:-6px;}
+  .anchor-verse{
+    text-align:center; font-style:italic; color:var(--muted); font-size:0.85rem;
+    border-top:1px solid var(--border); padding-top:10px; margin-top:4px;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- START -->
+  <div class="screen active" id="screen-start">
+    <div class="logo-orb">🌄</div>
+    <h1 id="t-title">EL VALLE DEL ESTRIBILLO</h1>
+    <p class="subtitle" id="t-subtitle">Luz Paso a Paso &middot; Parte 2 &middot; Salmo 136</p>
+
+    <div class="card">
+      <label id="t-name-label">Escribe tu nombre para comenzar</label>
+      <input type="text" id="input-name" maxlength="30" placeholder="Tu nombre...">
+    </div>
+
+    <div class="card">
+      <label id="t-char-label">Elige tu personaje</label>
+      <div class="lang-row">
+        <div class="lang-btn selected" id="btn-char-angelus" onclick="setCharacter('angelus')">Angelus</div>
+        <div class="lang-btn" id="btn-char-sakura" onclick="setCharacter('sakura')">Sakura</div>
+      </div>
+    </div>
+
+    <div class="card instructions" id="t-instructions"></div>
+
+    <button class="btn" id="btn-start" onclick="startGame()">Comenzar la travesia</button>
+  </div>
+
+  <!-- GAME -->
+  <div class="screen" id="screen-game">
+    <div id="game-wrap">
+      <canvas id="game-canvas" width="480" height="720"></canvas>
+      <div id="hud-top">
+        <div class="hud-pill">🏞️ <span id="hud-progress">0%</span></div>
+        <div class="hud-pill" id="power-icons">
+          <span class="power-icon" id="icon-super">💪</span>
+          <span class="power-icon" id="icon-fire">✨</span>
+          <span class="power-icon" id="icon-shield">🛡️</span>
+          <span class="power-icon" id="icon-fly">🪽</span>
+        </div>
+      </div>
+      <div id="toast"></div>
+      <div id="controls">
+        <div class="dpad">
+          <div class="ctrl-btn" id="btn-left">◀</div>
+          <div class="ctrl-btn" id="btn-right">▶</div>
+        </div>
+        <div class="action-btns">
+          <div class="ctrl-btn fire" id="btn-fire">✨</div>
+          <div class="ctrl-btn jump" id="btn-jump">⬆</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRIVIA MODAL -->
+  <div class="modal-overlay" id="trivia-modal">
+    <div class="modal-card">
+      <div class="modal-tag" id="trivia-tag">📜 Pergamino Sagrado</div>
+      <div class="modal-power" id="trivia-power"></div>
+      <p class="modal-q" id="trivia-question"></p>
+      <div id="trivia-options"></div>
+      <div class="feedback-box" id="trivia-feedback" style="display:none; margin-top:10px;"></div>
+      <button class="btn" id="btn-trivia-continue" style="display:none; margin-top:12px;" onclick="closeTrivia()">Continuar</button>
+    </div>
+  </div>
+
+  <!-- EPILOGO / REFLEXIONES -->
+  <div class="screen" id="screen-epilogue">
+    <div class="logo-orb">🕊️</div>
+    <h1 id="t-epilogue-title">Escribiendo tu propio estribillo</h1>
+    <p class="subtitle">Salmo 136:26 &mdash; "Alabad al Dios de los cielos, porque para siempre es su misericordia."</p>
+
+    <div class="card">
+      <label>1. Un momento donde sentiste la ayuda, consuelo o proteccion de Dios:</label>
+      <textarea id="refl1" placeholder="Escribe aqui..."></textarea>
+    </div>
+    <div class="card">
+      <label>2. Que dirias despues de recordar ese momento? ("...porque para siempre es su misericordia")</label>
+      <textarea id="refl2" placeholder="Escribe aqui..."></textarea>
+    </div>
+    <div class="card">
+      <label>3. Con quien vas a compartir esta experiencia esta semana?</label>
+      <textarea id="refl3" placeholder="Escribe aqui..."></textarea>
+    </div>
+
+    <button class="btn" id="btn-reveal" onclick="revealResult()">Ver mi Resultado</button>
+  </div>
+
+  <!-- FINAL / RESULTADO -->
+  <div class="screen" id="screen-final">
+    <div class="card" id="result-card" style="text-align:center; background:linear-gradient(160deg,#1a1030,#0d1424 60%); border-color:rgba(167,139,250,0.5);">
+      <p style="margin:0; color:var(--muted); font-size:0.72rem; letter-spacing:2px;">TU ESTRIBILLO PERSONAL</p>
+      <p style="margin:4px 0 10px 0; font-size:1.2rem; font-weight:800;" id="final-name-label"></p>
+      <div class="final-score" id="final-score">0</div>
+      <p style="margin:0 0 14px 0; color:var(--muted); font-size:0.72rem; letter-spacing:2px;">PUNTOS DE MISERICORDIA</p>
+      <div id="final-reflections" style="text-align:left;"></div>
+      <div class="anchor-verse" id="final-verse"></div>
+    </div>
+    <button class="btn whatsapp-btn" id="btn-whatsapp" onclick="sendWhatsapp()">📲 Compartir por WhatsApp</button>
+    <button class="btn secondary" id="btn-screenshot" onclick="screenshotMode()">📸 Modo Captura (Certificado)</button>
+    <button class="btn secondary" onclick="restartGame()" id="btn-restart">Jugar de nuevo</button>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   CONFIG
+============================================================ */
+const WHATSAPP_NUMBER = "5491100000000"; // mismo numero que juegos anteriores - reemplazar si corresponde
+
+/* ============================================================
+   AUDIO (Web Audio API puro, sin dependencias)
+============================================================ */
+let audioCtx = null;
+function ensureAudio(){
+  if(!audioCtx){ try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){} }
+  if(audioCtx && audioCtx.state === 'suspended'){ audioCtx.resume(); }
+}
+function playTone(freq, dur, type='sine', vol=0.08, delay=0){
+  if(!audioCtx) return;
+  const t0 = audioCtx.currentTime + delay;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, t0);
+  gain.gain.setValueAtTime(0, t0);
+  gain.gain.linearRampToValueAtTime(vol, t0 + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(t0); osc.stop(t0 + dur + 0.05);
+}
+function sfxClick(){ ensureAudio(); playTone(520,0.08,'sine',0.06); }
+function sfxJump(){ ensureAudio(); playTone(420,0.12,'square',0.05); playTone(620,0.1,'square',0.04,0.06); }
+function sfxStomp(){ ensureAudio(); playTone(180,0.1,'square',0.06); }
+function sfxFire(){ ensureAudio(); playTone(700,0.08,'sawtooth',0.05); }
+function sfxGood(){ ensureAudio(); playTone(440,0.15,'sine',0.07); playTone(660,0.2,'sine',0.07,0.1); playTone(880,0.25,'sine',0.06,0.2); }
+function sfxBad(){ ensureAudio(); playTone(220,0.25,'sawtooth',0.05); playTone(160,0.3,'sawtooth',0.05,0.1); }
+function sfxPower(){ ensureAudio(); playTone(500,0.1,'triangle',0.07); playTone(750,0.12,'triangle',0.07,0.08); playTone(1000,0.18,'triangle',0.06,0.16); }
+function sfxHit(){ ensureAudio(); playTone(140,0.2,'sawtooth',0.06); }
+function sfxWin(){ ensureAudio(); [523,659,784,1047].forEach((f,i)=>playTone(f,0.3,'sine',0.07,i*0.14)); }
+
+/* ============================================================
+   TEXTOS
+============================================================ */
+const UI = {
+  title:"EL VALLE DEL ESTRIBILLO", subtitle:"Luz Paso a Paso · Parte 2 · Salmo 136",
+  nameLabel:"Escribe tu nombre para comenzar",
+  charLabel:"Elige tu personaje",
+  start:"Comenzar la travesia",
+  instructions:"📜 Toca los manuscritos y responde bien la trivia para ganar poderes.<br>⬆ Salta sobre las sombras para dispersarlas.<br>✨ Con el Rayo de Luz, dispáraselas de lejos.<br>🛡️ Con el Brillo Protector, chocá contra ellas sin miedo.<br>🪽 Con las Alas de Misericordia, cruza el Canon final y llega al Arco.",
+  fillNameAlert:"Por favor escribe tu nombre para continuar.",
+  reflectionAlert:"Escribe al menos una reflexion antes de continuar.",
+  triviaTag:"📜 Pergamino Sagrado",
+  triviaCorrect:"Correcto. La luz avanza contigo 🌟",
+  triviaWrong:"No es esa, pero la travesia continua. Podes volver a intentarlo tocando el manuscrito otra vez.",
+  powerNames:["Fortaleza 💪","Rayo de Luz ✨","Brillo Protector 🛡️","Alas de Misericordia 🪽"],
+  toastStart:"Usa las flechas o botones para moverte y saltar",
+  verse:"\"Porque para siempre es su misericordia\" — Salmo 136",
+};
+function T(key){ return UI[key]; }
+
+/* ============================================================
+   TRIVIA (solo del PPTX de la clase, una por manuscrito)
+============================================================ */
+const TRIVIAS = [
+  { ref:"Salmo 136:1-3 · Elder Holland",
+    q:"Segun el Elder Jeffrey R. Holland, como es la misericordia de Dios?",
+    opts:["Condicional a nuestro esfuerzo","Inagotable","Limitada a los momentos dificiles"],
+    correct:1 },
+  { ref:"Salmo 136:4-9",
+    q:"Segun el Salmo 136:4-9, cual es la clave para confiar en la ayuda de Dios hoy?",
+    opts:["Orar sin cesar","Recordar lo que Dios ya hizo por nosotros en el pasado","Guardar todos los mandamientos"],
+    correct:1 },
+  { ref:"Salmo 136:23",
+    q:"Segun Salmo 136:23, de que se acordo Dios de nosotros?",
+    opts:["De nuestros aciertos y victorias","De nuestro abatimiento","De nuestro esfuerzo constante"],
+    correct:1 },
+  { ref:"Salmo 136:26",
+    q:"Cuantas veces se repite \"porque para siempre es su misericordia\" en el Salmo 136?",
+    opts:["19 veces","33 veces","26 veces"],
+    correct:2 },
+];
+
+/* ============================================================
+   NARRATIVA (solo de la historia, mostrada como mensajes breves)
+============================================================ */
+const NARRATIVE_BEATS = [
+  {x:80,   shown:false, text:"Tras la cima de la montana, Angelus y Sakura descienden a un valle denso y rocoso. El camino de la vida no es una sola cima."},
+  {x:900,  shown:false, text:"\"He fallado demasiadas veces. Temo que hayamos agotado la paciencia del Cielo...\""},
+  {x:1900, shown:false, text:"\"Escucha esto: El es el que se acordo de nosotros en nuestro abatimiento. Su mirada esta puesta en nosotros justo aqui.\""},
+  {x:2900, shown:false, text:"Un arco de piedra bloquea el canon. No hay juicios en el, solo una promesa de segundas oportunidades."},
+  {x:3700, shown:false, text:"Las sombras susurran una ultima mentira: \"Su paciencia tiene un limite\". Pero el estribillo ya resuena mas fuerte que ellas."},
+  {x:4500, shown:false, text:"La pesadez se disolvio por completo. Ya no le temen a la noche: Su misericordia estara alli para siempre."},
+];
+
+/* ============================================================
+   NIVEL (mundo) — un solo escenario largo
+============================================================ */
+const WORLD_W = 4800, WORLD_H = 720;
+const GROUND_Y = 620;
+
+// Plataformas de suelo (segmentos) y flotantes
+const PLATFORMS = [
+  {x:0,    y:GROUND_Y, w:640,  h:100},
+  {x:720,  y:GROUND_Y, w:560,  h:100},
+  {x:1360, y:GROUND_Y, w:640,  h:100},
+  {x:2080, y:GROUND_Y, w:520,  h:100},
+  {x:2680, y:GROUND_Y, w:640,  h:100},
+  {x:3400, y:GROUND_Y, w:600,  h:100},
+  // gran abismo final (el Canon): 4000 - 4220, requiere las Alas de Misericordia
+  {x:4220, y:GROUND_Y, w:580,  h:100},
+  // plataformas flotantes (todas a una altura alcanzable de un solo salto)
+  {x:280,  y:510, w:150, h:24},
+  {x:950,  y:480, w:160, h:24},
+  {x:1620, y:500, w:150, h:24},
+  {x:2150, y:510, w:140, h:24},
+  {x:2750, y:490, w:150, h:24},
+  {x:3050, y:480, w:150, h:24},
+  {x:3620, y:510, w:150, h:24},
+  {x:4350, y:520, w:150, h:24},
+];
+
+// Manuscritos de luz, en orden de progresion (todos alcanzables con un salto simple)
+const MANUSCRIPTS = [
+  {x:400,  y:GROUND_Y-40, triviaIndex:0, collected:false}, // en el suelo (Valle Helado)
+  {x:1010, y:440,         triviaIndex:1, collected:false}, // sobre plataforma (El Rescate)
+  {x:2260, y:GROUND_Y-40, triviaIndex:2, collected:false}, // en el suelo (El Portal)
+  {x:3110, y:440,         triviaIndex:3, collected:false}, // sobre plataforma (El Canon)
+];
+
+// Sombras de Duda (patrullan entre minX y maxX sobre su plataforma)
+const ENEMY_TEMPLATES = [
+  {x:820,  y:GROUND_Y-32, minX:760,  maxX:1100, speed:60},
+  {x:1450, y:GROUND_Y-32, minX:1400, maxX:1850, speed:70},
+  {x:1900, y:GROUND_Y-32, minX:1850, maxX:2280, speed:65},
+  {x:2320, y:GROUND_Y-32, minX:2130, maxX:2500, speed:75},
+  {x:2760, y:GROUND_Y-32, minX:2730, maxX:3150, speed:70},
+  {x:3480, y:GROUND_Y-32, minX:3450, maxX:3900, speed:80},
+  {x:3650, y:GROUND_Y-32, minX:3450, maxX:3900, speed:65},
+  {x:4300, y:GROUND_Y-32, minX:4260, maxX:4700, speed:75},
+];
+
+const ENEMY_EMOJIS = ['👻','💩','👹','💀','🌫️'];
+const GOAL = {x:4680, y:GROUND_Y-120, w:60, h:120};
+
+const FINAL_GAP = {x:4000, x2:4220}; // el Canon: solo se cruza con Alas de Misericordia
+
+/* ============================================================
+   ESTADO GLOBAL
+============================================================ */
+let state = { name:"", character:"angelus" };
+
+let game = null; // se crea al iniciar partida
+
+function newGameState(){
+  return {
+    running:false,
+    camX:0,
+    power:0, // 0 normal,1 fortaleza,2 rayo de luz,3 brillo protector,4 alas
+    player:{
+      x:60, y:GROUND_Y-40, vx:0, vy:0,
+      w:30, h:40, onGround:false, facing:1,
+      invuln:0, flying:false,
+    },
+    manuscripts: MANUSCRIPTS.map(m=>({...m})),
+    enemies: ENEMY_TEMPLATES.map(e=>({...e, alive:true, dir: -1, emoji: ENEMY_EMOJIS[Math.floor(Math.random()*ENEMY_EMOJIS.length)]})),
+    fireballs: [],
+    narrativeBeats: NARRATIVE_BEATS.map(b=>({...b})),
+    keys:{left:false,right:false,jump:false,fire:false},
+    triviaOpen:false,
+    activeManuscript:null,
+
+    wrongAttempts:0,
+    correctFirstTry:0,
+    enemiesDefeated:0,
+    triviaCooldownUntil:0,
+    finished:false,
+    lastTime:0,
+  };
+}
+
+/* ============================================================
+   HELPERS DE TEXTO / PERSONAJE
+============================================================ */
+function setCharacter(ch){
+  sfxClick();
+  state.character = ch;
+  document.getElementById('btn-char-angelus').classList.toggle('selected', ch==='angelus');
+  document.getElementById('btn-char-sakura').classList.toggle('selected', ch==='sakura');
+}
+
+function applyStaticTexts(){
+  document.getElementById('t-title').textContent = T('title');
+  document.getElementById('t-subtitle').textContent = T('subtitle');
+  document.getElementById('t-name-label').textContent = T('nameLabel');
+  document.getElementById('t-char-label').textContent = T('charLabel');
+  document.getElementById('btn-start').textContent = T('start');
+  document.getElementById('t-instructions').innerHTML = T('instructions');
+  document.getElementById('input-name').placeholder = "Tu nombre...";
+  document.getElementById('btn-whatsapp').textContent = "📲 Compartir por WhatsApp";
+  document.getElementById('trivia-tag').textContent = T('triviaTag');
+}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ============================================================
+   INICIO
+============================================================ */
+function startGame(){
+  const nameInput = document.getElementById('input-name');
+  const name = nameInput.value.trim();
+  if(!name){ alert(T('fillNameAlert')); nameInput.focus(); return; }
+  ensureAudio();
+  sfxClick();
+  state.name = name;
+
+  game = newGameState();
+  showScreen('screen-game');
+  updatePowerIcons();
+  showToast(T('toastStart'), 2200);
+
+  game.running = true;
+  game.lastTime = performance.now();
+  requestAnimationFrame(loop);
+}
+
+function showToast(msg, ms){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.display = 'block';
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>{ el.style.display='none'; }, ms);
+}
+
+/* ============================================================
+   CONTROLES (teclado + táctil)
+============================================================ */
+function bindControls(){
+  window.addEventListener('keydown', e=>{
+    if(!game) return;
+    if(e.code==='ArrowLeft' || e.code==='KeyA') game.keys.left = true;
+    if(e.code==='ArrowRight'|| e.code==='KeyD') game.keys.right = true;
+    if(e.code==='Space' || e.code==='ArrowUp' || e.code==='KeyW') game.keys.jump = true;
+    if(e.code==='KeyF') game.keys.fire = true;
+  });
+  window.addEventListener('keyup', e=>{
+    if(!game) return;
+    if(e.code==='ArrowLeft' || e.code==='KeyA') game.keys.left = false;
+    if(e.code==='ArrowRight'|| e.code==='KeyD') game.keys.right = false;
+    if(e.code==='Space' || e.code==='ArrowUp' || e.code==='KeyW') game.keys.jump = false;
+    if(e.code==='KeyF') game.keys.fire = false;
+  });
+
+  const bindHold = (id, onDown, onUp)=>{
+    const el = document.getElementById(id);
+    const down = ev=>{ ev.preventDefault(); el.classList.add('active-touch'); onDown(); };
+    const up = ev=>{ if(ev)ev.preventDefault(); el.classList.remove('active-touch'); onUp(); };
+    el.addEventListener('touchstart', down, {passive:false});
+    el.addEventListener('touchend', up, {passive:false});
+    el.addEventListener('touchcancel', up, {passive:false});
+    el.addEventListener('mousedown', down);
+    el.addEventListener('mouseup', up);
+    el.addEventListener('mouseleave', up);
+  };
+  bindHold('btn-left',  ()=> game.keys.left = true,  ()=> game.keys.left = false);
+  bindHold('btn-right', ()=> game.keys.right = true, ()=> game.keys.right = false);
+  bindHold('btn-jump',  ()=> game.keys.jump = true,  ()=> game.keys.jump = false);
+  bindHold('btn-fire',  ()=> throwFireball(), ()=>{});
+}
+
+/* ============================================================
+   FÍSICA / COLISIONES
+============================================================ */
+const GRAVITY = 1400;
+const MOVE_SPEED = 200;
+const JUMP_VELOCITY = -680;
+const FLY_LIFT = -520;
+const FLY_GRAVITY = 420;
+const SIZE_SMALL = {w:30, h:40};
+const SIZE_BIG   = {w:34, h:56};
+
+// Ajusta el tamaño físico y visual del jugador según su poder,
+// manteniendo los pies en el mismo lugar (no lo hunde ni lo hace flotar).
+function applyPlayerSize(){
+  const p = game.player;
+  const target = game.power >= 1 ? SIZE_BIG : SIZE_SMALL;
+  if(p.w !== target.w || p.h !== target.h){
+    const feetY = p.y + p.h;
+    p.w = target.w;
+    p.h = target.h;
+    p.y = feetY - p.h;
+  }
+}
+
+function aabbOverlap(a,b){
+  return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
+}
+
+function playerBox(p){
+  return {x:p.x, y:p.y, w:p.w, h:p.h};
+}
+
+function updatePlayerPhysics(dt){
+  const p = game.player;
+  const flying = game.power >= 4 && game.keys.jump && p.flying;
+
+  // horizontal
+  let ax = 0;
+  if(game.keys.left){ ax = -1; p.facing = -1; }
+  if(game.keys.right){ ax = 1; p.facing = 1; }
+  p.vx = ax * MOVE_SPEED;
+
+  // vertical / gravedad
+  if(game.power >= 4 && p.flying){
+    p.vy += (game.keys.jump ? FLY_LIFT*dt*3 : FLY_GRAVITY*dt);
+    p.vy = Math.max(-260, Math.min(320, p.vy));
+  } else {
+    p.vy += GRAVITY * dt;
+    if(game.keys.jump && p.onGround){
+      p.vy = JUMP_VELOCITY;
+      p.onGround = false;
+      sfxJump();
+      if(game.power >= 4) p.flying = true; // despega en modo vuelo si tiene alas
+    }
+  }
+
+  // mover en X con colisión
+  p.x += p.vx * dt;
+  p.x = Math.max(0, Math.min(WORLD_W - p.w, p.x));
+  resolveCollisions(p, 'x');
+
+  // mover en Y con colisión
+  p.y += p.vy * dt;
+  p.onGround = false;
+  resolveCollisions(p, 'y');
+
+  if(p.onGround) p.flying = false;
+
+  // caída al vacío -> reubicar en última plataforma segura (sin penalización dura)
+  if(p.y > WORLD_H + 60){
+    p.x = Math.max(0, p.x - 220);
+    p.y = 0;
+    p.vy = 0;
+  }
+
+  if(p.invuln > 0) p.invuln -= dt;
+}
+
+function resolveCollisions(p, axis){
+  for(const plat of PLATFORMS){
+    if(!aabbOverlap(playerBox(p), plat)) continue;
+    if(axis==='x'){
+      if(p.vx > 0) p.x = plat.x - p.w;
+      else if(p.vx < 0) p.x = plat.x + plat.w;
+    } else {
+      if(p.vy > 0){ p.y = plat.y - p.h; p.vy = 0; p.onGround = true; }
+      else if(p.vy < 0){ p.y = plat.y + plat.h; p.vy = 0; }
+    }
+  }
+}
+
+/* ============================================================
+   HONGOS / TRIVIA
+============================================================ */
+function updateManuscripts(){
+  const p = game.player;
+  for(const m of game.manuscripts){
+    if(m.collected) continue;
+    const box = {x:m.x-18,y:m.y-18,w:36,h:36};
+    if(aabbOverlap(playerBox(p), box) && !game.triviaOpen && performance.now() > game.triviaCooldownUntil){
+      openTrivia(m);
+      break;
+    }
+  }
+}
+
+function openTrivia(manuscript){
+  game.triviaOpen = true;
+  game.activeManuscript = manuscript;
+  const trivia = TRIVIAS[manuscript.triviaIndex];
+
+  document.getElementById('trivia-tag').textContent = T('triviaTag');
+  document.getElementById('trivia-power').textContent = `${trivia.ref} · ${T('powerNames')[manuscript.triviaIndex]}`;
+  document.getElementById('trivia-question').textContent = trivia.q;
+  document.getElementById('trivia-feedback').style.display = 'none';
+  document.getElementById('btn-trivia-continue').style.display = 'none';
+
+  const optsWrap = document.getElementById('trivia-options');
+  optsWrap.innerHTML = '';
+  trivia.opts.forEach((text, idx)=>{
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.textContent = text;
+    btn.onclick = ()=> answerTrivia(idx, trivia, manuscript);
+    optsWrap.appendChild(btn);
+  });
+
+  document.getElementById('trivia-modal').classList.add('active');
+}
+
+function answerTrivia(idx, trivia, manuscript){
+  document.querySelectorAll('#trivia-options .option').forEach(b=> b.disabled = true);
+  const correct = idx === trivia.correct;
+  const fb = document.getElementById('trivia-feedback');
+  fb.style.display = 'block';
+
+  if(correct){
+    sfxPower();
+    manuscript.collected = true;
+    game.power = Math.max(game.power, manuscript.triviaIndex+1);
+    game.correctFirstTry += 1;
+    applyPlayerSize();
+    fb.className = 'feedback-box good';
+    fb.textContent = T('triviaCorrect');
+    updatePowerIcons();
+  } else {
+    sfxBad();
+    game.wrongAttempts += 1;
+    fb.className = 'feedback-box bad';
+    fb.textContent = T('triviaWrong');
+  }
+  document.getElementById('btn-trivia-continue').style.display = 'block';
+}
+
+function closeTrivia(){
+  sfxClick();
+  document.getElementById('trivia-modal').classList.remove('active');
+  game.triviaOpen = false;
+  game.triviaCooldownUntil = performance.now() + 900;
+}
+
+/* ============================================================
+   ENEMIGOS
+============================================================ */
+function updateEnemies(dt){
+  const p = game.player;
+  for(const e of game.enemies){
+    if(!e.alive) continue;
+    e.x += e.dir * e.speed * dt;
+    if(e.x < e.minX){ e.x = e.minX; e.dir = 1; }
+    if(e.x > e.maxX){ e.x = e.maxX; e.dir = -1; }
+
+    const eBox = {x:e.x-16, y:e.y-16, w:32, h:32};
+    if(!aabbOverlap(playerBox(p), eBox)) continue;
+
+    const stomping = p.vy > 40 && (p.y + p.h) - e.y < 26;
+    const hasShield = game.power >= 3;
+
+    if(stomping || hasShield){
+      defeatEnemy(e);
+      if(stomping){ p.vy = JUMP_VELOCITY*0.55; }
+    } else if(p.invuln <= 0){
+      sfxHit();
+      if(navigator.vibrate){ navigator.vibrate(80); }
+      p.invuln = 1.2;
+      p.vx = -p.facing*180;
+      p.x = Math.max(0, p.x - p.facing*24);
+    }
+  }
+
+  // colisión de bolas de fuego con enemigos
+  for(const f of game.fireballs){
+    if(!f.alive) continue;
+    for(const e of game.enemies){
+      if(!e.alive) continue;
+      const eBox = {x:e.x-16, y:e.y-16, w:32, h:32};
+      const fBox = {x:f.x-6, y:f.y-6, w:12, h:12};
+      if(aabbOverlap(fBox, eBox)){
+        defeatEnemy(e);
+        f.alive = false;
+      }
+    }
+  }
+}
+
+function defeatEnemy(e){
+  if(!e.alive) return;
+  e.alive = false;
+  game.enemiesDefeated += 1;
+  sfxStomp();
+}
+
+function throwFireball(){
+  if(!game || game.power < 2 || game.triviaOpen) return;
+  sfxFire();
+  const p = game.player;
+  game.fireballs.push({x:p.x + p.w/2, y:p.y + p.h/2, vx: p.facing*420, alive:true});
+}
+
+function updateFireballs(dt){
+  for(const f of game.fireballs){
+    if(!f.alive) continue;
+    f.x += f.vx * dt;
+    if(f.x < game.camX-40 || f.x > game.camX+520) f.alive = false;
+  }
+  game.fireballs = game.fireballs.filter(f=>f.alive);
+}
+
+/* ============================================================
+   META
+============================================================ */
+function checkGoal(){
+  const p = game.player;
+  if(aabbOverlap(playerBox(p), GOAL)){
+    finishGame();
+  }
+}
+
+function finishGame(){
+  if(game.finished) return;
+  game.finished = true;
+  game.running = false;
+  sfxWin();
+  setTimeout(()=> showScreen('screen-epilogue'), 400);
+}
+
+/* ============================================================
+   RENDER
+============================================================ */
+const canvas = document.getElementById('game-canvas');
+const ctx = canvas.getContext('2d');
+const VIEW_W = 480, VIEW_H = 720;
+
+function draw(){
+  ctx.clearRect(0,0,VIEW_W,VIEW_H);
+
+  // fondo cielo con degradado calmante
+  const sky = ctx.createLinearGradient(0,0,0,VIEW_H);
+  sky.addColorStop(0,'#1a1230'); sky.addColorStop(0.55,'#0d1424'); sky.addColorStop(1,'#060810');
+  ctx.fillStyle = sky; ctx.fillRect(0,0,VIEW_W,VIEW_H);
+
+  ctx.save();
+  ctx.translate(-game.camX, 0);
+
+  // estrellas/decoración simple (paralaje leve)
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  for(let i=0;i<60;i++){
+    const sx = (i*137) % WORLD_W;
+    const sy = (i*89) % 300;
+    ctx.fillRect(sx, sy, 2, 2);
+  }
+
+  // plataformas
+  for(const plat of PLATFORMS){
+    const grad = ctx.createLinearGradient(0,plat.y,0,plat.y+plat.h);
+    grad.addColorStop(0,'#8b6f47'); grad.addColorStop(1,'#3a2b1a');
+    ctx.fillStyle = grad;
+    ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
+    ctx.fillStyle = 'rgba(251,191,36,0.55)';
+    ctx.fillRect(plat.x, plat.y, plat.w, 6);
+  }
+
+  // abismo final (marca visual)
+  ctx.fillStyle = 'rgba(255,107,107,0.12)';
+  ctx.fillRect(FINAL_GAP.x, 0, FINAL_GAP.x2-FINAL_GAP.x, VIEW_H);
+
+  // hongos
+  for(const m of game.manuscripts){
+    if(m.collected) continue;
+    drawManuscript(m.x, m.y);
+  }
+
+  // enemigos
+  for(const e of game.enemies){
+    if(!e.alive) continue;
+    drawEnemy(e.x, e.y, e.emoji);
+  }
+
+  // bolas de fuego
+  ctx.fillStyle = '#fef08a';
+  for(const f of game.fireballs){
+    if(!f.alive) continue;
+    ctx.beginPath(); ctx.arc(f.x, f.y, 7, 0, Math.PI*2); ctx.fill();
+  }
+
+  // meta
+  drawGoal();
+
+  // jugador
+  drawPlayer();
+
+  ctx.restore();
+}
+
+function drawManuscript(x,y){
+  ctx.save();
+  ctx.translate(x,y);
+  var bob = Math.sin(performance.now()/300)*3;
+  ctx.translate(0,bob);
+  // halo dorado
+  var rg = ctx.createRadialGradient(0,-6,2,0,-6,26);
+  rg.addColorStop(0,'rgba(255,209,102,0.55)');
+  rg.addColorStop(1,'rgba(255,209,102,0)');
+  ctx.fillStyle = rg;
+  ctx.beginPath(); ctx.arc(0,-6,26,0,Math.PI*2); ctx.fill();
+  // pergamino
+  ctx.fillStyle = '#e7d3a8';
+  ctx.fillRect(-13,-16,26,20);
+  ctx.strokeStyle = '#92400e';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(-13,-16,26,20);
+  ctx.fillStyle = '#92400e';
+  for(let i=0;i<3;i++){ ctx.fillRect(-9, -11+i*5, 18, 1.4); }
+  ctx.restore();
+}
+
+function drawEnemy(x,y,emoji){
+  ctx.save();
+  ctx.translate(x,y);
+  var wob = Math.sin(performance.now()/260 + x)*3;
+  ctx.translate(0,wob);
+  ctx.font = '30px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(emoji || '👻', 0, 2);
+  ctx.restore();
+}
+
+function drawGoal(){
+  ctx.save();
+  var pulse = 0.5 + Math.sin(performance.now()/500)*0.5;
+  var rg = ctx.createRadialGradient(GOAL.x+20, GOAL.y+GOAL.h/2, 4, GOAL.x+20, GOAL.y+GOAL.h/2, 70+pulse*14);
+  rg.addColorStop(0,'rgba(251,191,36,'+(0.5+pulse*0.25)+')');
+  rg.addColorStop(1,'rgba(251,191,36,0)');
+  ctx.fillStyle = rg;
+  ctx.beginPath(); ctx.arc(GOAL.x+20, GOAL.y+GOAL.h/2, 70+pulse*14, 0, Math.PI*2); ctx.fill();
+  // arco de piedra
+  ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 10; ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(GOAL.x, GOAL.y+GOAL.h);
+  ctx.lineTo(GOAL.x, GOAL.y+30);
+  ctx.quadraticCurveTo(GOAL.x, GOAL.y-20, GOAL.x+40, GOAL.y-20);
+  ctx.quadraticCurveTo(GOAL.x+80, GOAL.y-20, GOAL.x+80, GOAL.y+30);
+  ctx.lineTo(GOAL.x+80, GOAL.y+GOAL.h);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(251,191,36,0.9)';
+  ctx.beginPath(); ctx.arc(GOAL.x+40, GOAL.y+10, 10+pulse*3, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function drawPlayer(){
+  const p = game.player;
+  const isSakura = state.character === 'sakura';
+  const emoji = isSakura ? '🏃🏻\u200d♀️' : '🏃🏻\u200d♂️';
+  ctx.save();
+  ctx.translate(p.x + p.w/2, p.y + p.h/2);
+  // el emoji de persona corriendo mira por defecto hacia la izquierda,
+  // asi que se espeja cuando el personaje camina hacia la derecha (facing > 0)
+  if(p.facing > 0) ctx.scale(-1,1);
+
+  if(p.invuln > 0 && Math.floor(p.invuln*12)%2===0){ ctx.restore(); return; }
+
+  // escudo (Brillo Protector)
+  if(game.power >= 3){
+    ctx.strokeStyle = 'rgba(34,211,238,0.8)';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(0,0, p.w*0.95, 0, Math.PI*2); ctx.stroke();
+  }
+  // alas de misericordia
+  if(game.power >= 4){
+    ctx.fillStyle = 'rgba(234,247,243,0.85)';
+    ctx.beginPath(); ctx.ellipse(-p.w*0.7, -4, 12, 7, 0.4, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(p.w*0.7, -4, 12, 7, -0.4, 0, Math.PI*2); ctx.fill();
+  }
+
+  const fontSize = game.power >= 1 ? p.h*1.15 : p.h*0.95;
+  ctx.font = fontSize + 'px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(emoji, 0, 2);
+
+  ctx.restore();
+}
+
+function updatePowerIcons(){
+  document.getElementById('icon-super').classList.toggle('active', game.power>=1);
+  document.getElementById('icon-fire').classList.toggle('active', game.power>=2);
+  document.getElementById('icon-shield').classList.toggle('active', game.power>=3);
+  document.getElementById('icon-fly').classList.toggle('active', game.power>=4);
+  document.getElementById('btn-fire').style.display = game.power>=2 ? 'flex' : 'none';
+}
+
+function updateCamera(){
+  const p = game.player;
+  game.camX = Math.max(0, Math.min(WORLD_W - VIEW_W, p.x - VIEW_W/2));
+}
+
+function updateHUDProgress(){
+  const pct = Math.min(100, Math.round((game.player.x / (GOAL.x)) * 100));
+  document.getElementById('hud-progress').textContent = pct + '%';
+}
+
+function updateNarrativeBeats(){
+  const p = game.player;
+  for(const b of game.narrativeBeats){
+    if(b.shown) continue;
+    if(p.x >= b.x){
+      b.shown = true;
+      showToast(b.text, 4200);
+      break;
+    }
+  }
+}
+
+/* ============================================================
+   GAME LOOP
+============================================================ */
+function loop(ts){
+  if(!game || !game.running) return;
+  const dt = Math.min(0.033, (ts - game.lastTime)/1000);
+  game.lastTime = ts;
+
+  if(!game.triviaOpen){
+    updatePlayerPhysics(dt);
+    updateManuscripts();
+    updateEnemies(dt);
+    updateFireballs(dt);
+    updateCamera();
+    updateHUDProgress();
+    updateNarrativeBeats();
+    checkGoal();
+
+    const p = game.player;
+    if(p.x >= FINAL_GAP.x - p.w && p.x <= FINAL_GAP.x2 && game.power < 4){
+      // sin alas de misericordia no puede cruzar: se bloquea suavemente
+      if(p.x + p.w > FINAL_GAP.x && p.vx > 0){ p.x = FINAL_GAP.x - p.w; }
+    }
+  }
+
+  draw();
+  requestAnimationFrame(loop);
+}
+
+/* ============================================================
+   FINAL / RANK / WHATSAPP
+============================================================ */
+function cleanText(s){
+  return (s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ").trim();
+}
+
+function computeReflectionScore(text){
+  const c = cleanText(text);
+  if(c.length===0) return 0;
+  if(c.length<12) return 8;
+  if(c.length<40) return 16;
+  return 24;
+}
+
+function computeScore(){
+  const gameplayScore = game.correctFirstTry*25 + game.enemiesDefeated*5 - game.wrongAttempts*3;
+  const r1 = document.getElementById('refl1').value;
+  const r2 = document.getElementById('refl2').value;
+  const r3 = document.getElementById('refl3').value;
+  const reflScore = computeReflectionScore(r1) + computeReflectionScore(r2) + computeReflectionScore(r3);
+  return Math.max(26, Math.max(0, gameplayScore) + reflScore); // nunca menos que el numero simbolico del salmo
+}
+
+function revealResult(){
+  sfxClick();
+  const r1 = document.getElementById('refl1').value;
+  const r2 = document.getElementById('refl2').value;
+  const r3 = document.getElementById('refl3').value;
+  if(cleanText(r1).length===0 && cleanText(r2).length===0 && cleanText(r3).length===0){
+    alert(T('reflectionAlert'));
+    return;
+  }
+  const score = computeScore();
+  document.getElementById('final-name-label').textContent = state.name || "Peregrino del Valle";
+  document.getElementById('final-score').textContent = score;
+  document.getElementById('final-verse').textContent = T('verse');
+
+  const wrap = document.getElementById('final-reflections');
+  wrap.innerHTML = '';
+  [r1,r2,r3].forEach(r=>{
+    if(cleanText(r).length===0) return;
+    const div = document.createElement('div');
+    div.style.cssText = 'font-size:0.8rem; color:var(--text); background:rgba(255,255,255,0.05); border-radius:10px; padding:8px 10px; margin:6px 0; line-height:1.4;';
+    div.textContent = '"' + r.trim() + '"';
+    wrap.appendChild(div);
+  });
+
+  showScreen('screen-final');
+}
+
+function sendWhatsapp(){
+  sfxClick();
+  const score = document.getElementById('final-score').textContent;
+  const msg = `Complete El Valle del Estribillo (Salmo 136) y obtuve ${score} puntos de misericordia. Para siempre es su misericordia!`;
+  const encoded = encodeURIComponent(msg);
+  const base = WHATSAPP_NUMBER ? `https://wa.me/${WHATSAPP_NUMBER}` : `https://wa.me/`;
+  window.open(`${base}?text=${encoded}`, '_blank');
+}
+
+function screenshotMode(){
+  document.querySelectorAll('#screen-final .btn').forEach(b=>{
+    if(b.id !== 'btn-restart') b.style.visibility = 'hidden';
+  });
+  alert('Modo captura activo. Toma una captura de pantalla ahora para tu certificado.');
+}
+
+function restartGame(){
+  sfxClick();
+  game = null;
+  document.getElementById('input-name').value = '';
+  document.getElementById('refl1').value = '';
+  document.getElementById('refl2').value = '';
+  document.getElementById('refl3').value = '';
+  document.querySelectorAll('#screen-final .btn').forEach(b=> b.style.visibility = 'visible');
+  document.getElementById('btn-fire').style.display = 'none';
+  applyStaticTexts();
+  showScreen('screen-start');
+}
+
+/* ============================================================
+   INIT
+============================================================ */
+applyStaticTexts();
+bindControls();
+</script>
+</body>
+</html>

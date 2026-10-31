@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Hábitos Saludables Quest</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --primary:#0077cc;
+    --primary-dark:#005fa3;
+    --bg:#f0f4f8;
+    --card:#ffffff;
+    --text:#1c2b36;
+    --muted:#5b6b76;
+    --good:#22a35c;
+    --bad:#d9483f;
+    --selected:#6b4fbb;
+    --whatsapp:#25D366;
+    --whatsapp-dark:#1ebe57;
+  }
+  *{box-sizing:border-box;}
+  body{
+    font-family:'Segoe UI',Arial,sans-serif;
+    background:linear-gradient(135deg,#eef4fa,#dce9f5);
+    margin:0;
+    padding:20px;
+    min-height:100vh;
+    color:var(--text);
+  }
+  .container{
+    max-width:600px;
+    margin:auto;
+    background:var(--card);
+    padding:24px;
+    border-radius:16px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.12);
+  }
+  h1{text-align:center; margin-top:0; font-size:1.5rem;}
+  h2{text-align:center; font-size:1.1rem; line-height:1.4;}
+  h3{font-size:1rem; margin-bottom:6px;}
+  p.sub{text-align:center; color:var(--muted); margin-top:-8px;}
+  input[type="text"], textarea{
+    width:100%;
+    padding:12px;
+    font-size:16px;
+    border:2px solid #d6e0e8;
+    border-radius:8px;
+    margin-top:8px;
+    margin-bottom:4px;
+    font-family:inherit;
+    resize:vertical;
+  }
+  textarea{min-height:70px;}
+  input[type="text"]:focus, textarea:focus{outline:none; border-color:var(--primary);}
+  button{
+    width:100%;
+    padding:14px;
+    margin-top:10px;
+    background:var(--primary);
+    color:white;
+    border:none;
+    border-radius:8px;
+    font-size:16px;
+    font-weight:600;
+    cursor:pointer;
+    transition:background 0.15s, transform 0.1s;
+  }
+  button:hover{background:var(--primary-dark);}
+  button:active{transform:scale(0.98);}
+  button:disabled{opacity:0.45; cursor:not-allowed;}
+  button.correct{background:var(--good) !important;}
+  button.incorrect{background:var(--bad) !important;}
+  button.selected-neutral{background:var(--selected) !important;}
+  .whatsapp-btn{background:var(--whatsapp); display:flex; align-items:center; justify-content:center; gap:8px;}
+  .whatsapp-btn:hover{background:var(--whatsapp-dark);}
+  .progress-wrap{background:#e4ecf2; border-radius:20px; height:10px; margin:16px 0 4px; overflow:hidden;}
+  .progress-bar{height:100%; background:var(--primary); width:0%; transition:width 0.3s ease;}
+  .progress-label{text-align:center; font-size:13px; color:var(--muted); margin-bottom:4px;}
+  .question{margin-top:10px;}
+  .reflection-box{margin-top:18px; padding-top:14px; border-top:1px dashed #d6e0e8;}
+  .reflection-prompt{font-size:14px; color:var(--muted); margin-bottom:2px;}
+  .score{font-size:32px; text-align:center; margin:14px 0 4px; font-weight:800; color:var(--primary);}
+  .tier{text-align:center; font-size:18px; font-weight:700; margin-bottom:6px;}
+  .hidden{display:none;}
+  .greeting{text-align:center; font-size:18px; font-weight:600; margin-bottom:6px;}
+  .charcount{font-size:12px; color:var(--muted); text-align:right; margin-top:-2px;}
+  #shareStatus{text-align:center; font-size:13px; color:var(--muted); margin-top:6px; min-height:16px;}
+  .tuvida-field{margin-bottom:16px;}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Hábitos Saludables Quest</h1>
+  <p class="sub">Responde, reflexioná y descubrí tu score espiritual.</p>
+
+  <div id="nameScreen">
+    <p style="text-align:center;">¿Cómo te llamás?</p>
+    <input type="text" id="playerName" placeholder="Escribí tu nombre" maxlength="30">
+    <button id="startBtn">Comenzar</button>
+  </div>
+
+  <div id="game" class="hidden"></div>
+
+  <div id="tuVidaScreen" class="hidden">
+    <h2>Tu vida</h2>
+    <p class="sub">Completá de manera individual y sincera.</p>
+    <div class="tuvida-field">
+      <h3>Cuando me siento...</h3>
+      <textarea id="tv1" placeholder="ej: estresado, solo, aburrido..."></textarea>
+    </div>
+    <div class="tuvida-field">
+      <h3>A menudo siento el deseo de...</h3>
+      <textarea id="tv2" placeholder="ej: distraerme con el celular..."></textarea>
+    </div>
+    <div class="tuvida-field">
+      <h3>Un hábito saludable que puedo esforzarme por desarrollar es...</h3>
+      <textarea id="tv3" placeholder="ej: leer las Escrituras cada noche..."></textarea>
+    </div>
+    <div class="tuvida-field">
+      <h3>Para buscar la ayuda del Padre Celestial y de Jesucristo, yo...</h3>
+      <textarea id="tv4" placeholder="ej: voy a orar antes de reaccionar..."></textarea>
+    </div>
+    <button id="tuVidaBtn" disabled>Ver resultado</button>
+  </div>
+
+  <div id="result" class="hidden">
+    <h2 id="resultGreeting" class="greeting"></h2>
+    <h2>Tu Score Final</h2>
+    <p class="score" id="score"></p>
+    <p class="tier" id="tier"></p>
+    <p style="text-align:center;">Tomá una captura y compartila con tu maestro.</p>
+    <button class="whatsapp-btn" id="shareBtn"><span>📲</span> Compartir por WhatsApp</button>
+    <button id="restartBtn">Jugar de nuevo</button>
+    <p id="shareStatus"></p>
+  </div>
+</div>
+
+<script>
+// Cada pregunta: type 'mc' (opción múltiple) u 'open' (respuesta abierta).
+// 'reflection' es el prompt de justificación obligatoria que se muestra
+// después de elegir (o, si es 'open', es la pregunta misma).
+const questions = [
+  {
+    type: "mc",
+    text: "Louis llega a casa estresado. ¿Qué hábito saludable debería elegir?",
+    options: [
+      { text: "Comer comida chatarra", score: 0 },
+      { text: "Hacer ejercicio", score: 2 },
+      { text: "Leer las Escrituras", score: 3 }
+    ],
+    reflection: "¿Por qué creés que esta elección ayuda a Louis a sentirse mejor?"
+  },
+  {
+    type: "mc",
+    text: "¿Qué escritura enseña que el cuerpo es templo?",
+    options: [
+      { text: "1 Corintios 6:19–20", score: 3 },
+      { text: "Éter 12:27", score: 1 },
+      { text: "Proverbios 3:7–8", score: 1 }
+    ],
+    reflection: "¿Qué significa para vos que tu cuerpo sea un templo?"
+  },
+  {
+    type: "mc",
+    text: "¿Qué enseñó el presidente Holland sobre cambiar hábitos?",
+    options: [
+      { text: "Que es imposible cambiar", score: 0 },
+      { text: "Que Dios concede el don de cambiar a quienes lo procuran", score: 3 },
+      { text: "Que solo algunos pueden cambiar", score: 0 }
+    ],
+    reflection: "¿Por qué creés que Dios concede el don de cambiar a quienes lo procuran?"
+  },
+  {
+    type: "mc",
+    text: "¿Qué hizo Heber J. Grant para mejorar en béisbol?",
+    options: [
+      { text: "Se rindió", score: 0 },
+      { text: "Practicó horas contra el granero", score: 3 },
+      { text: "Esperó a que lo eligieran", score: 0 }
+    ],
+    reflection: "¿Por qué practicar tanto marcó la diferencia para Heber J. Grant?"
+  },
+  {
+    type: "mc",
+    text: "¿Qué referencia rock enseña a enfocarse en lo esencial?",
+    options: [
+      { text: "Nothing Else Matters – Metallica", score: 3 },
+      { text: "Bohemian Rhapsody – Queen", score: 1 },
+      { text: "Highway to Hell – AC/DC", score: 0 }
+    ],
+    reflection: "¿Por qué es importante enfocarte solo en lo esencial?"
+  },
+  {
+    type: "mc",
+    text: "¿Qué escena de Creed enseña que la pelea es interna?",
+    options: [
+      { text: "La pelea en el ring", score: 1 },
+      { text: "Rocky frente al espejo con Adonis", score: 3 },
+      { text: "La entrada al estadio", score: 0 }
+    ],
+    reflection: "¿Por qué creés que tu principal rival sos vos mismo?"
+  },
+  {
+    type: "mc",
+    text: "Louis llegó a casa de la escuela sintiéndose...",
+    options: [
+      { text: "Estresado", score: 1 },
+      { text: "Solo", score: 1 },
+      { text: "Aburrido", score: 1 }
+    ],
+    reflection: "¿Por qué creés que Louis se siente así después de la escuela?"
+  },
+  {
+    type: "mc",
+    text: "Por lo general, Louis enfrenta esa situación...",
+    options: [
+      { text: "Comiendo alimentos poco saludables", score: 0 },
+      { text: "Jugando videojuegos durante horas", score: 0 },
+      { text: "Viendo videos de redes sociales durante horas", score: 0 }
+    ],
+    reflection: "¿Cómo podrían esos hábitos influir en su relación con Dios?"
+  },
+  {
+    type: "mc",
+    text: "Louis decide reemplazar sus hábitos poco saludables. Cuando llega a casa, decide...",
+    options: [
+      { text: "Hacer ejercicio", score: 2 },
+      { text: "Pasar tiempo con un miembro de la familia", score: 2 },
+      { text: "Leer las Escrituras", score: 3 }
+    ],
+    reflection: "¿Cómo te ayuda esto a vos a sentirte más cerca de Dios?"
+  },
+  {
+    type: "open",
+    text: "Para buscar la ayuda del Padre Celestial y de Jesucristo, Louis podría...",
+    reflection: "Escribí tu respuesta (ej: orar, leer un pasaje, hablar con un líder...)"
+  }
+];
+
+const HIDDEN_CAP = 50; // tope de puntaje oculto por caja de texto
+const TOTAL_HIDDEN_BOXES = questions.length + 4; // 1 por pregunta + 4 de "Tu vida"
+const TRIVIA_MAX = questions.reduce((sum, q) => {
+  if (q.type !== "mc") return sum;
+  return sum + Math.max(...q.options.map(o => o.score));
+}, 0);
+const MAX_SCORE = TRIVIA_MAX + TOTAL_HIDDEN_BOXES * HIDDEN_CAP;
+
+let current = 0;
+let phase = "select"; // 'select' -> eligiendo opción (solo mc) | 'justify' -> escribiendo justificación
+let selectedOptionScore = 0;
+let triviaScore = 0;
+let hiddenScore = 0;
+let playerName = "";
+
+function sanitizeName(raw){
+  return raw
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9 ]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+document.getElementById("startBtn").addEventListener("click", () => {
+  const clean = sanitizeName(document.getElementById("playerName").value);
+  playerName = clean.length > 0 ? clean : "Jugador";
+  document.getElementById("nameScreen").classList.add("hidden");
+  document.getElementById("game").classList.remove("hidden");
+  renderStep();
+});
+
+function renderStep() {
+  if (current >= questions.length) {
+    document.getElementById("game").classList.add("hidden");
+    document.getElementById("tuVidaScreen").classList.remove("hidden");
+    return;
+  }
+  const q = questions[current];
+  const pct = Math.round((current / questions.length) * 100);
+  let html = `
+    <div class="progress-label">Pregunta ${current + 1} de ${questions.length}</div>
+    <div class="progress-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
+    <div class='question'><h2>${q.text}</h2>`;
+
+  if (q.type === "mc" && phase === "select") {
+    q.options.forEach((opt, i) => {
+      html += `<button data-idx="${i}" onclick="choose(${i}, this)">${opt.text}</button>`;
+    });
+  }
+
+  if (phase === "justify") {
+    html += `
+      <div class="reflection-box">
+        <p class="reflection-prompt">${q.reflection}</p>
+        <textarea id="justifyInput" maxlength="300" placeholder="Escribí tu respuesta..."></textarea>
+        <p class="charcount" id="charcount"></p>
+      </div>
+      <button id="continueBtn" disabled>Continuar</button>`;
+  }
+
+  html += "</div>";
+  document.getElementById("game").innerHTML = html;
+
+  if (phase === "justify") {
+    const input = document.getElementById("justifyInput");
+    const btn = document.getElementById("continueBtn");
+    const counter = document.getElementById("charcount");
+    input.addEventListener("input", () => {
+      const len = input.value.trim().length;
+      btn.disabled = len === 0;
+      counter.innerText = len + " caracteres";
+    });
+    btn.addEventListener("click", () => submitJustification(input.value));
+  }
+}
+
+function choose(i, btnEl) {
+  const q = questions[current];
+  const scores = q.options.map(o => o.score);
+  const maxOpt = Math.max(...scores);
+  const minOpt = Math.min(...scores);
+  const allBtns = document.querySelectorAll("#game button[data-idx]");
+  allBtns.forEach(b => b.disabled = true);
+
+  if (maxOpt === minOpt) {
+    btnEl.classList.add("selected-neutral");
+  } else {
+    btnEl.classList.add(q.options[i].score === maxOpt ? "correct" : "incorrect");
+  }
+
+  selectedOptionScore = q.options[i].score;
+  phase = "justify";
+  setTimeout(() => renderStep(), 450);
+}
+
+function submitJustification(text) {
+  const trimmed = text.trim();
+  hiddenScore += Math.min(trimmed.length, HIDDEN_CAP);
+
+  const q = questions[current];
+  if (q.type === "mc") {
+    triviaScore += selectedOptionScore;
+  }
+  // type 'open' no suma trivia, solo puntaje oculto ya sumado arriba.
+
+  current++;
+  phase = "select";
+  selectedOptionScore = 0;
+  renderStep();
+}
+
+function allTuVidaFilled() {
+  return ["tv1", "tv2", "tv3", "tv4"].every(id => document.getElementById(id).value.trim().length > 0);
+}
+
+["tv1", "tv2", "tv3", "tv4"].forEach(id => {
+  document.getElementById(id).addEventListener("input", () => {
+    document.getElementById("tuVidaBtn").disabled = !allTuVidaFilled();
+  });
+});
+
+document.getElementById("tuVidaBtn").addEventListener("click", () => {
+  ["tv1", "tv2", "tv3", "tv4"].forEach(id => {
+    const val = document.getElementById(id).value.trim();
+    hiddenScore += Math.min(val.length, HIDDEN_CAP);
+  });
+  document.getElementById("tuVidaScreen").classList.add("hidden");
+  showResult();
+});
+
+function getTier(pct){
+  if (pct >= 80) return "🌟 Discípulo Ejemplar";
+  if (pct >= 55) return "💪 En Camino Firme";
+  if (pct >= 30) return "🌱 Creciendo en Fe";
+  return "🔄 A Seguir Intentando";
+}
+
+let finalTotal = 0;
+let finalPct = 0;
+
+function showResult(){
+  document.getElementById("result").classList.remove("hidden");
+  finalTotal = triviaScore + hiddenScore;
+  finalPct = Math.round((finalTotal / MAX_SCORE) * 100);
+  document.getElementById("resultGreeting").innerText = `¡Bien hecho, ${playerName}!`;
+  document.getElementById("score").innerText = `${finalTotal} puntos`;
+  document.getElementById("tier").innerText = getTier(finalPct);
+}
+
+document.getElementById("restartBtn").addEventListener("click", () => {
+  current = 0;
+  phase = "select";
+  selectedOptionScore = 0;
+  triviaScore = 0;
+  hiddenScore = 0;
+  ["tv1", "tv2", "tv3", "tv4"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("tuVidaBtn").disabled = true;
+  document.getElementById("result").classList.add("hidden");
+  document.getElementById("nameScreen").classList.remove("hidden");
+  document.getElementById("playerName").value = "";
+  document.getElementById("shareStatus").innerText = "";
+});
+
+document.getElementById("shareBtn").addEventListener("click", () => {
+  const message = `🏆 Hábitos Saludables Quest\n${playerName} obtuvo ${finalTotal} puntos\n${getTier(finalPct)}`;
+  if (navigator.share) {
+    navigator.share({ text: message }).catch(() => openWhatsAppWeb(message));
+  } else {
+    openWhatsAppWeb(message);
+  }
+});
+
+function openWhatsAppWeb(message){
+  const url = "https://wa.me/?text=" + encodeURIComponent(message);
+  const win = window.open(url, "_blank");
+  const statusEl = document.getElementById("shareStatus");
+  statusEl.innerText = win ? "" : "Habilitá las ventanas emergentes para compartir por WhatsApp.";
+}
+</script>
+</body>
+</html>
