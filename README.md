@@ -71,7 +71,7 @@ Materiales de clase de Seminario (jovenes 14-18, Buenos Aires).
 | 2026-10-24 | [Jeremias31LeyEnElCorazon](Clases/2026-10-24_Jeremias31LeyEnElCorazon) | 1 | 0 | 1 | 0 | 0 |
 | 2026-10-29 | [BusquedaDeLaVerdad](Clases/2026-10-29_BusquedaDeLaVerdad) | 2 | 0 | 1 | 0 | 0 |
 | 2026-10-31 | [Jeremias36LaPalabraDeDios](Clases/2026-10-31_Jeremias36LaPalabraDeDios) | 1 | 0 | 1 | 0 | 0 |
-| 2026-11-07 | [QuienEstoyLlegandoASer](Clases/2026-11-07_QuienEstoyLlegandoASer) | 0 (+1 solo local, >95 MB) | 0 | 0 | 0 | 0 |
-| | **Total: 68 clases** | **75** | **8** | **35** | **5** | **2** |
+| 2026-11-07 | [QuienEstoyLlegandoASer](Clases/2026-11-07_QuienEstoyLlegandoASer) | 1 (+1 solo local, >95 MB) | 0 | 0 | 0 | 0 |
+| | **Total: 68 clases** | **76** | **8** | **35** | **5** | **2** |
 
 Cada clase tiene las subcarpetas: Presentacion, Programa, Imagenes, Videos, Musica, Guion y Recursos (juegos HTML).
