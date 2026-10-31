@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>El Llamado del Estandarte</title>
+<style>
+  :root{
+    --bg:#0A0E1A; --card:#141B2E; --card2:#1B2440; --gold:#E8B24D; --cyan:#2DD4E8;
+    --text:#F5F7FA; --muted:#94A3B8; --danger:#FF6B6B; --ok:#4ADE80;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    overflow:hidden; height:100%; width:100%;}
+  #app{position:relative; width:100%; height:100vh; height:100dvh; display:flex; align-items:center; justify-content:center;}
+  .screen{display:none; width:100%; height:100%; flex-direction:column; align-items:center; justify-content:flex-start; padding:20px; text-align:center; overflow-y:auto;}
+  .screen.active{display:flex;}
+  #screen-start, #screen-epilogue, #screen-results{justify-content:center;}
+  h1{font-family:Georgia,'Times New Roman',serif; color:var(--gold); font-size:clamp(24px,7vw,44px); margin:0 0 6px;}
+  h2{color:var(--gold); font-family:Georgia,'Times New Roman',serif; margin:10px 0 4px; font-size:clamp(19px,5vw,26px);}
+  p{color:var(--muted); line-height:1.5; max-width:600px; margin:8px auto;}
+  .subtitle{color:var(--cyan); font-size:clamp(13px,3.5vw,17px); letter-spacing:1px; margin-bottom:20px;}
+  input[type=text], textarea{
+    width:100%; max-width:420px; background:var(--card); border:1px solid #2a3552; color:var(--text);
+    border-radius:10px; padding:12px 14px; font-size:16px; margin:8px 0; font-family:inherit;
+  }
+  textarea{min-height:80px; resize:vertical;}
+  button{cursor:pointer; border:none; font-family:inherit;}
+  .btn-primary{
+    background:linear-gradient(180deg,var(--gold),#c8933a); color:#1a1206; font-weight:700;
+    padding:13px 26px; border-radius:12px; font-size:16px; margin-top:12px; box-shadow:0 4px 14px rgba(232,178,77,.25);
+  }
+  .btn-primary:disabled{opacity:.4; cursor:not-allowed; box-shadow:none;}
+  .btn-secondary{
+    background:var(--card2); color:var(--cyan); font-weight:600; padding:9px 16px; border-radius:10px; font-size:13px; margin:5px;
+  }
+  .btn-secondary:disabled{opacity:.35; cursor:not-allowed;}
+  .btn-hint{
+    background:rgba(232,178,77,.14); color:var(--gold); font-weight:600; padding:8px 14px; border-radius:10px; font-size:12px; margin:8px 4px 0; border:1px solid rgba(232,178,77,.4);
+  }
+  .lang-toggle{position:absolute; top:14px; right:14px; z-index:20;}
+  .lang-toggle button{background:var(--card2); color:var(--text); padding:8px 12px; border-radius:8px; font-size:13px;}
+  #challengeWrap{width:100%; max-width:440px; display:flex; flex-direction:column; align-items:center; margin:auto; padding-top:6px;}
+  #chProgress{background:rgba(20,27,46,.85); color:var(--gold); font-weight:700; padding:6px 14px; border-radius:20px; font-size:13px; border:1px solid rgba(232,178,77,.3); margin-bottom:6px;}
+  #chHint{color:var(--cyan); font-size:12.5px; max-width:380px; margin:2px auto 10px;}
+  #puzzleArea{width:100%; display:flex; flex-direction:column; align-items:center; margin:6px 0;}
+  #puzzleFooter{display:flex; flex-wrap:wrap; justify-content:center; gap:6px;}
+
+  /* Maze */
+  .mazeGrid{display:grid; gap:2px; margin:0 auto;}
+  .mazeCell{width:24px; height:24px; border-radius:3px; background:#05070d;}
+  .mazeCell.path{background:var(--card2); cursor:pointer;}
+  .mazeCell.path.reachable{box-shadow: inset 0 0 0 1px rgba(45,212,232,.35);}
+  .mazeCell.start{background:linear-gradient(180deg,#4ADE80,#2fae63);}
+  .mazeCell.goal{background:linear-gradient(180deg,var(--gold),#c8933a);}
+  .mazeCell.player{background:var(--cyan); box-shadow:0 0 8px rgba(45,212,232,.8);}
+  .mazeCell.visited{background:#233150;}
+  .mazeCell.hintcell{outline:2px solid var(--gold);}
+
+  /* Sokoban */
+  .sokoGrid{display:grid; gap:3px; margin:0 auto;}
+  .sokoCell{width:46px; height:46px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:22px; background:#05070d;}
+  .sokoCell.floor{background:var(--card2);}
+  .sokoCell.target{background:rgba(232,178,77,.18); border:2px dashed rgba(232,178,77,.6);}
+  .dpad{display:grid; grid-template-columns:repeat(3,54px); grid-template-rows:repeat(3,54px); gap:6px; margin-top:14px;}
+  .dpadBtn{background:rgba(20,27,46,.85); border:2px solid rgba(148,163,184,.3); border-radius:12px; color:var(--text); font-size:20px; display:flex; align-items:center; justify-content:center; touch-action:manipulation;}
+  .dpadBtn:active{background:rgba(45,212,232,.35); border-color:var(--cyan);}
+
+  /* Assembly */
+  .treeSlots{display:flex; flex-direction:column-reverse; gap:8px; width:100%; max-width:360px; margin:6px auto;}
+  .slot{min-height:46px; border:2px dashed rgba(148,163,184,.4); border-radius:10px; padding:9px 12px; font-size:12.5px; color:var(--muted); display:flex; align-items:center; justify-content:center; text-align:center;}
+  .slot.filled{border-style:solid; border-color:var(--cyan); background:var(--card2); color:var(--text);}
+  .slot.wrongFlash{border-color:var(--danger); background:rgba(255,107,107,.12);}
+  .slot.correctFlash{border-color:var(--ok); background:rgba(74,222,128,.12);}
+  .piecePool{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:16px; width:100%; max-width:380px;}
+  .piece{background:var(--card2); color:var(--text); padding:9px 12px; border-radius:4px 10px 4px 10px; border-left:4px solid var(--gold); font-size:12.5px; box-shadow:0 2px 6px rgba(0,0,0,.3);}
+  .piece.selected{border-left-color:var(--cyan); box-shadow:0 0 0 2px var(--cyan);}
+
+  /* Simon */
+  .simonGrid{display:grid; grid-template-columns:repeat(2,92px); grid-template-rows:repeat(2,92px); gap:10px; margin:10px auto;}
+  .simonPad{border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:34px; opacity:.55; transition:opacity .1s, transform .1s;}
+  .simonPad.lit{opacity:1; transform:scale(1.06);}
+  .pad0{background:#3a2d6b;} .pad1{background:#1d5f5f;} .pad2{background:#6b3a2d;} .pad3{background:#5f5f1d;}
+  #simonRoundInfo{color:var(--gold); font-weight:700; font-size:14px; margin:6px 0;}
+
+  #overlay{position:absolute; inset:0; background:rgba(6,8,18,.94); display:none; z-index:30; align-items:center; justify-content:center; padding:16px;}
+  #overlay.active{display:flex;}
+  .modalCard{background:var(--card); border-radius:14px; padding:22px; max-width:440px; width:100%; text-align:center; box-shadow:0 10px 40px rgba(0,0,0,.5); max-height:88vh; overflow-y:auto;}
+  .modalCard h3{color:var(--gold); font-size:17px; margin:0 0 12px;}
+  .modalCard .qtext{color:var(--text); font-size:14.5px; margin-bottom:14px; line-height:1.5; white-space:pre-line; text-align:left;}
+  .opt{display:block; width:100%; text-align:left; background:var(--card2); color:var(--text); padding:11px 14px; border-radius:9px; margin:7px 0; font-size:14px; border:1px solid transparent;}
+  .opt.correct{background:rgba(74,222,128,.18); border-color:var(--ok); color:var(--ok);}
+  .opt.wrong{background:rgba(255,107,107,.18); border-color:var(--danger); color:var(--danger);}
+  .feedback{font-size:14px; font-weight:700; margin-top:8px; min-height:20px;}
+  .scoreRow{display:flex; justify-content:space-between; max-width:380px; margin:6px auto; font-size:14px; color:var(--muted);}
+  .scoreRow b{color:var(--text);}
+  .bigscore{font-size:44px; color:var(--gold); font-weight:800; margin:10px 0;}
+  #resultImg{max-width:280px; width:80%; border-radius:12px; margin:14px auto; display:block; box-shadow:0 6px 24px rgba(0,0,0,.5);}
+  .charCount{font-size:11px; color:var(--muted); text-align:right; max-width:420px; margin:-4px auto 6px;}
+  footer.credits{position:absolute; bottom:4px; font-size:10px; color:#3c4967;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="lang-toggle"><button class="btn-secondary" id="langBtn">EN</button></div>
+
+  <!-- START -->
+  <div class="screen active" id="screen-start">
+    <h1 id="t-title">El Llamado del Estandarte</h1>
+    <div class="subtitle" id="t-subtitle">Isaías 11–12 · Lección 116</div>
+    <p id="t-startDesc">Resolvé 4 desafíos para descubrir cómo cada símbolo de Isaías encaja en la Restauración, hasta izar el Estandarte.</p>
+    <input type="text" id="nameInput" maxlength="24" placeholder="Tu nombre">
+    <button class="btn-primary" id="startBtn" disabled>Comenzar</button>
+  </div>
+
+  <!-- GAME (4 challenges) -->
+  <div class="screen" id="screen-game">
+    <div id="challengeWrap">
+      <div id="chProgress">Desafío 1/4</div>
+      <h2 id="chTitle">Raíces de Luz</h2>
+      <div id="chHint"></div>
+      <div id="puzzleArea"></div>
+      <div id="puzzleFooter"></div>
+    </div>
+  </div>
+
+  <!-- BLOCKING OVERLAY (challenge intros + trivia) -->
+  <div id="overlay">
+    <div class="modalCard" id="modalCardContent"></div>
+  </div>
+
+  <!-- EPILOGUE -->
+  <div class="screen" id="screen-epilogue">
+    <h2 id="t-epiTitle">Reflexión final</h2>
+    <div style="max-width:460px; width:100%;">
+      <p style="text-align:left; color:var(--text);" id="t-q1">¿Qué símbolo de Isaías te ayudó más a entender cómo Dios cumple Sus promesas?</p>
+      <textarea id="ans1" maxlength="500"></textarea>
+      <div class="charCount"><span id="cc1">0</span>/500</div>
+
+      <p style="text-align:left; color:var(--text);" id="t-q2">¿Cómo podés ser, como Wisan, un instrumento en las manos de Dios esta semana?</p>
+      <textarea id="ans2" maxlength="500"></textarea>
+      <div class="charCount"><span id="cc2">0</span>/500</div>
+
+      <p style="text-align:left; color:var(--text);" id="t-q3">¿Qué significa para vos congregarte "bajo el estandarte" del Evangelio?</p>
+      <textarea id="ans3" maxlength="500"></textarea>
+      <div class="charCount"><span id="cc3">0</span>/500</div>
+    </div>
+    <button class="btn-primary" id="submitEpilogueBtn" disabled>Compartir con el Maestro</button>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="screen" id="screen-results">
+    <h2 id="t-resultsTitle">Resultado</h2>
+    <div class="bigscore" id="bigScore">???</div>
+    <button class="btn-primary" id="revealBtn">Revelar puntaje</button>
+
+    <div id="breakdownBox" style="display:none;">
+      <div class="scoreRow"><span id="t-b1">Desafíos completados</span><b id="bd1">-</b></div>
+      <div class="scoreRow"><span id="t-b2">Preguntas correctas</span><b id="bd2">-</b></div>
+      <div class="scoreRow"><span id="t-b3">Bono de precisión</span><b id="bd3">-</b></div>
+      <div class="scoreRow"><span id="t-b4">Reflexión</span><b id="bd4">-</b></div>
+      <img id="resultImg" alt="Resultado">
+      <div>
+        <button class="btn-secondary" id="shareBtn">Compartir imagen</button>
+        <button class="btn-secondary" id="downloadBtn">Descargar imagen</button>
+        <button class="btn-secondary" id="whatsappBtn">WhatsApp</button>
+      </div>
+      <button class="btn-primary" id="playAgainBtn">Jugar de nuevo</button>
+    </div>
+  </div>
+
+  <footer class="credits">Isaías 11–12 · Lección 116 — Seminario 2026</footer>
+</div>
+
+<canvas id="resultCanvas" width="900" height="1200" style="display:none;"></canvas>
+
+<script>
+(function(){
+"use strict";
+
+// ============ CONFIG ============
+const WHATSAPP_NUMBER = ""; // completar con el número del maestro/clase, formato 549XXXXXXXXXX (sin +)
+
+// ============ Maze data (pre-generated, guaranteed single connected path with dead ends) ============
+const MAZE_GRID = [
+  [1,1,1,1,1,1,1],
+  [1,0,0,0,0,0,1],
+  [1,1,1,1,1,0,1],
+  [1,0,0,0,0,0,1],
+  [1,0,1,1,1,1,1],
+  [1,0,0,0,0,0,1],
+  [1,0,1,1,1,0,1],
+  [1,0,0,0,1,0,1],
+  [1,0,1,1,1,0,1],
+  [1,0,1,0,0,0,1],
+  [1,1,1,1,1,1,1]
+];
+const MAZE_START=[3,9]; // [col,row]
+const MAZE_GOAL=[3,1];
+
+// ============ Sokoban data (verified solvable via BFS: up, left, up, right) ============
+const SOKO_GRID = [
+  [1,1,1,1,1],
+  [1,0,0,0,1],
+  [1,0,0,0,1],
+  [1,0,0,0,1],
+  [1,1,1,1,1]
+];
+const SOKO_TARGET=[1,3]; // [row,col]
+const SOKO_BOX_START=[2,2];
+const SOKO_PLAYER_START=[3,2];
+
+// ============ i18n ============
+const STR = {
+  es:{
+    title:"El Llamado del Estandarte", subtitle:"Isaías 11–12 · Lección 116",
+    startDesc:"Resolvé 4 desafíos para descubrir cómo cada símbolo de Isaías encaja en la Restauración, hasta izar el Estandarte.",
+    namePh:"Tu nombre", start:"Comenzar",
+    progress:n=>`Desafío ${n}/4`,
+    hintBtn:"Pista (-15 pts)",
+    reset:"Reiniciar",
+    correct:"¡Correcto!", wrong:"Intentá de nuevo",
+    ch:[
+      { name:"Raíces de Luz",
+        introTitle:"Isaías 11:1",
+        introText:"“Y saldrá una vara del tronco de Isaí, y un vástago retoñará de sus raíces.”\n\nRecorré el camino desde la raíz hasta el tronco.",
+        introBtn:"Comenzar desafío",
+        hint:"Tocá una celda adyacente para moverte. Encontrá el camino desde la raíz (abajo) hasta el tronco (arriba)." },
+      { name:"La Vara del Profeta",
+        introTitle:"Doctrina y Convenios 113:3–4",
+        introText:"“¿Qué es la vara mencionada en el primer versículo del capítulo 11 de Isaías, que saldrá del tronco de Isaí? He aquí, así dice el Señor: Es un siervo en las manos de Cristo, que en parte desciende de Isaí, así como de Efraín, o sea, de la casa de José, a quien se ha dado mucho poder.”\n\nUsá las flechas para empujar la vara hasta su lugar.",
+        introBtn:"Comenzar desafío",
+        hint:"Empujá la vara (el bloque) hasta el círculo marcado." },
+      { name:"El Árbol Genealógico",
+        introTitle:"Doctrina y Convenios 113:5–6",
+        introText:"“¿Qué es la raíz de Isaí, de la cual se habla en el décimo versículo del capítulo once? He aquí, así dice el Señor: Es un descendiente de Isaí, así como de José, a quien por derecho pertenecen el sacerdocio y las llaves del reino, y será por estandarte y para el recogimiento de mi pueblo en los postreros días.”\n\nOrdená las piezas de esta profecía en su lugar, de la raíz al estandarte.",
+        introBtn:"Comenzar desafío",
+        hint:"Tocá una pieza y luego el lugar donde va." },
+      { name:"Izar el Estandarte",
+        introTitle:"Presidente Joseph Fielding Smith",
+        introText:"“Hace más de 125 años, en el pequeño pueblo de Fayette, condado de Séneca, Nueva York, el Señor levantó un pendón a las naciones. Fue en cumplimiento de la profecía hecha por el profeta Isaías […]. Ese pendón fue La Iglesia de Jesucristo de los Santos de los Últimos Días, que se estableció por la última vez, para nunca más ser destruida ni dejada a otro pueblo.”\n\nRepetí la señal para izar el estandarte y convocar a los dispersos.",
+        introBtn:"Comenzar desafío",
+        hint:"Repetí la secuencia tocando las señales en el mismo orden." }
+    ],
+    piece:["Isaí","Descendiente de Isaí y de José","Sacerdocio y llaves del reino","Estandarte para el recogimiento"],
+    verify:"Verificar orden",
+    simonStart:"Ver señal", simonReplay:"Repetir señal",
+    epiTitle:"Reflexión final",
+    q1:'¿Qué símbolo de Isaías te ayudó más a entender cómo Dios cumple Sus promesas?',
+    q2:'¿Cómo podés ser, como Wisan, un instrumento en las manos de Dios esta semana?',
+    q3:'¿Qué significa para vos congregarte "bajo el estandarte" del Evangelio?',
+    submitEpilogue:"Compartir con el Maestro",
+    resultsTitle:"Resultado", reveal:"Revelar puntaje",
+    b1:"Desafíos completados", b2:"Preguntas correctas", b3:"Bono de precisión", b4:"Reflexión",
+    share:"Compartir imagen", download:"Descargar imagen", whatsapp:"WhatsApp", playAgain:"Jugar de nuevo",
+    precisionBonusTxt:" (¡sin pistas!)",
+    trivia:[
+      {q:"¿Qué representa el TRONCO en Isaías 11:1, según Doctrina y Convenios 113?", opts:["José Smith","Cristo","David","Isaí"], correct:1},
+      {q:"¿Qué representa la VARA / VÁSTAGO que sale del tronco de Isaí?", opts:["Cristo","Un ángel","Un siervo — José Smith","El rey David"], correct:2},
+      {q:"Según Doctrina y Convenios 113:5-6, ¿qué es la RAÍZ de Isaí?", opts:["El linaje real del rey David","La ciudad de Jerusalén restaurada","Un descendiente de Isaí y de José, con el sacerdocio y las llaves del reino, puesto por estandarte y recogimiento","Un ángel enviado a preparar el camino"], correct:2},
+      {q:"Según el Presidente Joseph Fielding Smith, ¿dónde y cuándo se cumplió la profecía del estandarte?", opts:["Jerusalén, año 30","Kirtland, Ohio, 1836","Nauvoo, Illinois, 1840","Fayette, Nueva York, 1830"], correct:3}
+    ]
+  },
+  en:{
+    title:"The Call of the Standard", subtitle:"Isaiah 11–12 · Lesson 116",
+    startDesc:"Solve 4 challenges to discover how each symbol from Isaiah fits into the Restoration, until you raise the Standard.",
+    namePh:"Your name", start:"Start",
+    progress:n=>`Challenge ${n}/4`,
+    hintBtn:"Hint (-15 pts)",
+    reset:"Reset",
+    correct:"Correct!", wrong:"Try again",
+    ch:[
+      { name:"Roots of Light",
+        introTitle:"Isaiah 11:1",
+        introText:"“And there shall come forth a rod out of the stem of Jesse, and a Branch shall grow out of his roots.”\n\nTrace the path from the root to the stem.",
+        introBtn:"Start challenge",
+        hint:"Tap an adjacent cell to move. Find the path from the root (bottom) to the stem (top)." },
+      { name:"The Prophet's Rod",
+        introTitle:"Doctrine and Covenants 113:3–4",
+        introText:"“What is the rod spoken of in the first verse of the eleventh chapter of Isaiah, that should come of the stem of Jesse? Behold, thus saith the Lord: It is a servant in the hands of Christ, who is partly a descendant of Jesse as well as of Ephraim, or of the house of Joseph, on whom there is laid much power.”\n\nUse the arrows to push the rod into place.",
+        introBtn:"Start challenge",
+        hint:"Push the rod (the block) onto the marked circle." },
+      { name:"The Family Tree",
+        introTitle:"Doctrine and Covenants 113:5–6",
+        introText:"“What is the root of Jesse spoken of in the tenth verse of the eleventh chapter? Behold, thus saith the Lord, it is a descendant of Jesse, as well as of Joseph, unto whom rightly belongs the priesthood, and the keys of the kingdom, for an ensign, and for the gathering of my people in the last days.”\n\nPut the pieces of this prophecy in order, from the root to the standard.",
+        introBtn:"Start challenge",
+        hint:"Tap a piece, then tap where it goes." },
+      { name:"Raising the Standard",
+        introTitle:"President Joseph Fielding Smith",
+        introText:"“More than 125 years ago, in the little town of Fayette, Seneca County, New York, the Lord raised an ensign to the nations. This was in fulfilment of the prophecy made by the prophet Isaiah […]. That ensign was The Church of Jesus Christ of Latter-day Saints, which was established for the last time, never again to be destroyed or given to another people.”\n\nRepeat the signal to raise the standard and gather the scattered.",
+        introBtn:"Start challenge",
+        hint:"Repeat the sequence by tapping the signals in the same order." }
+    ],
+    piece:["Jesse","A descendant of Jesse and of Joseph","The priesthood and the keys of the kingdom","A standard for the gathering"],
+    verify:"Check order",
+    simonStart:"Watch signal", simonReplay:"Repeat signal",
+    epiTitle:"Final reflection",
+    q1:'Which symbol from Isaiah helped you understand how God fulfills His promises?',
+    q2:'How can you, like Wisan, be an instrument in God\'s hands this week?',
+    q3:'What does it mean for you to gather "under the standard" of the Gospel?',
+    submitEpilogue:"Share with the Teacher",
+    resultsTitle:"Result", reveal:"Reveal score",
+    b1:"Challenges completed", b2:"Correct answers", b3:"Precision bonus", b4:"Reflection",
+    share:"Share image", download:"Download image", whatsapp:"WhatsApp", playAgain:"Play again",
+    precisionBonusTxt:" (no hints!)",
+    trivia:[
+      {q:"What does the STEM in Isaiah 11:1 represent, according to Doctrine and Covenants 113?", opts:["Joseph Smith","Christ","David","Jesse"], correct:1},
+      {q:"What does the ROD / BRANCH that comes out of the stem of Jesse represent?", opts:["Christ","An angel","A servant — Joseph Smith","King David"], correct:2},
+      {q:"According to Doctrine and Covenants 113:5-6, what is the ROOT of Jesse?", opts:["The royal lineage of King David","The city of Jerusalem restored","A descendant of Jesse and of Joseph, holding the priesthood and keys of the kingdom, set up as a standard and for the gathering","An angel sent to prepare the way"], correct:2},
+      {q:"According to President Joseph Fielding Smith, where and when was the prophecy of the standard fulfilled?", opts:["Jerusalem, year 30","Kirtland, Ohio, 1836","Nauvoo, Illinois, 1840","Fayette, New York, 1830"], correct:3}
+    ]
+  }
+};
+let lang = "es";
+
+// ============ Utilities ============
+function cleanName(raw){
+  let s = raw.normalize("NFD").replace(/[̀-ͯ]/g,"");
+  s = s.replace(/[^A-Za-z0-9 ]/g,"");
+  s = s.replace(/\s+/g," ").trim();
+  return s.slice(0,24);
+}
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+
+// ============ Audio (synth, Web Audio API) ============
+let actx = null;
+function ensureAudio(){ if(!actx){ try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } }
+function beep(freq, dur, type, gainPeak, delay){
+  if(!actx) return;
+  const t0 = actx.currentTime + (delay||0);
+  const osc = actx.createOscillator();
+  const gain = actx.createGain();
+  osc.type = type||"sine";
+  osc.frequency.setValueAtTime(freq, t0);
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.exponentialRampToValueAtTime(gainPeak||0.2, t0+0.015);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+  osc.connect(gain); gain.connect(actx.destination);
+  osc.start(t0); osc.stop(t0+dur+0.02);
+}
+const SFX = {
+  move:()=>beep(420,0.08,"square",0.1),
+  blocked:()=>beep(140,0.1,"square",0.08),
+  push:()=>beep(300,0.12,"triangle",0.14),
+  place:()=>beep(500,0.1,"triangle",0.14),
+  correct:()=>{ beep(523,0.12,"sine",0.18); beep(659,0.12,"sine",0.18,0.1); beep(784,0.18,"sine",0.2,0.2); },
+  wrong:()=>{ beep(200,0.18,"sawtooth",0.15); beep(150,0.2,"sawtooth",0.15,0.12); },
+  win:()=>{ [0,0.15,0.3,0.45].forEach((d,i)=>beep(392+i*110,0.25,"triangle",0.2,d)); },
+  padTone:i=>beep([349,415,262,311][i],0.28,"sine",0.2)
+};
+
+// ============ Global state ============
+let playerName = "";
+let state = null;
+
+function initGame(){
+  state = {
+    challenge: 0,
+    penalty: [0,0,0,0],
+    triviaRetry: [false,false,false,false],
+    correctCount: 0,
+    maze: null,
+    soko: null,
+    asm: null,
+    simon: null
+  };
+}
+
+// ============ DOM refs ============
+const el = id => document.getElementById(id);
+const screens = {
+  start: el("screen-start"), game: el("screen-game"),
+  epilogue: el("screen-epilogue"), results: el("screen-results")
+};
+function showScreen(name){
+  Object.values(screens).forEach(s=>s.classList.remove("active"));
+  screens[name].classList.add("active");
+}
+
+// ============ i18n apply ============
+function applyLang(){
+  const S = STR[lang];
+  el("t-title").textContent = S.title;
+  el("t-subtitle").textContent = S.subtitle;
+  el("t-startDesc").textContent = S.startDesc;
+  el("nameInput").placeholder = S.namePh;
+  el("startBtn").textContent = S.start;
+  el("t-epiTitle").textContent = S.epiTitle;
+  el("t-q1").textContent = S.q1;
+  el("t-q2").textContent = S.q2;
+  el("t-q3").textContent = S.q3;
+  el("submitEpilogueBtn").textContent = S.submitEpilogue;
+  el("t-resultsTitle").textContent = S.resultsTitle;
+  el("revealBtn").textContent = S.reveal;
+  el("t-b1").textContent = S.b1; el("t-b2").textContent = S.b2;
+  el("t-b3").textContent = S.b3; el("t-b4").textContent = S.b4;
+  el("shareBtn").textContent = S.share;
+  el("downloadBtn").textContent = S.download;
+  el("whatsappBtn").textContent = S.whatsapp;
+  el("playAgainBtn").textContent = S.playAgain;
+  el("langBtn").textContent = lang==="es" ? "EN" : "ES";
+  document.documentElement.lang = lang;
+  if(state){
+    el("chProgress").textContent = S.progress(state.challenge+1);
+    const cd = S.ch[state.challenge];
+    if(cd){ el("chTitle").textContent = cd.name; el("chHint").textContent = cd.hint; }
+  }
+}
+el("langBtn").addEventListener("click", ()=>{ lang = lang==="es"?"en":"es"; applyLang(); });
+
+// ============ Start screen ============
+const nameInput = el("nameInput");
+nameInput.addEventListener("input", ()=>{
+  const cleaned = cleanName(nameInput.value);
+  el("startBtn").disabled = cleaned.length===0;
+});
+el("startBtn").addEventListener("click", ()=>{
+  playerName = cleanName(nameInput.value) || "Jugador";
+  ensureAudio();
+  initGame();
+  showScreen("game");
+  showChallengeIntro(0);
+});
+
+// ============ Overlay / modal helper ============
+function showModal(buildFn){
+  const overlay = el("overlay");
+  const card = el("modalCardContent");
+  card.innerHTML = "";
+  buildFn(card);
+  overlay.classList.add("active");
+}
+function closeModal(){
+  el("overlay").classList.remove("active");
+}
+
+// ============ Challenge intro (blocking) ============
+function showChallengeIntro(idx){
+  state.challenge = idx;
+  const S = STR[lang];
+  const cd = S.ch[idx];
+  el("chProgress").textContent = S.progress(idx+1);
+  el("chTitle").textContent = cd.name;
+  el("chHint").textContent = cd.hint;
+  el("puzzleArea").innerHTML = "";
+  el("puzzleFooter").innerHTML = "";
+  showModal(card=>{
+    const h3 = document.createElement("h3"); h3.textContent = cd.introTitle; card.appendChild(h3);
+    const p = document.createElement("div"); p.className="qtext"; p.textContent = cd.introText; card.appendChild(p);
+    const btn = document.createElement("button"); btn.className="btn-primary"; btn.textContent = cd.introBtn;
+    btn.addEventListener("click", ()=>{
+      closeModal();
+      startChallenge(idx);
+    });
+    card.appendChild(btn);
+  });
+}
+function startChallenge(idx){
+  if(idx===0) initMaze();
+  else if(idx===1) initSokoban();
+  else if(idx===2) initAssembly();
+  else if(idx===3) initSimon();
+}
+
+// ============ Trivia gate ============
+function openTrivia(challengeIdx, onDone){
+  const S = STR[lang];
+  const qd = S.trivia[challengeIdx];
+  const order = shuffle(qd.opts.map((o,i)=>i));
+  showModal(card=>{
+    const h3 = document.createElement("h3"); h3.textContent = (lang==="es"?"Pregunta":"Question"); card.appendChild(h3);
+    const qp = document.createElement("div"); qp.className="qtext"; qp.textContent = qd.q; card.appendChild(qp);
+    const fb = document.createElement("div"); fb.className="feedback";
+    let answered = false;
+    order.forEach(optIdx=>{
+      const b = document.createElement("button");
+      b.className = "opt";
+      b.textContent = qd.opts[optIdx];
+      b.addEventListener("click", ()=>{
+        if(answered) return;
+        if(optIdx === qd.correct){
+          answered = true;
+          b.classList.add("correct");
+          fb.textContent = S.correct; fb.style.color = "#4ADE80";
+          SFX.correct();
+          if(!state.triviaRetry[challengeIdx]) state.correctCount++;
+          setTimeout(()=>{ closeModal(); onDone(); }, 700);
+        } else {
+          b.classList.add("wrong");
+          fb.textContent = S.wrong; fb.style.color = "#FF6B6B";
+          SFX.wrong();
+          state.triviaRetry[challengeIdx] = true;
+          b.disabled = true;
+        }
+      });
+      card.appendChild(b);
+    });
+    card.appendChild(fb);
+  });
+}
+
+function challengeComplete(idx){
+  SFX.win();
+  setTimeout(()=>{
+    openTrivia(idx, ()=>{
+      const next = idx+1;
+      if(next < 4){ showChallengeIntro(next); }
+      else { showScreen("epilogue"); }
+    });
+  }, 350);
+}
+
+// ============ Challenge 0: Maze ("Raíces de Luz") ============
+function initMaze(){
+  state.maze = {
+    grid: MAZE_GRID,
+    pos: MAZE_START.slice(),
+    goal: MAZE_GOAL,
+    visited: new Set([MAZE_START.join(",")]),
+    done: false
+  };
+  renderMaze();
+}
+function mazeCellOpen(col,row){
+  if(row<0 || row>=state.maze.grid.length) return false;
+  if(col<0 || col>=state.maze.grid[0].length) return false;
+  return state.maze.grid[row][col]===0;
+}
+function renderMaze(){
+  const S = STR[lang];
+  const m = state.maze;
+  const GW = m.grid[0].length, GH = m.grid.length;
+  const area = el("puzzleArea");
+  area.innerHTML = "";
+  const gridEl = document.createElement("div");
+  gridEl.className = "mazeGrid";
+  gridEl.style.gridTemplateColumns = `repeat(${GW}, 24px)`;
+  for(let r=0;r<GH;r++){
+    for(let c=0;c<GW;c++){
+      const cell = document.createElement("div");
+      cell.className = "mazeCell";
+      const open = m.grid[r][c]===0;
+      if(open) cell.classList.add("path");
+      const isStart = c===MAZE_START[0] && r===MAZE_START[1];
+      const isGoal = c===m.goal[0] && r===m.goal[1];
+      const isPlayer = c===m.pos[0] && r===m.pos[1];
+      if(m.visited.has(c+","+r) && open) cell.classList.add("visited");
+      if(isStart) cell.classList.add("start");
+      if(isGoal) cell.classList.add("goal");
+      if(isPlayer) cell.classList.add("player");
+      if(open && !m.done){
+        cell.addEventListener("click", ()=>mazeTryMove(c,r));
+      }
+      gridEl.appendChild(cell);
+    }
+  }
+  area.appendChild(gridEl);
+  const footer = el("puzzleFooter");
+  footer.innerHTML = "";
+  const hintBtn = document.createElement("button");
+  hintBtn.className = "btn-hint";
+  hintBtn.textContent = S.hintBtn;
+  hintBtn.addEventListener("click", mazeHint);
+  footer.appendChild(hintBtn);
+}
+function mazeTryMove(c,r){
+  const m = state.maze;
+  if(m.done) return;
+  const [pc,pr] = m.pos;
+  const adjacent = (Math.abs(pc-c)+Math.abs(pr-r))===1;
+  if(!adjacent || !mazeCellOpen(c,r)){ SFX.blocked(); return; }
+  m.pos = [c,r];
+  m.visited.add(c+","+r);
+  SFX.move();
+  if(c===m.goal[0] && r===m.goal[1]){
+    m.done = true;
+    renderMaze();
+    challengeComplete(0);
+    return;
+  }
+  renderMaze();
+}
+function mazeBFSNext(){
+  const m = state.maze;
+  const GW = m.grid[0].length, GH = m.grid.length;
+  const start = m.pos.join(",");
+  const goal = m.goal.join(",");
+  const prev = {}; const seen = new Set([start]);
+  const q = [start];
+  let qi = 0;
+  while(qi < q.length){
+    const cur = q[qi++];
+    if(cur===goal) break;
+    const [cx,cy] = cur.split(",").map(Number);
+    [[0,-1],[0,1],[-1,0],[1,0]].forEach(([dx,dy])=>{
+      const nx=cx+dx, ny=cy+dy;
+      const key = nx+","+ny;
+      if(nx>=0&&nx<GW&&ny>=0&&ny<GH&&m.grid[ny][nx]===0&&!seen.has(key)){
+        seen.add(key); prev[key]=cur; q.push(key);
+      }
+    });
+  }
+  if(!seen.has(goal)) return null;
+  let cur = goal;
+  const path = [cur];
+  while(cur!==start){ cur = prev[cur]; path.push(cur); }
+  path.reverse();
+  return path.length>1 ? path[1].split(",").map(Number) : null;
+}
+function mazeHint(){
+  const m = state.maze;
+  if(m.done) return;
+  const next = mazeBFSNext();
+  if(!next) return;
+  state.penalty[0]++;
+  const [nc,nr] = next;
+  const cells = document.querySelectorAll("#puzzleArea .mazeCell");
+  const GW = m.grid[0].length;
+  const idx = nr*GW+nc;
+  if(cells[idx]) cells[idx].classList.add("hintcell");
+  setTimeout(()=>{ if(cells[idx]) cells[idx].classList.remove("hintcell"); }, 900);
+}
+
+// ============ Challenge 1: Sokoban ("La Vara del Profeta") ============
+function initSokoban(){
+  state.soko = {
+    grid: SOKO_GRID,
+    box: SOKO_BOX_START.slice(),
+    player: SOKO_PLAYER_START.slice(),
+    target: SOKO_TARGET,
+    done: false
+  };
+  renderSokoban();
+}
+function sokoFloor(r,c){
+  const g = state.soko.grid;
+  if(r<0||r>=g.length||c<0||c>=g[0].length) return false;
+  return g[r][c]===0;
+}
+function renderSokoban(){
+  const S = STR[lang];
+  const s = state.soko;
+  const GH = s.grid.length, GW = s.grid[0].length;
+  const area = el("puzzleArea");
+  area.innerHTML = "";
+  const gridEl = document.createElement("div");
+  gridEl.className = "sokoGrid";
+  gridEl.style.gridTemplateColumns = `repeat(${GW}, 46px)`;
+  for(let r=0;r<GH;r++){
+    for(let c=0;c<GW;c++){
+      const cell = document.createElement("div");
+      cell.className = "sokoCell";
+      const floor = s.grid[r][c]===0;
+      if(floor) cell.classList.add("floor");
+      const isTarget = r===s.target[0] && c===s.target[1];
+      const isBox = r===s.box[0] && c===s.box[1];
+      const isPlayer = r===s.player[0] && c===s.player[1];
+      if(isTarget) cell.classList.add("target");
+      if(isBox) cell.textContent = (isTarget ? "✅" : "📦");
+      else if(isPlayer) cell.textContent = "🧍";
+      else if(isTarget) cell.textContent = "⭐";
+      gridEl.appendChild(cell);
+    }
+  }
+  area.appendChild(gridEl);
+
+  const dpad = document.createElement("div");
+  dpad.className = "dpad";
+  const mk = (label, dr, dc, gridArea) => {
+    const b = document.createElement("button");
+    b.className = "dpadBtn"; b.textContent = label; b.style.gridArea = gridArea;
+    b.addEventListener("click", ()=>sokobanMove(dr,dc));
+    return b;
+  };
+  dpad.appendChild(document.createElement("div"));
+  const up = mk("▲",-1,0); up.style.gridColumn="2"; up.style.gridRow="1"; dpad.appendChild(up);
+  dpad.appendChild(document.createElement("div"));
+  const left = mk("◀",0,-1); left.style.gridColumn="1"; left.style.gridRow="2"; dpad.appendChild(left);
+  const mid = document.createElement("div"); mid.style.gridColumn="2"; mid.style.gridRow="2"; dpad.appendChild(mid);
+  const right = mk("▶",0,1); right.style.gridColumn="3"; right.style.gridRow="2"; dpad.appendChild(right);
+  dpad.appendChild(document.createElement("div"));
+  const down = mk("▼",1,0); down.style.gridColumn="2"; down.style.gridRow="3"; dpad.appendChild(down);
+  dpad.appendChild(document.createElement("div"));
+  area.appendChild(dpad);
+
+  const footer = el("puzzleFooter");
+  footer.innerHTML = "";
+  const resetBtn = document.createElement("button");
+  resetBtn.className = "btn-secondary";
+  resetBtn.textContent = S.reset;
+  resetBtn.addEventListener("click", ()=>{ if(!state.soko.done) initSokoban(); });
+  footer.appendChild(resetBtn);
+  const hintBtn = document.createElement("button");
+  hintBtn.className = "btn-hint";
+  hintBtn.textContent = S.hintBtn;
+  hintBtn.addEventListener("click", sokobanHint);
+  footer.appendChild(hintBtn);
+}
+function sokobanMove(dr,dc){
+  const s = state.soko;
+  if(s.done) return;
+  const [pr,pc] = s.player;
+  const nr = pr+dr, nc = pc+dc;
+  if(!sokoFloor(nr,nc)){ SFX.blocked(); return; }
+  const [br,bc] = s.box;
+  if(nr===br && nc===bc){
+    const bnr = br+dr, bnc = bc+dc;
+    if(!sokoFloor(bnr,bnc)){ SFX.blocked(); return; }
+    s.box = [bnr,bnc];
+    SFX.push();
+  } else {
+    SFX.move();
+  }
+  s.player = [nr,nc];
+  if(s.box[0]===s.target[0] && s.box[1]===s.target[1]){
+    s.done = true;
+    renderSokoban();
+    challengeComplete(1);
+    return;
+  }
+  renderSokoban();
+}
+function sokobanBFSNextMove(){
+  const s = state.soko;
+  const GH = s.grid.length, GW = s.grid[0].length;
+  const startKey = s.player.join(",")+"|"+s.box.join(",");
+  const seen = new Set([startKey]);
+  const q = [{player:s.player.slice(), box:s.box.slice(), path:[]}];
+  let qi=0;
+  const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+  while(qi<q.length){
+    const cur = q[qi++];
+    if(cur.box[0]===s.target[0] && cur.box[1]===s.target[1]) return cur.path[0]||null;
+    for(const [dr,dc] of dirs){
+      const npr=cur.player[0]+dr, npc=cur.player[1]+dc;
+      if(!sokoFloor(npr,npc)) continue;
+      let nbox = cur.box;
+      if(npr===cur.box[0] && npc===cur.box[1]){
+        const nbr=cur.box[0]+dr, nbc=cur.box[1]+dc;
+        if(!sokoFloor(nbr,nbc)) continue;
+        nbox = [nbr,nbc];
+      }
+      const key = npr+","+npc+"|"+nbox.join(",");
+      if(seen.has(key)) continue;
+      seen.add(key);
+      q.push({player:[npr,npc], box:nbox, path: cur.path.concat([[dr,dc]])});
+    }
+  }
+  return null;
+}
+function sokobanHint(){
+  if(state.soko.done) return;
+  const mv = sokobanBFSNextMove();
+  if(!mv) return;
+  state.penalty[1]++;
+  const dpadBtns = document.querySelectorAll("#puzzleArea .dpadBtn");
+  const dirMap = {"-1,0":0,"0,-1":1,"0,1":2,"1,0":3};
+  const key = mv.join(",");
+  const bIdx = dirMap[key];
+  if(dpadBtns[bIdx]){
+    dpadBtns[bIdx].style.background = "rgba(232,178,77,.5)";
+    setTimeout(()=>{ if(dpadBtns[bIdx]) dpadBtns[bIdx].style.background=""; }, 900);
+  }
+}
+
+// ============ Challenge 2: Assembly ("El Árbol Genealógico") ============
+function initAssembly(){
+  const order = shuffle([0,1,2,3]);
+  state.asm = {
+    slots: [null,null,null,null], // correct order index expected per slot: slots[0]=0 (root/bottom) ... slots[3]=3 (top)
+    pool: order,
+    selected: null,
+    done: false
+  };
+  renderAssembly();
+}
+function renderAssembly(){
+  const S = STR[lang];
+  const a = state.asm;
+  const area = el("puzzleArea");
+  area.innerHTML = "";
+  const slotsEl = document.createElement("div");
+  slotsEl.className = "treeSlots";
+  for(let i=0;i<4;i++){
+    const slot = document.createElement("div");
+    slot.className = "slot" + (a.slots[i]!==null ? " filled" : "");
+    slot.textContent = a.slots[i]!==null ? S.piece[a.slots[i]] : "—";
+    slot.dataset.slotIndex = i;
+    slot.addEventListener("click", ()=>assemblySlotTap(i));
+    slotsEl.appendChild(slot);
+  }
+  area.appendChild(slotsEl);
+
+  const poolEl = document.createElement("div");
+  poolEl.className = "piecePool";
+  a.pool.forEach(pIdx=>{
+    const piece = document.createElement("div");
+    piece.className = "piece" + (a.selected===pIdx ? " selected" : "");
+    piece.textContent = S.piece[pIdx];
+    piece.addEventListener("click", ()=>assemblyPieceTap(pIdx));
+    poolEl.appendChild(piece);
+  });
+  area.appendChild(poolEl);
+
+  const footer = el("puzzleFooter");
+  footer.innerHTML = "";
+  const verifyBtn = document.createElement("button");
+  verifyBtn.className = "btn-primary";
+  verifyBtn.textContent = S.verify;
+  verifyBtn.disabled = a.slots.some(v=>v===null);
+  verifyBtn.style.marginTop = "10px";
+  verifyBtn.addEventListener("click", assemblyVerify);
+  footer.appendChild(verifyBtn);
+  const hintBtn = document.createElement("button");
+  hintBtn.className = "btn-hint";
+  hintBtn.textContent = S.hintBtn;
+  hintBtn.addEventListener("click", assemblyHint);
+  footer.appendChild(hintBtn);
+}
+function assemblyPieceTap(pIdx){
+  const a = state.asm;
+  if(a.done) return;
+  a.selected = (a.selected===pIdx) ? null : pIdx;
+  renderAssembly();
+}
+function assemblySlotTap(slotIdx){
+  const a = state.asm;
+  if(a.done) return;
+  if(a.slots[slotIdx]!==null){
+    // return piece to pool
+    a.pool.push(a.slots[slotIdx]);
+    a.slots[slotIdx] = null;
+    renderAssembly();
+    return;
+  }
+  if(a.selected===null) return;
+  a.slots[slotIdx] = a.selected;
+  a.pool = a.pool.filter(p=>p!==a.selected);
+  a.selected = null;
+  SFX.place();
+  renderAssembly();
+}
+function assemblyVerify(){
+  const a = state.asm;
+  const correct = a.slots.every((v,i)=>v===i);
+  const slotEls = document.querySelectorAll("#puzzleArea .slot");
+  if(correct){
+    a.done = true;
+    slotEls.forEach(s=>s.classList.add("correctFlash"));
+    SFX.correct();
+    challengeComplete(2);
+  } else {
+    state.penalty[2]++;
+    a.slots.forEach((v,i)=>{
+      if(v!==i && slotEls[i]) slotEls[i].classList.add("wrongFlash");
+    });
+    SFX.wrong();
+    setTimeout(()=>{ slotEls.forEach(s=>s.classList.remove("wrongFlash")); }, 700);
+  }
+}
+function assemblyHint(){
+  const a = state.asm;
+  if(a.done) return;
+  for(let i=0;i<4;i++){
+    if(a.slots[i]!==i){
+      if(a.slots[i]!==null){ a.pool.push(a.slots[i]); }
+      a.pool = a.pool.filter(p=>p!==i);
+      a.slots[i] = i;
+      state.penalty[2]++;
+      renderAssembly();
+      return;
+    }
+  }
+}
+
+// ============ Challenge 3: Simon ("Izar el Estandarte") ============
+const SIMON_TARGET_LEN = 5;
+function initSimon(){
+  state.simon = {
+    sequence: [],
+    inputIdx: 0,
+    round: 0,
+    playing: false,
+    done: false
+  };
+  renderSimon();
+}
+function renderSimon(){
+  const S = STR[lang];
+  const s = state.simon;
+  const area = el("puzzleArea");
+  area.innerHTML = "";
+  const info = document.createElement("div");
+  info.id = "simonRoundInfo";
+  info.textContent = (lang==="es"?"Ronda ":"Round ") + s.round + " / " + SIMON_TARGET_LEN;
+  area.appendChild(info);
+  const grid = document.createElement("div");
+  grid.className = "simonGrid";
+  const icons = ["🚩","🔔","✨","🌟"];
+  for(let i=0;i<4;i++){
+    const pad = document.createElement("div");
+    pad.className = "simonPad pad"+i;
+    pad.dataset.pad = i;
+    pad.textContent = icons[i];
+    pad.addEventListener("click", ()=>simonPadTap(i));
+    grid.appendChild(pad);
+  }
+  area.appendChild(grid);
+
+  const footer = el("puzzleFooter");
+  footer.innerHTML = "";
+  const startBtn = document.createElement("button");
+  startBtn.className = "btn-primary";
+  startBtn.id = "simonPlayBtn";
+  startBtn.style.marginTop = "6px";
+  startBtn.textContent = s.round===0 ? S.simonStart : S.simonReplay;
+  startBtn.addEventListener("click", simonPlayRound);
+  footer.appendChild(startBtn);
+}
+function updateSimonInfo(){
+  const S = STR[lang];
+  const s = state.simon;
+  const info = el("simonRoundInfo");
+  if(info) info.textContent = (lang==="es"?"Ronda ":"Round ") + s.round + " / " + SIMON_TARGET_LEN;
+  const btn = el("simonPlayBtn");
+  if(btn){
+    btn.textContent = s.round===0 ? S.simonStart : S.simonReplay;
+    btn.disabled = s.playing;
+  }
+}
+function simonFlashPad(i, dur){
+  const pad = document.querySelector(`#puzzleArea .simonPad[data-pad="${i}"]`);
+  if(!pad) return;
+  pad.classList.add("lit");
+  SFX.padTone(i);
+  setTimeout(()=>{ if(pad) pad.classList.remove("lit"); }, dur||400);
+}
+function simonPlayRound(){
+  const s = state.simon;
+  if(s.done || s.playing) return;
+  if(s.round===0) s.round = 1;
+  while(s.sequence.length < s.round && s.sequence.length < SIMON_TARGET_LEN){
+    s.sequence.push(Math.floor(Math.random()*4));
+  }
+  s.inputIdx = 0;
+  s.playing = true;
+  updateSimonInfo();
+  const seq = s.sequence.slice(0, s.round);
+  seq.forEach((padIdx, i)=>{
+    setTimeout(()=>simonFlashPad(padIdx, 380), i*550);
+  });
+  setTimeout(()=>{ s.playing = false; updateSimonInfo(); }, seq.length*550);
+}
+function simonPadTap(i){
+  const s = state.simon;
+  if(s.done || s.playing || s.round===0) return;
+  simonFlashPad(i, 220);
+  const expected = s.sequence[s.inputIdx];
+  if(i===expected){
+    s.inputIdx++;
+    if(s.inputIdx >= s.round){
+      if(s.round >= SIMON_TARGET_LEN){
+        s.done = true;
+        SFX.correct();
+        challengeComplete(3);
+        return;
+      } else {
+        s.round++;
+        s.inputIdx = 0;
+        updateSimonInfo();
+        setTimeout(simonPlayRound, 500);
+      }
+    }
+  } else {
+    state.penalty[3]++;
+    SFX.wrong();
+    s.inputIdx = 0;
+    setTimeout(simonPlayRound, 600);
+  }
+}
+
+// ============ Epilogue ============
+["ans1","ans2","ans3"].forEach((id,i)=>{
+  el(id).addEventListener("input", ()=>{
+    el("cc"+(i+1)).textContent = el(id).value.length;
+    const allFilled = ["ans1","ans2","ans3"].every(a=>el(a).value.trim().length>0);
+    el("submitEpilogueBtn").disabled = !allFilled;
+  });
+});
+el("submitEpilogueBtn").addEventListener("click", ()=>{
+  showScreen("results");
+});
+
+// ============ Scoring & results ============
+function challengeScore(i){ return Math.max(50, 150 - state.penalty[i]*15); }
+function computeScore(){
+  let chPts = 0;
+  for(let i=0;i<4;i++) chPts += challengeScore(i);
+  let triviaPts = 0;
+  for(let i=0;i<4;i++) triviaPts += state.triviaRetry[i] ? 50 : 150;
+  const totalPenalty = state.penalty.reduce((s,v)=>s+v,0);
+  const precisionBonus = totalPenalty===0 ? 100 : 0;
+  const reflectionChars = ["ans1","ans2","ans3"].reduce((s,id)=>s+el(id).value.trim().length,0);
+  const reflectionPts = reflectionChars*4;
+  const total = chPts+triviaPts+precisionBonus+reflectionPts;
+  return {chPts,triviaPts,precisionBonus,reflectionPts,total};
+}
+el("revealBtn").addEventListener("click", ()=>{
+  const S = STR[lang];
+  const sc = computeScore();
+  el("bigScore").textContent = sc.total;
+  el("bd1").textContent = "4/4 (+"+sc.chPts+")";
+  el("bd2").textContent = state.correctCount+"/4 (+"+sc.triviaPts+")";
+  el("bd3").textContent = "+"+sc.precisionBonus + (sc.precisionBonus>0 ? S.precisionBonusTxt : "");
+  el("bd4").textContent = "+"+sc.reflectionPts;
+  el("breakdownBox").style.display = "block";
+  el("revealBtn").style.display = "none";
+  buildResultImage(sc);
+});
+function buildResultImage(sc){
+  const rc = el("resultCanvas");
+  const rctx = rc.getContext("2d");
+  const W = rc.width, H = rc.height;
+  const g = rctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,"#0A0E1A"); g.addColorStop(1,"#141B2E");
+  rctx.fillStyle = g; rctx.fillRect(0,0,W,H);
+  rctx.textAlign="center";
+  rctx.fillStyle = "#E8B24D";
+  rctx.font = "bold 50px Georgia, serif";
+  rctx.fillText("El Llamado del Estandarte", W/2, 140);
+  rctx.fillStyle = "#2DD4E8";
+  rctx.font = "24px sans-serif";
+  rctx.fillText("Isaías 11–12 · Lección 116", W/2, 185);
+
+  rctx.fillStyle = "#F5F7FA";
+  rctx.font = "bold 34px sans-serif";
+  rctx.fillText(playerName, W/2, 280);
+
+  rctx.fillStyle = "#E8B24D";
+  rctx.font = "bold 130px sans-serif";
+  rctx.fillText(String(sc.total), W/2, 460);
+  rctx.fillStyle = "#94A3B8";
+  rctx.font = "22px sans-serif";
+  rctx.fillText(lang==="es"?"PUNTOS":"POINTS", W/2, 500);
+
+  const totalPenalty = state.penalty.reduce((s,v)=>s+v,0);
+  const rows = [
+    [(lang==="es"?"Desafíos completados":"Challenges completed"), "4/4"],
+    [(lang==="es"?"Preguntas correctas":"Correct answers"), state.correctCount+"/4"],
+    [(lang==="es"?"Precisión":"Precision"), totalPenalty===0 ? (lang==="es"?"Perfecta":"Perfect") : (lang==="es"?"Con pistas":"With hints")],
+  ];
+  rctx.font = "26px sans-serif";
+  let y = 600;
+  rows.forEach(r=>{
+    rctx.fillStyle = "#94A3B8"; rctx.textAlign="left";
+    rctx.fillText(r[0], 120, y);
+    rctx.fillStyle = "#F5F7FA"; rctx.textAlign="right";
+    rctx.fillText(r[1], W-120, y);
+    y += 50;
+  });
+
+  rctx.textAlign="center";
+  rctx.fillStyle="#2DD4E8";
+  rctx.font="20px sans-serif";
+  const d = new Date();
+  rctx.fillText(d.toLocaleDateString(lang==="es"?"es-AR":"en-US"), W/2, H-60);
+
+  const dataUrl = rc.toDataURL("image/png");
+  el("resultImg").src = dataUrl;
+}
+el("downloadBtn").addEventListener("click", ()=>{
+  const rc = el("resultCanvas");
+  const a = document.createElement("a");
+  a.href = rc.toDataURL("image/png");
+  a.download = "llamado-del-estandarte-"+playerName.replace(/\s+/g,"_")+".png";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+});
+el("shareBtn").addEventListener("click", async ()=>{
+  const rc = el("resultCanvas");
+  rc.toBlob(async (blob)=>{
+    const file = new File([blob], "resultado.png", {type:"image/png"});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{
+        await navigator.share({files:[file], title:"El Llamado del Estandarte", text:(lang==="es"?"Mi resultado: ":"My result: ")+el("bigScore").textContent});
+      }catch(e){ /* user cancelled */ }
+    } else {
+      el("downloadBtn").click();
+    }
+  }, "image/png");
+});
+el("whatsappBtn").addEventListener("click", ()=>{
+  const text = encodeURIComponent((lang==="es"?"Terminé 'El Llamado del Estandarte' con ":"I finished 'The Call of the Standard' with ")+el("bigScore").textContent+(lang==="es"?" puntos.":" points."));
+  const num = WHATSAPP_NUMBER ? WHATSAPP_NUMBER : "";
+  const url = "https://wa.me/"+num+"?text="+text;
+  window.open(url, "_blank");
+});
+el("playAgainBtn").addEventListener("click", ()=>{
+  ["ans1","ans2","ans3"].forEach(id=>{ el(id).value=""; });
+  ["cc1","cc2","cc3"].forEach(id=>{ el(id).textContent="0"; });
+  el("breakdownBox").style.display="none";
+  el("revealBtn").style.display="inline-block";
+  el("bigScore").textContent = "???";
+  showScreen("start");
+});
+
+// ============ init ============
+applyLang();
+})();
+</script>
+</body>
+</html>

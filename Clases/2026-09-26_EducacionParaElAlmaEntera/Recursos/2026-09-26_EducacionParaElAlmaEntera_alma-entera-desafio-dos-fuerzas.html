@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Alma Entera: El Desafio de las Dos Fuerzas</title>
+<style>
+  :root{
+    --bg:#0b0e14; --panel:#141a26; --panel2:#1b2333; --text:#eef2f7; --muted:#9aa7bd;
+    --secular:#1f6fe0; --secular-d:#0a4ea6; --religiosa:#f0930a; --religiosa-d:#b96b00;
+    --accent:#2dd4e8; --gold:#e8b24d; --good:#33c46b; --bad:#e5484d;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    overscroll-behavior:none; touch-action:manipulation; user-select:none;}
+  #app{max-width:920px;margin:0 auto;padding:12px 12px 28px;}
+  h1{font-size:1.3rem;margin:6px 0 2px;text-align:center;}
+  h2{font-size:1.05rem;margin:0 0 8px;text-align:center;color:var(--gold);}
+  p{line-height:1.45;}
+  .screen{display:none;}
+  .screen.active{display:block;}
+  .card{background:var(--panel);border-radius:16px;padding:16px;margin:10px 0;
+    border:1px solid #232c40;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;}
+  .col{flex:1;min-width:120px;}
+  .btn{background:var(--panel2);border:2px solid var(--accent);color:var(--text);
+    border-radius:12px;padding:12px 16px;font-size:1rem;font-weight:700;cursor:pointer;
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;}
+  .btn:active{transform:scale(0.96);}
+  .btn.big{width:100%;padding:16px;font-size:1.15rem;}
+  .btn.gold{border-color:var(--gold);}
+  .btn.good{border-color:var(--good);}
+  .btn.ghost{background:transparent;border-color:#334;color:var(--muted);}
+  input[type="text"], textarea{
+    width:100%;background:#0e1420;border:2px solid #2a3550;border-radius:10px;
+    color:var(--text);padding:10px 12px;font-size:1rem;font-family:inherit;}
+  textarea{min-height:80px;resize:vertical;}
+  .lang-toggle{position:fixed;top:8px;right:8px;z-index:50;}
+  .lang-toggle button{background:var(--panel);color:var(--text);border:1px solid #334;
+    border-radius:8px;padding:6px 10px;font-size:0.8rem;font-weight:700;}
+  .lang-toggle button.active{border-color:var(--accent);color:var(--accent);}
+
+  #gameWrap{position:relative;width:100%;aspect-ratio:16/9;background:linear-gradient(#1a2340,#0c1020);
+    border-radius:14px;overflow:hidden;border:1px solid #232c40;}
+  #gameWrap canvas{width:100%;height:100%;display:block;}
+  .hud{position:absolute;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;
+    font-size:0.8rem;font-weight:700;color:#fff;text-shadow:0 1px 2px #000;pointer-events:none;}
+  .hud .pill{background:rgba(0,0,0,0.4);border-radius:8px;padding:4px 8px;}
+
+  .controls{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:10px;}
+  .dpad{display:flex;gap:8px;}
+  .dpad button{width:58px;height:58px;font-size:1.4rem;border-radius:14px;
+    background:var(--panel2);border:2px solid #334;color:var(--text);}
+  .action-btns{display:flex;gap:8px;}
+  .action-btns button{width:64px;height:64px;border-radius:50%;font-size:0.75rem;font-weight:700;}
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(4,6,12,0.86);z-index:100;
+    display:flex;align-items:center;justify-content:center;padding:16px;}
+  .modal-overlay.hidden{display:none;}
+  .modal{background:var(--panel);border:2px solid var(--accent);border-radius:16px;
+    padding:20px;max-width:520px;width:100%;max-height:86vh;overflow-y:auto;}
+  .modal .quote{font-style:italic;color:var(--muted);border-left:3px solid var(--gold);
+    padding-left:12px;margin:10px 0;font-size:0.92rem;}
+  .modal .opt{display:block;width:100%;text-align:left;margin:6px 0;padding:12px;
+    border-radius:10px;background:var(--panel2);border:2px solid #334;color:var(--text);font-size:0.98rem;}
+  .modal .opt.correct{border-color:var(--good);background:#0f2a1c;}
+  .modal .opt.wrong{border-color:var(--bad);background:#2a0f11;}
+
+  .gauge-wrap{margin:14px 0;}
+  .gauge-label{display:flex;justify-content:space-between;font-weight:700;margin-bottom:4px;}
+  .gauge-bar{width:100%;height:26px;background:#0e1420;border-radius:13px;overflow:hidden;
+    border:2px solid #2a3550;}
+  .gauge-fill{height:100%;transition:width 0.12s linear;}
+  .gauge-fill.secular{background:linear-gradient(90deg,var(--secular-d),var(--secular));}
+  .gauge-fill.religiosa{background:linear-gradient(90deg,var(--religiosa-d),var(--religiosa));}
+
+  #puzzleGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:360px;margin:14px auto;}
+  #puzzleGrid .tile{aspect-ratio:1;background:var(--panel2);border:2px solid var(--accent);
+    border-radius:10px;display:flex;align-items:center;justify-content:center;
+    font-size:1.6rem;font-weight:800;color:var(--text);}
+  #puzzleGrid .tile.blank{background:transparent;border:2px dashed #334;}
+
+  #resultCanvas{display:none;}
+  .center{text-align:center;}
+  .muted{color:var(--muted);font-size:0.9rem;}
+  .timer-badge{position:absolute;top:8px;left:50%;transform:translateX(-50%);
+    background:rgba(0,0,0,0.5);padding:4px 10px;border-radius:8px;font-weight:700;}
+</style>
+</head>
+<body>
+
+<div class="lang-toggle">
+  <button id="langEs" class="active" onclick="setLang('es')">ES</button>
+  <button id="langEn" onclick="setLang('en')">EN</button>
+</div>
+
+<div id="app">
+
+  <!-- START SCREEN -->
+  <div id="scr-start" class="screen active">
+    <h1 data-i18n="gameTitle">Alma Entera: El Desafio de las Dos Fuerzas</h1>
+    <div class="card center">
+      <p data-i18n="introText">Combina la educacion secular y la educacion espiritual para superar tres desafios. Ninguna de las dos alcanza sola.</p>
+      <p class="muted" data-i18n="nameLabel">Escribe tu nombre para empezar:</p>
+      <input type="text" id="playerNameInput" maxlength="24" placeholder="Tu nombre">
+      <div style="height:14px;"></div>
+      <button class="btn big gold" onclick="startGame()" data-i18n="startBtn">Comenzar</button>
+    </div>
+  </div>
+
+  <!-- LEVEL 1: PLATFORMER -->
+  <div id="scr-level1" class="screen">
+    <h2 data-i18n="lvl1Title">Nivel 1: Dos Fuerzas en Camino</h2>
+    <div id="gameWrap">
+      <canvas id="canvas1" width="960" height="540"></canvas>
+      <div class="hud">
+        <div class="pill" id="hudPower" data-i18n="hudPowerNone">Poder: ninguno</div>
+        <div class="pill" id="hudLives">Vidas: 3</div>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="dpad">
+        <button ontouchstart="input.left=true" ontouchend="input.left=false"
+                onmousedown="input.left=true" onmouseup="input.left=false" onmouseleave="input.left=false">◀</button>
+        <button ontouchstart="input.right=true" ontouchend="input.right=false"
+                onmousedown="input.right=true" onmouseup="input.right=false" onmouseleave="input.right=false">▶</button>
+      </div>
+      <div class="action-btns">
+        <button class="btn" ontouchstart="input.jump=true" ontouchend="input.jump=false"
+                onmousedown="input.jump=true" onmouseup="input.jump=false" onmouseleave="input.jump=false" data-i18n="jumpBtn">SALTAR</button>
+        <button class="btn gold" id="fireBtn" style="display:none;" onclick="shootFire()" data-i18n="fireBtn">FUEGO</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEVEL 2: SLIDING PUZZLE -->
+  <div id="scr-level2" class="screen">
+    <h2 data-i18n="lvl2Title">Nivel 2: Ordena los Numeros</h2>
+    <div class="card center">
+      <p class="muted" data-i18n="lvl2Instr">Toca una ficha junto al espacio vacio para moverla. Ordenalas del 1 al 8.</p>
+      <div id="puzzleGrid"></div>
+    </div>
+  </div>
+
+  <!-- LEVEL 3: EQUILIBRIO DE KIM -->
+  <div id="scr-level3" class="screen">
+    <h2 data-i18n="lvl3Title">Nivel 3: El Equilibrio de Kim</h2>
+    <div class="card">
+      <p class="muted center" data-i18n="lvl3Instr">Manten los dos medidores por encima del minimo durante 10 segundos. No descuides ninguno.</p>
+      <div class="gauge-wrap">
+        <div class="gauge-label"><span data-i18n="secularLabel">EDUCACION SECULAR</span><span id="secularPct">100%</span></div>
+        <div class="gauge-bar"><div class="gauge-fill secular" id="secularFill" style="width:100%;"></div></div>
+      </div>
+      <div class="gauge-wrap">
+        <div class="gauge-label"><span data-i18n="religiosaLabel">EDUCACION ESPIRITUAL</span><span id="religiosaPct">100%</span></div>
+        <div class="gauge-bar"><div class="gauge-fill religiosa" id="religiosaFill" style="width:100%;"></div></div>
+      </div>
+      <div class="center muted" style="margin:10px 0;" id="lvl3Timer">20.0s</div>
+      <div class="row">
+        <button class="btn big" style="border-color:var(--secular);" ontouchstart="lvl3Boost('secular')" onmousedown="lvl3Boost('secular')" data-i18n="secularBtn">+ SECULAR</button>
+        <button class="btn big gold" ontouchstart="lvl3Boost('religiosa')" onmousedown="lvl3Boost('religiosa')" data-i18n="religiosaBtn">+ ESPIRITUAL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EPILOGUE: REFLECTION -->
+  <div id="scr-epilogue" class="screen">
+    <h2 data-i18n="epilogueTitle">Mi Plan</h2>
+    <div class="card">
+      <p class="muted" data-i18n="q1">¿Que metas tienes para el futuro?</p>
+      <textarea id="ref1"></textarea>
+      <p class="muted" data-i18n="q2">¿Que decisiones educativas te ayudaran a lograrlas?</p>
+      <textarea id="ref2"></textarea>
+      <p class="muted" data-i18n="q3">¿Que planes tienes para tu educacion religiosa el proximo año?</p>
+      <textarea id="ref3"></textarea>
+      <div style="height:10px;"></div>
+      <button class="btn big good" onclick="finishGame()" data-i18n="finishBtn">Terminar</button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="scr-results" class="screen">
+    <h2 data-i18n="resultsTitle">Resultados</h2>
+    <div class="card center">
+      <p data-i18n="resultsHidden">Tu puntaje esta listo. Presiona el boton para verlo y compartirlo con tu maestro.</p>
+      <button class="btn big gold" id="revealBtn" onclick="revealAndShare()" data-i18n="revealBtn">Compartir con el Maestro</button>
+      <div id="waWrap" style="display:none;margin-top:10px;">
+        <button class="btn big" style="border-color:#25D366;color:#25D366;" onclick="shareWhatsApp()" data-i18n="waBtn">Enviar por WhatsApp</button>
+      </div>
+      <canvas id="resultCanvas" width="900" height="1100"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<!-- BLOCKING DIALOG (quotes / scripture) -->
+<div id="dialogOverlay" class="modal-overlay hidden">
+  <div class="modal">
+    <h2 id="dialogTitle" style="text-align:left;"></h2>
+    <div id="dialogQuote" class="quote"></div>
+    <p id="dialogBody"></p>
+    <button class="btn big gold" onclick="closeDialog()" data-i18n="continueBtn">Continuar</button>
+  </div>
+</div>
+
+<!-- TRIVIA MODAL -->
+<div id="triviaOverlay" class="modal-overlay hidden">
+  <div class="modal">
+    <h2 id="triviaQuestion" style="text-align:left;"></h2>
+    <div id="triviaOptions"></div>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   ALMA ENTERA: EL DESAFIO DE LAS DOS FUERZAS
+   Juego educativo HTML5 de archivo unico - Seminario 2026
+   Leccion: "Educacion para el Alma Entera"
+   ========================================================================= */
+
+/* ---------------- i18n ---------------- */
+const I18N = {
+  es: {
+    gameTitle:"Alma Entera: El Desafio de las Dos Fuerzas",
+    introText:"Combina la educacion secular y la educacion espiritual para superar tres desafios. Ninguna de las dos alcanza sola.",
+    nameLabel:"Escribe tu nombre para empezar:",
+    startBtn:"Comenzar",
+    lvl1Title:"Nivel 1: Dos Fuerzas en Camino",
+    hudPowerNone:"Poder: ninguno",
+    jumpBtn:"SALTAR",
+    fireBtn:"FUEGO",
+    lvl2Title:"Nivel 2: Ordena los Numeros",
+    lvl2Instr:"Toca una ficha junto al espacio vacio para moverla. Ordenalas del 1 al 8.",
+    lvl3Title:"Nivel 3: El Equilibrio de Kim",
+    lvl3Instr:"Manten los dos medidores por encima del minimo durante 10 segundos. No descuides ninguno.",
+    secularLabel:"EDUCACION SECULAR",
+    religiosaLabel:"EDUCACION ESPIRITUAL",
+    secularBtn:"+ SECULAR",
+    religiosaBtn:"+ ESPIRITUAL",
+    epilogueTitle:"Mi Plan",
+    q1:"¿Que metas tienes para el futuro?",
+    q2:"¿Que decisiones educativas te ayudaran a lograrlas?",
+    q3:"¿Que planes tienes para tu educacion religiosa el proximo año?",
+    finishBtn:"Terminar",
+    resultsTitle:"Resultados",
+    resultsHidden:"Tu puntaje esta listo. Presiona el boton para verlo y compartirlo con tu maestro.",
+    revealBtn:"Compartir con el Maestro",
+    waBtn:"Enviar por WhatsApp",
+    continueBtn:"Continuar",
+    dlg1Title:"Pergamino 1: Educacion Secular",
+    dlg1Quote:"Cualquier principio de inteligencia que logremos en esta vida se levantara con nosotros en la resurreccion; y si en esta vida una persona adquiere mas conocimiento e inteligencia que otra, por medio de su diligencia y obediencia, hasta ese grado le llevara la ventaja en el mundo venidero. (Doctrina y Convenios 130:18-19)",
+    dlg1Body:"Tocaste el pergamino del conocimiento. Responde para ganar el poder del Tamaño.",
+    dlg2Title:"Pergamino 2: Educacion Religiosa",
+    dlg2Quote:"Os mando que os enseñeis el uno al otro la doctrina del reino. Enseñaos diligentemente... para que seais mas perfectamente instruidos en teoria, en principio, en doctrina, en la ley del evangelio, en todas las cosas que pertenecen al reino de Dios. (Doctrina y Convenios 88:77-78)",
+    dlg2Body:"Tocaste el pergamino de la fe. Responde para ganar el poder del Fuego.",
+    dlg3Title:"Pergamino 3: La Combinacion",
+    dlg3Quote:"Mejor son dos que uno, porque tienen mejor paga por su trabajo... cordon de tres dobleces no se rompe pronto. (Eclesiastes 4:9,12)",
+    dlg3Body:"Este pergamino combina ambos colores. Responde la pregunta y decide si quieres combinar las dos fuerzas.",
+    triviaQ1:"Segun Doctrina y Convenios 130:18-19, ¿que se necesita para tener ventaja en el mundo venidero?",
+    triviaQ1_opts:["Solo tener mucho dinero","Conocimiento e inteligencia logrados con diligencia y obediencia","Solo estudiar mucho, sin mas","No se necesita nada en especial"],
+    triviaQ1_correct:1,
+    triviaQ2:"Segun Doctrina y Convenios 88:77-78, ¿que manda el Señor que hagamos?",
+    triviaQ2_opts:["Enseñarnos diligentemente en todas las cosas","Memorizar solo un libro","Ir a la iglesia una vez al año","Nada en especial"],
+    triviaQ2_correct:0,
+    triviaQ3:"¿Que representa la fusion de Goku y Vegeta en esta clase?",
+    triviaQ3_opts:["Dos personajes que solo compiten entre si","Un truco sin ningun significado","Dos fuerzas que se combinan y se vuelven mucho mas poderosas juntas","Una forma de ganar tiempo en la pelea"],
+    triviaQ3_correct:2,
+    combineQuestion:"¿Deseas combinar las dos fuerzas?",
+    combineYes:"Si, combinar",
+    triviaQ4:"Segun Galatas 6:9, ¿que pasa si no nos cansamos de hacer el bien?",
+    triviaQ4_opts:["A su tiempo segaremos, si no desmayamos","Nada cambia nunca","Se hace mas dificil cada vez","Hay que empezar de nuevo siempre"],
+    triviaQ4_correct:0,
+    triviaQ5:"¿Que le paso a Kim Sanchez Aldana cuando combino su carrera con su fe?",
+    triviaQ5_opts:["Dejo la universidad a mitad de camino","Tuvo su propio consultorio, mantuvo a su familia y siguio sirviendo","Dejo de asistir a la Iglesia","No cambio nada en su vida"],
+    triviaQ5_correct:1,
+    powerSize:"Tamaño",
+    powerFire:"Fuego",
+    powerCombined:"Combinado",
+    correctFeedback:"¡Correcto!",
+    wrongFeedback:"Intenta de nuevo",
+    solvedMsg:"¡Resuelto!"
+  },
+  en: {
+    gameTitle:"Whole Soul: The Challenge of Two Forces",
+    introText:"Combine secular and spiritual education to overcome three challenges. Neither one is enough on its own.",
+    nameLabel:"Write your name to begin:",
+    startBtn:"Start",
+    lvl1Title:"Level 1: Two Forces on the Path",
+    hudPowerNone:"Power: none",
+    jumpBtn:"JUMP",
+    fireBtn:"FIRE",
+    lvl2Title:"Level 2: Sort the Numbers",
+    lvl2Instr:"Tap a tile next to the empty space to move it. Sort them from 1 to 8.",
+    lvl3Title:"Level 3: Kim's Balance",
+    lvl3Instr:"Keep both gauges above the minimum for 10 seconds. Do not neglect either one.",
+    secularLabel:"SECULAR EDUCATION",
+    religiosaLabel:"SPIRITUAL EDUCATION",
+    secularBtn:"+ SECULAR",
+    religiosaBtn:"+ SPIRITUAL",
+    epilogueTitle:"My Plan",
+    q1:"What goals do you have for the future?",
+    q2:"What educational decisions will help you reach them?",
+    q3:"What plans do you have for your religious education next year?",
+    finishBtn:"Finish",
+    resultsTitle:"Results",
+    resultsHidden:"Your score is ready. Press the button to see it and share it with your teacher.",
+    revealBtn:"Share with Teacher",
+    waBtn:"Send via WhatsApp",
+    continueBtn:"Continue",
+    dlg1Title:"Scroll 1: Secular Education",
+    dlg1Quote:"Whatever principle of intelligence we attain unto in this life, it will rise with us in the resurrection; and if a person gains more knowledge and intelligence in this life through diligence and obedience than another, he will have so much the advantage in the world to come. (Doctrine and Covenants 130:18-19)",
+    dlg1Body:"You touched the scroll of knowledge. Answer to gain the power of Size.",
+    dlg2Title:"Scroll 2: Religious Education",
+    dlg2Quote:"I command you, that ye teach one another the doctrine of the kingdom. Teach ye diligently... that you may be instructed more perfectly in theory, in principle, in doctrine, in the law of the gospel, in all things that pertain unto the kingdom of God. (Doctrine and Covenants 88:77-78)",
+    dlg2Body:"You touched the scroll of faith. Answer to gain the power of Fire.",
+    dlg3Title:"Scroll 3: The Combination",
+    dlg3Quote:"Two are better than one, because they have a good reward for their labor... a threefold cord is not quickly broken. (Ecclesiastes 4:9,12)",
+    dlg3Body:"This scroll combines both colors. Answer the question and decide if you want to combine the two forces.",
+    triviaQ1:"According to Doctrine and Covenants 130:18-19, what is needed to have an advantage in the world to come?",
+    triviaQ1_opts:["Only having a lot of money","Knowledge and intelligence gained through diligence and obedience","Only studying a lot, nothing else","Nothing special is needed"],
+    triviaQ1_correct:1,
+    triviaQ2:"According to Doctrine and Covenants 88:77-78, what does the Lord command us to do?",
+    triviaQ2_opts:["Teach ourselves diligently in all things","Memorize only one book","Go to church once a year","Nothing special"],
+    triviaQ2_correct:0,
+    triviaQ3:"What does the fusion of Goku and Vegeta represent in this class?",
+    triviaQ3_opts:["Two characters who only compete with each other","A trick with no meaning","Two forces that combine and become far more powerful together","A way to stall for time in the fight"],
+    triviaQ3_correct:2,
+    combineQuestion:"Do you want to combine the two forces?",
+    combineYes:"Yes, combine",
+    triviaQ4:"According to Galatians 6:9, what happens if we do not grow weary in doing good?",
+    triviaQ4_opts:["In due season we shall reap, if we faint not","Nothing ever changes","It gets harder every time","We always have to start over"],
+    triviaQ4_correct:0,
+    triviaQ5:"What happened to Kim Sanchez Aldana when he combined his career with his faith?",
+    triviaQ5_opts:["He dropped out of college halfway","He got his own clinic, supported his family, and kept serving","He stopped attending church","Nothing changed in his life"],
+    triviaQ5_correct:1,
+    powerSize:"Size",
+    powerFire:"Fire",
+    powerCombined:"Combined",
+    correctFeedback:"Correct!",
+    wrongFeedback:"Try again",
+    solvedMsg:"Solved!"
+  }
+};
+let lang = 'es';
+function t(key){ return I18N[lang][key] || key; }
+function setLang(l){
+  lang = l;
+  document.getElementById('langEs').classList.toggle('active', l==='es');
+  document.getElementById('langEn').classList.toggle('active', l==='en');
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k = el.getAttribute('data-i18n');
+    el.textContent = t(k);
+  });
+}
+
+/* ---------------- helpers ---------------- */
+function sanitizeText(str){
+  if(!str) return "";
+  return str.normalize("NFD").replace(/[̀-ͯ]/g,"")
+    .replace(/[^a-zA-Z0-9 ]/g,"")
+    .replace(/\s+/g," ")
+    .trim();
+}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ---------------- audio (WebAudio synth, no assets) ---------------- */
+let actx = null;
+function audioCtx(){
+  if(!actx){
+    try{ actx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ actx=null; }
+  }
+  return actx;
+}
+function beep(freq, dur, type){
+  const ctx = audioCtx();
+  if(!ctx) return;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type || 'square';
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0.12, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.start(); osc.stop(ctx.currentTime + dur);
+}
+function sfxCorrect(){ beep(660,0.12,'square'); setTimeout(()=>beep(880,0.15,'square'),110); }
+function sfxWrong(){ beep(160,0.25,'sawtooth'); }
+function sfxPower(){ beep(440,0.1,'triangle'); setTimeout(()=>beep(660,0.1,'triangle'),90); setTimeout(()=>beep(880,0.2,'triangle'),180); }
+function sfxJump(){ beep(500,0.08,'square'); }
+function sfxFire(){ beep(300,0.08,'sawtooth'); }
+function sfxHit(){ beep(200,0.15,'sawtooth'); }
+function sfxExplosion(){
+  beep(120,0.4,'sawtooth');
+  setTimeout(()=>beep(90,0.3,'sawtooth'),80);
+  setTimeout(()=>beep(60,0.3,'sawtooth'),160);
+}
+
+/* ---------------- global state ---------------- */
+let playerName = "";
+let scoreState = {
+  triviaPoints: 0,
+  reflectionPoints: 0,
+  triviaAttempts: {} // key -> attempts count
+};
+const WHATSAPP_NUMBER = "5491100000000"; // TODO: reemplazar por el numero real del maestro (con codigo de pais, sin +)
+
+let dialogQueueCallback = null;
+function openDialog(titleKey, quoteKey, bodyKey, onClose){
+  document.getElementById('dialogTitle').textContent = t(titleKey);
+  document.getElementById('dialogQuote').textContent = t(quoteKey);
+  document.getElementById('dialogBody').textContent = t(bodyKey);
+  document.getElementById('dialogOverlay').classList.remove('hidden');
+  dialogQueueCallback = onClose;
+}
+function closeDialog(){
+  document.getElementById('dialogOverlay').classList.add('hidden');
+  const cb = dialogQueueCallback;
+  dialogQueueCallback = null;
+  if(cb) cb();
+}
+
+let triviaActiveCallback = null;
+let triviaActiveKey = null;
+function openTrivia(qKey, optsKey, correctKey, onCorrect){
+  triviaActiveKey = qKey;
+  const q = t(qKey);
+  const opts = I18N[lang][optsKey];
+  const correctIdx = I18N[lang][correctKey];
+  document.getElementById('triviaQuestion').textContent = q;
+  const wrap = document.getElementById('triviaOptions');
+  wrap.innerHTML = "";
+  opts.forEach((opt, idx)=>{
+    const b = document.createElement('button');
+    b.className = 'opt';
+    b.textContent = opt;
+    b.onclick = ()=>{
+      const attempts = (scoreState.triviaAttempts[qKey] || 0) + 1;
+      scoreState.triviaAttempts[qKey] = attempts;
+      if(idx === correctIdx){
+        b.classList.add('correct');
+        sfxCorrect();
+        const pts = attempts === 1 ? 100 : 50;
+        scoreState.triviaPoints += pts;
+        setTimeout(()=>{
+          document.getElementById('triviaOverlay').classList.add('hidden');
+          const cb = onCorrect;
+          triviaActiveCallback = null;
+          if(cb) cb();
+        }, 550);
+      } else {
+        b.classList.add('wrong');
+        sfxWrong();
+        if(navigator.vibrate) navigator.vibrate(80);
+      }
+    };
+    wrap.appendChild(b);
+  });
+  document.getElementById('triviaOverlay').classList.remove('hidden');
+}
+
+/* =========================================================================
+   START / FLOW CONTROL
+   ========================================================================= */
+function startGame(){
+  const raw = document.getElementById('playerNameInput').value;
+  playerName = sanitizeText(raw) || (lang==='es' ? "Jugador" : "Player");
+  showScreen('scr-level1');
+  initLevel1();
+}
+
+function goToLevel2(){
+  showScreen('scr-level2');
+  initLevel2();
+}
+function goToLevel3(){
+  showScreen('scr-level3');
+  initLevel3();
+}
+function goToEpilogue(){
+  showScreen('scr-epilogue');
+}
+function finishGame(){
+  const r1 = document.getElementById('ref1').value.trim();
+  const r2 = document.getElementById('ref2').value.trim();
+  const r3 = document.getElementById('ref3').value.trim();
+  const totalChars = r1.length + r2.length + r3.length;
+  scoreState.reflectionPoints = totalChars * 4;
+  scoreState.reflections = [r1, r2, r3];
+  showScreen('scr-results');
+}
+
+/* =========================================================================
+   LEVEL 1: PLATFORMER (continuous world + camera, canvas)
+   ========================================================================= */
+const input = { left:false, right:false, jump:false };
+let l1 = null; // level1 state
+let rafId = null;
+
+function initLevel1(){
+  const canvas = document.getElementById('canvas1');
+  const ctx = canvas.getContext('2d');
+  l1 = {
+    ctx: ctx,
+    canvas: canvas,
+    worldW: 3400,
+    camX: 0,
+    groundY: 440,
+    player: { x:60, y:380, w:34, h:46, vx:0, vy:0, onGround:false, size:1, hasFire:false, invuln:0, facing:1 },
+    lives: 3,
+    platforms: [
+      { x:320,  y:340, w:130, h:16 },
+      { x:560,  y:290, w:110, h:16 },
+      { x:980,  y:330, w:140, h:16 },
+      { x:1260, y:280, w:120, h:16 },
+      { x:1480, y:340, w:130, h:16 },
+      { x:1880, y:300, w:150, h:16 },
+      { x:2150, y:250, w:120, h:16 },
+      { x:2420, y:320, w:140, h:16 },
+      { x:2680, y:270, w:130, h:16 }
+    ],
+    scrolls: [
+      { x:700,  y:380, w:30, h:38, taken:false, kind:'secular' },
+      { x:1650, y:380, w:30, h:38, taken:false, kind:'religiosa' },
+      { x:2750, y:380, w:30, h:38, taken:false, kind:'combine' }
+    ],
+    enemies: [],
+    projectiles: [],
+    particles: [],
+    stage: 0, // 0: before scroll1, 1: after scroll1, 2: after scroll2, 3: combined/finished
+    transformed: false,
+    finished: false,
+    explosionTimer: 0
+  };
+  spawnEnemies(2, 500, 700, 'ground');
+  document.getElementById('hudPower').textContent = t('hudPowerNone');
+  document.getElementById('hudLives').textContent = 'Vidas: ' + l1.lives;
+  document.getElementById('fireBtn').style.display = 'none';
+  if(rafId) cancelAnimationFrame(rafId);
+  rafId = requestAnimationFrame(loop);
+}
+
+function spawnEnemies(count, fromX, spacing, type){
+  type = type || 'ground';
+  for(let i=0;i<count;i++){
+    const cx = fromX + i*spacing + Math.random()*80;
+    if(type === 'flying'){
+      const baseY = l1.groundY - 150 - Math.random()*60;
+      l1.enemies.push({
+        type:'flying',
+        x: cx, y: baseY, baseY: baseY, phase: Math.random()*Math.PI*2,
+        w: 28, h: 24,
+        vx: (Math.random()<0.5 ? -1 : 1) * (0.7 + Math.random()*0.5),
+        minX: cx - 100, maxX: cx + 100,
+        alive: true
+      });
+    } else {
+      l1.enemies.push({
+        type:'ground',
+        x: cx,
+        y: l1.groundY - 30,
+        w: 30, h: 30,
+        vx: (Math.random()<0.5 ? -1 : 1) * (0.8 + Math.random()*0.6),
+        minX: fromX + i*spacing - 90,
+        maxX: fromX + i*spacing + 90,
+        alive: true
+      });
+    }
+  }
+}
+
+let triviaOpen = false; // pauses gameplay logic without stopping the RAF loop
+
+function loop(ts){
+  rafId = requestAnimationFrame(loop);
+  const scr1active = document.getElementById('scr-level1').classList.contains('active');
+  if(scr1active && l1 && !l1.finished){
+    if(!triviaOpen && document.getElementById('dialogOverlay').classList.contains('hidden')){
+      updateLevel1();
+    }
+    drawLevel1();
+  }
+}
+
+function updateLevel1(){
+  const p = l1.player;
+  const speed = 3.2;
+  if(input.left){ p.vx = -speed; p.facing=-1; }
+  else if(input.right){ p.vx = speed; p.facing=1; }
+  else { p.vx = 0; }
+
+  if(input.jump && p.onGround){
+    p.vy = -10.5;
+    p.onGround = false;
+    sfxJump();
+  }
+
+  p.vy += 0.5; // gravity
+  const prevFootY = p.y + p.h*p.size;
+  p.x += p.vx;
+  p.y += p.vy;
+
+  resolveVertical(p, prevFootY);
+
+  if(p.x < 0) p.x = 0;
+  if(p.x > l1.worldW - 40) p.x = l1.worldW - 40;
+
+  if(p.invuln > 0) p.invuln--;
+
+  // camera follow
+  l1.camX = Math.max(0, Math.min(p.x - 160, l1.worldW - l1.canvas.width));
+
+  // scrolls
+  l1.scrolls.forEach(s=>{
+    if(!s.taken && rectsOverlap(p, {x:s.x,y:s.y,w:s.w,h:s.h}, p.size)){
+      s.taken = true;
+      handleScroll(s.kind);
+    }
+  });
+
+  // enemies
+  l1.enemies.forEach(e=>{
+    if(!e.alive) return;
+    if(e.type === 'flying'){
+      // Chase the player (with a slight bob), instead of just floating in place.
+      const dx = p.x - e.x;
+      const dy = (p.y - 16) - e.y;
+      const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+      const chaseSpeed = 1.35;
+      e.x += (dx / dist) * chaseSpeed;
+      e.y += (dy / dist) * chaseSpeed + Math.sin(Date.now()/260 + e.phase) * 0.7;
+      e.y = Math.max(40, Math.min(l1.groundY - 40, e.y));
+    } else {
+      e.x += e.vx;
+      if(e.x < e.minX || e.x > e.maxX) e.vx *= -1;
+    }
+    const eb = {x:e.x, y:e.y, w:e.w, h:e.h};
+    const pb = {x:p.x, y:p.y, w:p.w*p.size, h:p.h*p.size};
+    if(rectsOverlapRaw(pb, eb) && p.invuln === 0){
+      const isBig = p.size > 1.15;
+      // Stomp = the player's foot was still above the enemy's midpoint before this
+      // frame's fall (not how far it has now sunk in), so detection stays reliable
+      // regardless of frame rate or fall speed.
+      const isStomp = p.vy > 0 && prevFootY <= (eb.y + eb.h * 0.5);
+      if(isBig && isStomp){
+        // landed on top: eliminates the enemy
+        e.alive = false;
+        p.vy = -6.5; // small bounce
+        spawnParticles(e.x+e.w/2, e.y+e.h/2, '#e8b24d');
+        sfxHit();
+      } else if(isBig && !isStomp){
+        // touched from another angle while big: lose points, not a life
+        scoreState.penaltyPoints = (scoreState.penaltyPoints || 0) + 20;
+        p.invuln = 45;
+        sfxWrong();
+        if(navigator.vibrate) navigator.vibrate(60);
+        spawnParticles(p.x + p.w*p.size/2, p.y, '#e5484d');
+      } else {
+        p.invuln = 60;
+        l1.lives--;
+        document.getElementById('hudLives').textContent = 'Vidas: ' + l1.lives;
+        sfxHit();
+        if(navigator.vibrate) navigator.vibrate(120);
+        if(l1.lives <= 0){
+          resetLevel1Soft();
+        } else {
+          p.x = Math.max(0, p.x - 80);
+        }
+      }
+    }
+  });
+
+  // projectiles (fire)
+  l1.projectiles.forEach(pr=>{
+    pr.x += pr.vx;
+    l1.enemies.forEach(e=>{
+      if(e.alive && rectsOverlapRaw({x:pr.x,y:pr.y,w:10,h:10},{x:e.x,y:e.y,w:e.w,h:e.h})){
+        e.alive = false;
+        pr.dead = true;
+        spawnParticles(e.x+e.w/2, e.y+e.h/2, '#f0930a');
+        sfxHit();
+      }
+    });
+  });
+  l1.projectiles = l1.projectiles.filter(pr=> !pr.dead && pr.x < l1.camX + l1.canvas.width + 50);
+  l1.enemies = l1.enemies.filter(e=>e.alive);
+
+  // particles
+  l1.particles.forEach(pt=>{ pt.x+=pt.vx; pt.y+=pt.vy; pt.vy+=0.2; pt.life--; });
+  l1.particles = l1.particles.filter(pt=>pt.life>0);
+
+  if(l1.explosionTimer > 0){
+    l1.explosionTimer--;
+    if(l1.explosionTimer === 0){
+      completeLevel1();
+    }
+  }
+}
+
+function resolveVertical(p, prevFootY){
+  const footY = p.y + p.h*p.size;
+  let landed = false;
+  // one-way platforms: only solid when falling onto them from above
+  if(p.vy >= 0){
+    for(const pf of l1.platforms){
+      const pLeft = p.x, pRight = p.x + p.w*p.size;
+      if(pRight > pf.x && pLeft < pf.x + pf.w && prevFootY <= pf.y + 4 && footY >= pf.y){
+        p.y = pf.y - p.h*p.size;
+        p.vy = 0;
+        landed = true;
+        break;
+      }
+    }
+  }
+  if(!landed){
+    const groundLevel = l1.groundY - (p.h * p.size);
+    if(p.y >= groundLevel){
+      p.y = groundLevel;
+      p.vy = 0;
+      landed = true;
+    }
+  }
+  p.onGround = landed;
+}
+
+function resetLevel1Soft(){
+  l1.lives = 3;
+  l1.player.x = 60; l1.player.y = 380; l1.player.vx=0; l1.player.vy=0;
+  document.getElementById('hudLives').textContent = 'Vidas: ' + l1.lives;
+}
+
+function rectsOverlap(player, obj, scale){
+  const pb = {x:player.x, y:player.y, w:player.w*scale, h:player.h*scale};
+  return rectsOverlapRaw(pb, obj);
+}
+function rectsOverlapRaw(a,b){
+  return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
+}
+
+function spawnParticles(x,y,color){
+  for(let i=0;i<14;i++){
+    l1.particles.push({
+      x:x, y:y,
+      vx:(Math.random()-0.5)*6, vy:(Math.random()-1.2)*6,
+      life:30, color:color
+    });
+  }
+}
+
+function handleScroll(kind){
+  triviaOpen = true;
+  if(kind === 'secular'){
+    openDialog('dlg1Title','dlg1Quote','dlg1Body', ()=>{
+      openTrivia('triviaQ1','triviaQ1_opts','triviaQ1_correct', ()=>{
+        l1.player.size = 1.5;
+        l1.player.h = 46;
+        document.getElementById('hudPower').textContent = 'Poder: ' + t('powerSize');
+        sfxPower();
+        spawnEnemies(3, l1.player.x + 350, 220, 'ground');
+        triviaOpen = false;
+      });
+    });
+  } else if(kind === 'religiosa'){
+    openDialog('dlg2Title','dlg2Quote','dlg2Body', ()=>{
+      openTrivia('triviaQ2','triviaQ2_opts','triviaQ2_correct', ()=>{
+        l1.player.hasFire = true;
+        document.getElementById('fireBtn').style.display = 'inline-flex';
+        document.getElementById('hudPower').textContent = 'Poder: ' + t('powerFire');
+        sfxPower();
+        // Antes de la ultima pregunta: oleada masiva de enemigos, incluidos voladores.
+        // Tantos que combinar las dos fuerzas sera la unica salida.
+        spawnEnemies(8, l1.player.x + 300, 130, 'ground');
+        spawnEnemies(6, l1.player.x + 450, 150, 'flying');
+        triviaOpen = false;
+      });
+    });
+  } else if(kind === 'combine'){
+    openDialog('dlg3Title','dlg3Quote','dlg3Body', ()=>{
+      openTrivia('triviaQ3','triviaQ3_opts','triviaQ3_correct', ()=>{
+        askCombineConfirm();
+      });
+    });
+  }
+}
+
+function askCombineConfirm(){
+  document.getElementById('triviaQuestion').textContent = t('combineQuestion');
+  const wrap = document.getElementById('triviaOptions');
+  wrap.innerHTML = "";
+  const b = document.createElement('button');
+  b.className = 'opt correct';
+  b.textContent = t('combineYes');
+  b.onclick = ()=>{
+    document.getElementById('triviaOverlay').classList.add('hidden');
+    triggerTransformation();
+  };
+  wrap.appendChild(b);
+  document.getElementById('triviaOverlay').classList.remove('hidden');
+}
+
+function triggerTransformation(){
+  l1.transformed = true;
+  document.getElementById('hudPower').textContent = 'Poder: ' + t('powerCombined');
+  sfxPower();
+  // Explosion inmediata: elimina a TODOS los enemigos presentes (tierra y voladores)
+  // con una explosion de particulas por cada uno, en el mismo instante en que
+  // el jugador se transforma. No se espera a un contador.
+  spawnParticles(l1.player.x, l1.player.y, '#ffffff');
+  l1.enemies.forEach(e=>{
+    if(!e.alive) return;
+    spawnParticles(e.x + e.w/2, e.y + e.h/2, e.type === 'flying' ? '#b06fe0' : '#e8b24d');
+    e.alive = false;
+  });
+  l1.enemies = l1.enemies.filter(e=>e.alive);
+  sfxExplosion();
+  l1.explosionTimer = 45;
+  triviaOpen = false;
+}
+
+function completeLevel1(){
+  l1.finished = true;
+  setTimeout(()=>{ goToLevel2(); }, 900);
+}
+
+function shootFire(){
+  if(!l1 || !l1.player.hasFire || triviaOpen) return;
+  const p = l1.player;
+  l1.projectiles.push({ x: p.x + (p.facing>0? p.w*p.size : -10), y: p.y + p.h*p.size/2, vx: 7*p.facing });
+  sfxFire();
+}
+
+function drawLevel1(){
+  const ctx = l1.ctx;
+  const W = l1.canvas.width, H = l1.canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  // sky gradient
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0, l1.transformed ? '#3a2f6a' : '#16213e');
+  g.addColorStop(1, l1.transformed ? '#0c1020' : '#0c1020');
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,W,H);
+
+  ctx.save();
+  ctx.translate(-l1.camX, 0);
+
+  // ground
+  ctx.fillStyle = '#232c40';
+  ctx.fillRect(0, l1.groundY + 6, l1.worldW, H - l1.groundY);
+  ctx.fillStyle = '#2dd4e8';
+  ctx.fillRect(0, l1.groundY + 4, l1.worldW, 3);
+
+  // platforms
+  l1.platforms.forEach(pf=>{
+    ctx.fillStyle = '#334469';
+    roundRect(ctx, pf.x, pf.y, pf.w, pf.h, 6);
+    ctx.fill();
+    ctx.fillStyle = '#2dd4e8';
+    ctx.fillRect(pf.x, pf.y, pf.w, 3);
+  });
+
+  // scrolls
+  l1.scrolls.forEach(s=>{
+    if(s.taken) return;
+    ctx.save();
+    ctx.translate(s.x + s.w/2, s.y + s.h/2 + Math.sin(Date.now()/300 + s.x)*4);
+    let color = s.kind==='secular' ? '#1f6fe0' : s.kind==='religiosa' ? '#f0930a' : '#e8b24d';
+    ctx.fillStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 18;
+    roundRect(ctx, -s.w/2, -s.h/2, s.w, s.h, 6);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#0b0e14';
+    ctx.fillRect(-s.w/2+4, -2, s.w-8, 4);
+    ctx.restore();
+  });
+
+  // enemies (generic silhouettes)
+  l1.enemies.forEach(e=>{
+    if(e.type === 'flying'){
+      ctx.fillStyle = '#b23ce0';
+      ctx.beginPath();
+      ctx.ellipse(e.x+e.w/2, e.y+e.h/2, e.w/2, e.h/2, 0, 0, Math.PI*2);
+      ctx.fill();
+      // small wings
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      const wingFlap = Math.sin(Date.now()/120) * 6;
+      ctx.beginPath();
+      ctx.ellipse(e.x-2, e.y+e.h/2+wingFlap, 9, 4, 0.3, 0, Math.PI*2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(e.x+e.w+2, e.y+e.h/2-wingFlap, 9, 4, -0.3, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(e.x+e.w/2-6, e.y+e.h/2-3, 4,4);
+      ctx.fillRect(e.x+e.w/2+2, e.y+e.h/2-3, 4,4);
+    } else {
+      ctx.fillStyle = '#e5484d';
+      roundRect(ctx, e.x, e.y, e.w, e.h, 8);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(e.x+7, e.y+9, 5,5);
+      ctx.fillRect(e.x+e.w-12, e.y+9, 5,5);
+    }
+  });
+
+  // projectiles
+  l1.projectiles.forEach(pr=>{
+    ctx.fillStyle = '#f0930a';
+    ctx.beginPath();
+    ctx.arc(pr.x, pr.y, 7, 0, Math.PI*2);
+    ctx.fill();
+  });
+
+  // particles
+  l1.particles.forEach(pt=>{
+    ctx.globalAlpha = Math.max(pt.life/30, 0);
+    ctx.fillStyle = pt.color;
+    ctx.fillRect(pt.x, pt.y, 5, 5);
+    ctx.globalAlpha = 1;
+  });
+
+  // player
+  const p = l1.player;
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  const scale = p.size;
+  if(p.invuln > 0 && Math.floor(p.invuln/4)%2===0){
+    ctx.globalAlpha = 0.4;
+  }
+  if(l1.transformed){
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = '#e8b24d';
+    ctx.shadowBlur = 30;
+  } else {
+    ctx.fillStyle = '#dfe6f0';
+  }
+  roundRect(ctx, 0, 0, p.w*scale, p.h*scale, 8);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  // simple face
+  ctx.fillStyle = l1.transformed ? '#e8b24d' : '#0b0e14';
+  ctx.fillRect(6*scale, 8*scale, 5*scale, 5*scale);
+  ctx.fillRect((p.w-11)*scale, 8*scale, 5*scale, 5*scale);
+  if(l1.transformed){
+    // wings of light
+    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0,10*scale); ctx.quadraticCurveTo(-26*scale, -6*scale, -6*scale, -22*scale);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(p.w*scale,10*scale); ctx.quadraticCurveTo(p.w*scale+26*scale, -6*scale, p.w*scale+6*scale, -22*scale);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  ctx.restore(); // camera
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+/* keyboard support (desktop testing) */
+window.addEventListener('keydown', (e)=>{
+  if(e.key==='ArrowLeft') input.left = true;
+  if(e.key==='ArrowRight') input.right = true;
+  if(e.key===' '||e.key==='ArrowUp') input.jump = true;
+  if(e.key==='f'||e.key==='F') shootFire();
+});
+window.addEventListener('keyup', (e)=>{
+  if(e.key==='ArrowLeft') input.left = false;
+  if(e.key==='ArrowRight') input.right = false;
+  if(e.key===' '||e.key==='ArrowUp') input.jump = false;
+});
+
+/* =========================================================================
+   LEVEL 2: SLIDING PUZZLE (1-8 + blank)
+   ========================================================================= */
+let l2 = null;
+function initLevel2(){
+  let tiles = [1,2,3,4,5,6,7,8,0]; // 0 = blank
+  // shuffle via valid random moves so it's always solvable
+  let blankIdx = 8;
+  for(let i=0;i<200;i++){
+    const neighbors = puzzleNeighbors(blankIdx);
+    const swapWith = neighbors[Math.floor(Math.random()*neighbors.length)];
+    [tiles[blankIdx], tiles[swapWith]] = [tiles[swapWith], tiles[blankIdx]];
+    blankIdx = swapWith;
+  }
+  l2 = { tiles, blankIdx, solved:false };
+  renderPuzzle();
+}
+function puzzleNeighbors(idx){
+  const row = Math.floor(idx/3), col = idx%3;
+  const res = [];
+  if(row>0) res.push(idx-3);
+  if(row<2) res.push(idx+3);
+  if(col>0) res.push(idx-1);
+  if(col<2) res.push(idx+1);
+  return res;
+}
+function renderPuzzle(){
+  const grid = document.getElementById('puzzleGrid');
+  grid.innerHTML = "";
+  l2.tiles.forEach((val, idx)=>{
+    const div = document.createElement('div');
+    div.className = 'tile' + (val===0 ? ' blank' : '');
+    div.textContent = val===0 ? '' : val;
+    div.onclick = ()=>tryMove(idx);
+    grid.appendChild(div);
+  });
+}
+function tryMove(idx){
+  if(l2.solved) return;
+  const neighbors = puzzleNeighbors(l2.blankIdx);
+  if(neighbors.includes(idx)){
+    [l2.tiles[idx], l2.tiles[l2.blankIdx]] = [l2.tiles[l2.blankIdx], l2.tiles[idx]];
+    l2.blankIdx = idx;
+    renderPuzzle();
+    beep(420,0.06,'square');
+    checkPuzzleSolved();
+  }
+}
+function checkPuzzleSolved(){
+  const solved = l2.tiles.every((v,i)=> (i===8) ? v===0 : v===i+1);
+  if(solved){
+    l2.solved = true;
+    sfxCorrect();
+    setTimeout(()=>{
+      openTrivia('triviaQ4','triviaQ4_opts','triviaQ4_correct', ()=>{ goToLevel3(); });
+    }, 400);
+  }
+}
+
+/* =========================================================================
+   LEVEL 3: EQUILIBRIO DE KIM (dual gauge survival)
+   ========================================================================= */
+let l3 = null;
+let l3Interval = null;
+function initLevel3(){
+  l3 = { secular:100, religiosa:100, elapsed:0, duration:10, done:false };
+  updateGaugeUI();
+  if(l3Interval) clearInterval(l3Interval);
+  l3Interval = setInterval(l3Tick, 100);
+}
+function l3Tick(){
+  if(l3.done) return;
+  l3.secular = Math.max(0, l3.secular - 2.4);
+  l3.religiosa = Math.max(0, l3.religiosa - 2.4);
+  l3.elapsed += 0.1;
+  updateGaugeUI();
+  const remaining = Math.max(0, l3.duration - l3.elapsed);
+  document.getElementById('lvl3Timer').textContent = remaining.toFixed(1) + 's';
+
+  if(l3.secular <= 0 || l3.religiosa <= 0){
+    // soft fail: restart this level's timer, keep going (low-stakes for classroom)
+    l3.secular = Math.max(l3.secular, 40);
+    l3.religiosa = Math.max(l3.religiosa, 40);
+    l3.elapsed = Math.max(0, l3.elapsed - 4);
+    if(navigator.vibrate) navigator.vibrate(100);
+    sfxWrong();
+  }
+  if(l3.elapsed >= l3.duration && !l3.done){
+    l3.done = true;
+    clearInterval(l3Interval);
+    sfxCorrect();
+    setTimeout(()=>{
+      openTrivia('triviaQ5','triviaQ5_opts','triviaQ5_correct', ()=>{ goToEpilogue(); });
+    }, 300);
+  }
+}
+function updateGaugeUI(){
+  document.getElementById('secularFill').style.width = l3.secular + '%';
+  document.getElementById('religiosaFill').style.width = l3.religiosa + '%';
+  document.getElementById('secularPct').textContent = Math.round(l3.secular) + '%';
+  document.getElementById('religiosaPct').textContent = Math.round(l3.religiosa) + '%';
+}
+function lvl3Boost(which){
+  if(!l3 || l3.done) return;
+  if(which==='secular'){ l3.secular = Math.min(100, l3.secular + 9); }
+  else { l3.religiosa = Math.min(100, l3.religiosa + 9); }
+  updateGaugeUI();
+  beep(which==='secular'? 500:640, 0.05, 'triangle');
+}
+
+/* =========================================================================
+   RESULTS: hidden score reveal + PNG card + share
+   ========================================================================= */
+let finalScore = 0;
+function revealAndShare(){
+  finalScore = Math.max(0, scoreState.triviaPoints + scoreState.reflectionPoints - (scoreState.penaltyPoints || 0));
+  drawResultCard();
+  const canvas = document.getElementById('resultCanvas');
+  canvas.toBlob((blob)=>{
+    const file = new File([blob], 'alma-entera-resultado.png', { type:'image/png' });
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      navigator.share({
+        files:[file],
+        title: t('gameTitle'),
+        text: playerName + ' - ' + finalScore + ' pts'
+      }).catch(()=>{ downloadCanvas(canvas); });
+    } else {
+      downloadCanvas(canvas);
+    }
+    document.getElementById('waWrap').style.display = 'block';
+  }, 'image/png');
+  document.getElementById('resultsHidden') && (document.getElementById('resultsTitle').textContent = t('resultsTitle') + ': ' + finalScore + ' pts');
+}
+function downloadCanvas(canvas){
+  const link = document.createElement('a');
+  link.download = 'alma-entera-resultado.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+function drawResultCard(){
+  const canvas = document.getElementById('resultCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.fillStyle = '#0b0e14';
+  ctx.fillRect(0,0,W,H);
+  const grad = ctx.createLinearGradient(0,0,W,H);
+  grad.addColorStop(0,'#1f6fe0'); grad.addColorStop(1,'#f0930a');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,W,10);
+
+  ctx.fillStyle = '#e8b24d';
+  ctx.font = 'bold 42px sans-serif';
+  ctx.textAlign = 'center';
+  wrapText(ctx, t('gameTitle'), W/2, 90, W-80, 48);
+
+  ctx.fillStyle = '#eef2f7';
+  ctx.font = 'bold 34px sans-serif';
+  ctx.fillText(playerName, W/2, 190);
+
+  ctx.font = 'bold 64px sans-serif';
+  ctx.fillStyle = '#2dd4e8';
+  ctx.fillText(finalScore + ' pts', W/2, 270);
+
+  ctx.textAlign = 'left';
+  ctx.font = '22px sans-serif';
+  ctx.fillStyle = '#9aa7bd';
+  let y = 340;
+  const qs = [t('q1'), t('q2'), t('q3')];
+  const answers = scoreState.reflections || ["","",""];
+  for(let i=0;i<3;i++){
+    ctx.fillStyle = '#e8b24d';
+    y = wrapText(ctx, qs[i], 50, y, W-100, 30) + 10;
+    ctx.fillStyle = '#eef2f7';
+    y = wrapText(ctx, answers[i] || '-', 50, y, W-100, 30) + 30;
+  }
+
+  ctx.textAlign = 'center';
+  ctx.font = 'italic 20px sans-serif';
+  ctx.fillStyle = '#9aa7bd';
+  ctx.fillText('Seminario 2026 - Leccion: Educacion para el Alma Entera', W/2, H-40);
+}
+function wrapText(ctx, text, x, y, maxWidth, lineHeight){
+  const words = String(text).split(' ');
+  let line = '';
+  for(let n=0;n<words.length;n++){
+    const testLine = line + words[n] + ' ';
+    if(ctx.measureText(testLine).width > maxWidth && n>0){
+      ctx.fillText(line, x, y);
+      line = words[n] + ' ';
+      y += lineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+  ctx.fillText(line, x, y);
+  return y + lineHeight;
+}
+function shareWhatsApp(){
+  const msg = encodeURIComponent(
+    (playerName || 'Jugador') + ' termino "Alma Entera" con ' + finalScore + ' puntos. (Imagen descargada por separado)'
+  );
+  window.open('https://wa.me/' + WHATSAPP_NUMBER + '?text=' + msg, '_blank');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Rescate en Isaías</title>
+<style>
+  :root{
+    --cian:#3ef7ff;
+    --ambar:#ffb84d;
+    --dorado:#ffe9b3;
+    --fondo1:#070515;
+    --fondo2:#120b2e;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none;}
+  html,body{
+    margin:0; padding:0; width:100%; height:100%;
+    background:radial-gradient(circle at 50% 20%, var(--fondo2), var(--fondo1));
+    font-family:'Segoe UI', Arial, sans-serif;
+    color:#fff;
+    overflow:hidden;
+    touch-action:none;
+  }
+  #app{
+    position:fixed; inset:0;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .screen{
+    position:absolute; inset:0;
+    display:none;
+    flex-direction:column;
+    align-items:center; justify-content:center;
+    padding:20px;
+    text-align:center;
+    background:radial-gradient(circle at 50% 20%, var(--fondo2), var(--fondo1));
+  }
+  .screen.active{ display:flex; }
+  h1{
+    font-size:clamp(22px,7vw,40px);
+    margin:0 0 6px;
+    color:var(--cian);
+    text-shadow:0 0 12px var(--cian), 0 0 30px rgba(62,247,255,.5);
+    letter-spacing:1px;
+  }
+  h2{
+    font-size:clamp(16px,5vw,24px);
+    color:var(--ambar);
+    text-shadow:0 0 10px rgba(255,184,77,.6);
+    margin:0 0 14px;
+  }
+  p{ font-size:clamp(13px,4vw,17px); line-height:1.5; max-width:520px; }
+  .glow-box{
+    background:rgba(18,11,46,.7);
+    border:1px solid var(--cian);
+    box-shadow:0 0 20px rgba(62,247,255,.35), inset 0 0 20px rgba(62,247,255,.08);
+    border-radius:16px;
+    padding:22px;
+    max-width:520px;
+    width:100%;
+  }
+  input[type=text], textarea{
+    width:100%;
+    background:#0c0722;
+    border:1px solid var(--cian);
+    border-radius:10px;
+    color:#fff;
+    font-size:16px;
+    padding:12px;
+    margin-top:8px;
+    outline:none;
+  }
+  textarea{ resize:none; min-height:64px; font-family:inherit; }
+  input[type=text]:focus, textarea:focus{ box-shadow:0 0 12px var(--cian); }
+  button{
+    font-family:inherit;
+    font-weight:700;
+    letter-spacing:.5px;
+    border:none;
+    border-radius:12px;
+    padding:14px 26px;
+    font-size:clamp(14px,4vw,18px);
+    cursor:pointer;
+    margin-top:16px;
+    background:linear-gradient(135deg, var(--cian), #1f9aa8);
+    color:#031014;
+    box-shadow:0 0 18px rgba(62,247,255,.5);
+    transition:transform .12s;
+  }
+  button:active{ transform:scale(.95); }
+  button.secondary{
+    background:linear-gradient(135deg, var(--ambar), #b3701f);
+    color:#1a0f00;
+    box-shadow:0 0 18px rgba(255,184,77,.5);
+  }
+  /* ---------- juego ---------- */
+  #gameScreen{ padding:0; }
+  #gameWrap{
+    position:relative;
+    width:100%; height:100%;
+    max-width:900px; max-height:100%;
+    margin:0 auto;
+  }
+  canvas#gameCanvas{
+    display:block;
+    width:100%; height:100%;
+    background:linear-gradient(180deg, #170f3a 0%, #0a0620 60%, #070515 100%);
+    touch-action:none;
+  }
+  #hud{
+    position:absolute; top:8px; left:8px; right:8px;
+    display:flex; justify-content:space-between; align-items:flex-start;
+    pointer-events:none;
+    font-size:13px;
+    text-shadow:0 0 6px #000;
+  }
+  #hudLeft{ color:var(--cian); font-weight:700; }
+  #hudRight{ color:var(--ambar); font-weight:700; text-align:right; }
+  #energyBarBg{
+    width:120px; height:10px; border:1px solid var(--cian); border-radius:6px;
+    background:rgba(0,0,0,.4); overflow:hidden; margin-top:4px;
+  }
+  #energyBarFill{
+    height:100%; width:100%;
+    background:linear-gradient(90deg, var(--cian), var(--dorado));
+    transition:width .2s;
+  }
+  /* controles táctiles */
+  #controls{
+    position:absolute; bottom:10px; left:0; right:0;
+    display:flex; justify-content:space-between; align-items:flex-end;
+    padding:0 10px;
+    pointer-events:none;
+  }
+  .ctrlGroup{ display:flex; gap:8px; pointer-events:auto; }
+  .btnCtrl{
+    width:56px; height:56px;
+    border-radius:50%;
+    border:2px solid var(--cian);
+    background:rgba(18,11,46,.75);
+    color:var(--cian);
+    font-size:22px;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 0 12px rgba(62,247,255,.4);
+    margin:0; padding:0;
+  }
+  .btnCtrl:active{ background:rgba(62,247,255,.35); }
+  .btnCtrl.shoot{ border-color:var(--ambar); color:var(--ambar); box-shadow:0 0 12px rgba(255,184,77,.4); width:64px; height:64px; font-size:24px;}
+  .btnCtrl.special{
+    border-color:var(--dorado); color:var(--dorado);
+    box-shadow:0 0 14px rgba(255,233,179,.6);
+    opacity:.35;
+  }
+  .btnCtrl.special.ready{ opacity:1; animation:pulseSpecial 1s infinite; }
+  @keyframes pulseSpecial{
+    0%,100%{ box-shadow:0 0 10px rgba(255,233,179,.5);}
+    50%{ box-shadow:0 0 24px rgba(255,233,179,1);}
+  }
+  /* modal trivia */
+  #triviaModal{
+    position:absolute; inset:0;
+    background:rgba(3,2,15,.92);
+    display:none;
+    align-items:center; justify-content:center;
+    padding:16px;
+    z-index:20;
+  }
+  #triviaModal.active{ display:flex; }
+  #triviaBox{
+    max-width:480px; width:100%;
+    background:rgba(18,11,46,.95);
+    border:1px solid var(--dorado);
+    box-shadow:0 0 26px rgba(255,233,179,.4);
+    border-radius:16px;
+    padding:20px;
+  }
+  #triviaQuestion{ color:var(--dorado); font-size:17px; margin-bottom:14px; }
+  .opt{
+    display:block; width:100%; text-align:left;
+    background:#0c0722; border:1px solid var(--cian);
+    color:#fff; border-radius:10px; padding:12px; margin-bottom:10px;
+    font-size:15px;
+  }
+  .opt:active{ transform:scale(.98); }
+  .opt.correct{ border-color:#5CFF9D; background:rgba(92,255,157,.15); color:#5CFF9D; }
+  .opt.wrong{ border-color:#FF6B6B; background:rgba(255,107,107,.15); color:#FF6B6B; }
+  #triviaFeedback{ min-height:20px; font-size:14px; margin-top:6px; color:var(--ambar); }
+  /* reflexión */
+  .reflectBox{ text-align:left; width:100%; margin-top:10px; }
+  .reflectBox label{ font-size:14px; color:var(--cian); display:block; margin-top:14px; }
+  /* resultados */
+  #resultCardWrap{
+    position:relative; width:100%; max-width:420px;
+  }
+  #scoreBlur{
+    filter:blur(14px);
+    transition:filter .5s;
+  }
+  #scoreBlur.revealed{ filter:blur(0); }
+  #resultsCanvas{ display:none; }
+  #screenshotPreview{
+    position:fixed; inset:0; background:#000;
+    display:none; align-items:center; justify-content:center; flex-direction:column;
+    z-index:50; padding:16px;
+  }
+  #screenshotPreview.active{ display:flex; }
+  #screenshotPreview img{ max-width:100%; max-height:75vh; border-radius:10px; box-shadow:0 0 30px rgba(62,247,255,.5); }
+  .hint{ font-size:13px; color:var(--dorado); margin-top:14px; }
+  .small{ font-size:12px; opacity:.75; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- PANTALLA 1: NOMBRE -->
+  <div class="screen active" id="nameScreen">
+    <h1>RESCATE EN ISAÍAS</h1>
+    <h2>Misión de liberación</h2>
+    <div class="glow-box">
+      <p>Tu familia fue capturada. Solo las palabras de Isaías tienen el poder de liberarlos. Avanza, dispara, aprende, y no te rindas.</p>
+      <input type="text" id="playerNameInput" maxlength="18" placeholder="Escribe tu nombre">
+      <br>
+      <button id="startBtn">INICIAR MISIÓN</button>
+    </div>
+  </div>
+
+  <!-- PANTALLA 2: JUEGO -->
+  <div class="screen" id="gameScreen">
+    <div id="gameWrap">
+      <canvas id="gameCanvas"></canvas>
+      <div id="hud">
+        <div id="hudLeft">
+          SOLDADO: <span id="hudName"></span>
+          <div id="energyBarBg"><div id="energyBarFill"></div></div>
+        </div>
+        <div id="hudRight">
+          Habilidad: <span id="hudAbility">Disparo básico</span><br>
+          <span class="small">Enemigos derrotados: <span id="hudKills">0</span></span>
+        </div>
+      </div>
+      <div id="controls">
+        <div class="ctrlGroup">
+          <button class="btnCtrl" id="btnLeft">◀</button>
+          <button class="btnCtrl" id="btnRight">▶</button>
+        </div>
+        <div class="ctrlGroup">
+          <button class="btnCtrl special" id="btnSpecial">☀</button>
+          <button class="btnCtrl" id="btnJump">▲</button>
+          <button class="btnCtrl shoot" id="btnShoot">●</button>
+        </div>
+      </div>
+      <div id="triviaModal">
+        <div id="triviaBox">
+          <div id="triviaQuestion"></div>
+          <div id="triviaOptions"></div>
+          <div id="triviaFeedback"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANTALLA 3: RESCATE (bloqueante) -->
+  <div class="screen" id="rescueScreen">
+    <h1 style="color:var(--dorado); text-shadow:0 0 16px var(--dorado);">👨‍👩‍👧‍👦</h1>
+    <h2>"Con las palabras de Isaías, has podido rescatar a tu familia."</h2>
+    <div class="glow-box">
+      <p>El código que parecía imposible de descifrar se abrió capa por capa — con esfuerzo, y con el Espíritu.</p>
+      <button id="continueToReflect">CONTINUAR</button>
+    </div>
+  </div>
+
+  <!-- PANTALLA 4: REFLEXIÓN -->
+  <div class="screen" id="reflectScreen">
+    <h1>Reflexión final</h1>
+    <div class="glow-box reflectBox">
+      <label>¿Por qué crees que hoy tenemos las palabras de Isaías?</label>
+      <textarea id="r1" maxlength="300"></textarea>
+      <label>¿Qué haré para demostrar que las aprecio?</label>
+      <textarea id="r2" maxlength="300"></textarea>
+      <label>¿Con quién compartiré lo que aprendí hoy?</label>
+      <textarea id="r3" maxlength="300"></textarea>
+      <button id="submitReflect" style="width:100%;">VER MIS RESULTADOS</button>
+    </div>
+  </div>
+
+  <!-- PANTALLA 5: RESULTADOS -->
+  <div class="screen" id="resultsScreen">
+    <h1>Misión cumplida</h1>
+    <div class="glow-box" id="resultCardWrap">
+      <p class="small" style="color:var(--cian);">Enemigos derrotados: <span id="resKills"></span> · Preguntas correctas: <span id="resCorrect"></span>/4</p>
+      <div id="scoreBlur">
+        <h2 style="font-size:38px;">PUNTAJE: <span id="scoreValue">0</span></h2>
+      </div>
+      <button id="revealBtn">REVELAR PUNTAJE</button>
+      <div id="afterReveal" style="display:none;">
+        <p id="encourageMsg" style="color:var(--dorado); font-weight:bold;"></p>
+        <div style="text-align:left; font-size:13px; opacity:.85; margin-top:10px;">
+          <p><b style="color:var(--cian);">Por qué tenemos Isaías:</b> <span id="ansShow1"></span></p>
+          <p><b style="color:var(--cian);">Cómo lo apreciaré:</b> <span id="ansShow2"></span></p>
+          <p><b style="color:var(--cian);">Con quién lo compartiré:</b> <span id="ansShow3"></span></p>
+        </div>
+        <button id="genShotBtn" class="secondary">GENERAR MI TARJETA</button>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="resultsCanvas" width="720" height="960"></canvas>
+
+  <div id="screenshotPreview">
+    <img id="screenshotImg" alt="Resultado">
+    <p class="hint" id="shareHint"></p>
+    <div>
+      <button id="shareWhatsBtn">COMPARTIR POR WHATSAPP</button>
+      <button class="secondary" id="closePreviewBtn">CERRAR</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============ CONFIG GENERAL ============ */
+var WHATSAPP_NUMBER = ""; // dejar vacío para compartir sin número prefijado
+var state = {
+  playerName: "Soldado",
+  kills: 0,
+  correctAnswers: 0,
+  reflectAnswers: ["", "", ""],
+  reflectChars: 0,
+  bossDefeated: false,
+  familyRescuable: false
+};
+var FAMILY_X = null; // se define al construir el nivel
+var FAMILY_Y = null;
+
+function limpiarTexto(t){
+  return t
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"") // quita tildes
+    .replace(/[^a-zA-Z0-9 .,!?ñÑ]/g, "")
+    .trim();
+}
+
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(function(s){ s.classList.remove("active"); });
+  document.getElementById(id).classList.add("active");
+}
+
+/* ============ BANCO DE PREGUNTAS ============ */
+var QUESTIONS = [
+  {
+    q: "¿Quién mandó a estudiar diligentemente las palabras de Isaías? (3 Nefi 23:1-3)",
+    opts: ["Jesucristo mismo", "El profeta Nefi", "El propio Isaías", "El ángel Moroni"],
+    correct: 0,
+    ability: "triple"
+  },
+  {
+    q: "Según el presidente Dallin H. Oaks, ¿qué necesitamos para interpretar correctamente las profecías de Isaías?",
+    opts: ["Solo un buen diccionario", "Revelación del Espíritu Santo", "Estudiar solo historia antigua", "Nada especial, son fáciles"],
+    correct: 1,
+    ability: "bomba"
+  },
+  {
+    q: "¿Qué tienen en común 'Bohemian Rhapsody' de Queen y la película 'Sueños de fuga'?",
+    opts: ["Fueron un éxito inmediato", "Nunca fueron reconocidas", "Fueron rechazadas al inicio y luego se volvieron obras muy valoradas", "Se estrenaron el mismo año"],
+    correct: 2,
+    ability: "solar"
+  },
+  {
+    q: "¿Cuál de estos es un título de Jesucristo mencionado en Isaías 9:6?",
+    opts: ["Rey David", "Príncipe de Paz", "Arcángel Miguel", "Profeta Nefi"],
+    correct: 1,
+    ability: null // pregunta final tras el jefe
+  }
+];
+var cloudQuestionIndex = 0; // 0,1,2 para las 3 nubes
+var finalQuestion = QUESTIONS[3];
+
+/* ============ PANTALLA NOMBRE ============ */
+document.getElementById("startBtn").addEventListener("click", function(){
+  var raw = document.getElementById("playerNameInput").value || "Soldado";
+  state.playerName = limpiarTexto(raw) || "Soldado";
+  document.getElementById("hudName").textContent = state.playerName;
+  showScreen("gameScreen");
+  initGameIfNeeded();
+});
+
+/* ============ MOTOR DE JUEGO ============ */
+var canvas = document.getElementById("gameCanvas");
+var ctx = canvas.getContext("2d");
+var gameInited = false;
+var triviaOpen = false;
+var gameOver = false; // solo se activa al ganar (no hay derrota permanente)
+
+var COLORS = { cian:"#3ef7ff", ambar:"#ffb84d", dorado:"#ffe9b3", bgTop:"#170f3a", bgBot:"#070515" };
+
+var GROUND_Y = 340;
+var WORLD_WIDTH = 7400;
+var GRAVITY = 0.85;
+var camera = { x:0 };
+var totalTime = 0;
+
+var keys = { left:false, right:false, jump:false, shoot:false };
+
+var player = {
+  x: 60, y: GROUND_Y-40, w:26, h:40,
+  vx:0, vy:0, onGround:true, facing:1,
+  energy: 100,
+  ability: "normal", // normal | triple | bomba | solar-ready
+  shootCooldown:0,
+  specialReady:false,
+  emoji:"🏃🏻"
+};
+var lastSafe = { x:60, y:GROUND_Y-40 };
+
+var projectiles = []; // {x,y,vx,vy,type,owner}
+var enemies = [];
+var clouds = [];
+var boss = null;
+var particles = [];
+var platforms = [];
+var VILLAIN_EMOJIS = ["👹","🤡","👻"];
+
+function buildLevel(){
+  enemies = [];
+  clouds = [];
+  projectiles = [];
+  particles = [];
+  platforms = [];
+  boss = null;
+  totalTime = 0;
+
+  // segmentos de piso, con huecos entre ellos que hay que saltar (tipo plataformas) — nivel largo
+  var groundSegs = [
+    [0,380],[460,820],[900,1300],[1380,1750],[1830,2200],
+    [2280,2650],[2730,3100],[3180,3550],[3630,4000],
+    [4080,4450],[4530,4900],[4980,5350],[5430,5800],
+    [5880,6250],[6330,6700],[6780,7150],[7230,WORLD_WIDTH]
+  ];
+  groundSegs.forEach(function(seg){
+    platforms.push({type:"ground", x1:seg[0], x2:seg[1], y:GROUND_Y});
+  });
+
+  // plataformas flotantes elevadas (obstáculos para saltar/subir)
+  var floaters = [
+    [600,760, GROUND_Y-95],[1550,1700, GROUND_Y-95],[2450,2600, GROUND_Y-100],
+    [3350,3500, GROUND_Y-95],[4230,4380, GROUND_Y-95],[5100,5250, GROUND_Y-95],
+    [5950,6100, GROUND_Y-100],[6850,7000, GROUND_Y-95]
+  ];
+  floaters.forEach(function(f){
+    platforms.push({type:"floating", x1:f[0], x2:f[1], y:f[2]});
+  });
+
+  // oleadas de enemigos comunes: 3 por segmento (más enemigos, nivel más largo)
+  var evIdx = 0;
+  groundSegs.forEach(function(seg, si){
+    if(si===0 || si===groundSegs.length-1) return; // dejar libre el inicio y reservar el final para el jefe
+    var segW = seg[1]-seg[0];
+    var positions = [seg[0]+segW*0.22, seg[0]+segW*0.5, seg[0]+segW*0.78];
+    positions.forEach(function(x){
+      var isFlying = (evIdx % 3 === 2); // uno de cada tres es volador
+      if(isFlying){
+        enemies.push({
+          x:x, y:GROUND_Y-140, baseY:GROUND_Y-140, w:26, h:26,
+          vx: (evIdx%2===0?1:-1)*0.9,
+          minX: Math.max(seg[0]+30, x-90), maxX: Math.min(seg[1]-30, x+90),
+          alive:true, hp:2, flying:true, phase: evIdx*300,
+          emoji: "👻"
+        });
+      } else {
+        enemies.push({
+          x:x, y:GROUND_Y-16, w:26, h:30,
+          vx: (evIdx%2===0?1:-1)*0.7,
+          minX: Math.max(seg[0]+30, x-70), maxX: Math.min(seg[1]-30, x+70),
+          alive:true, hp:2, flying:false,
+          emoji: VILLAIN_EMOJIS[evIdx%2] // 👹 y 🤡 en tierra, 👻 vuela
+        });
+      }
+      evIdx++;
+    });
+  });
+
+  // nubes de poder: bajas, dentro del alcance de un salto, y en movimiento constante
+  clouds = [
+    {baseX:820, baseY:GROUND_Y-70, x:820, y:GROUND_Y-70, w:60, h:36, alive:true, qIndex:0, phase:0},
+    {baseX:3200, baseY:GROUND_Y-65, x:3200, y:GROUND_Y-65, w:60, h:36, alive:true, qIndex:1, phase:800},
+    {baseX:5700, baseY:GROUND_Y-70, x:5700, y:GROUND_Y-70, w:60, h:36, alive:true, qIndex:2, phase:1600}
+  ];
+
+  lastSafe = { x:60, y:GROUND_Y-40 };
+  FAMILY_X = WORLD_WIDTH-90;
+  FAMILY_Y = GROUND_Y-28;
+  state.familyRescuable = false;
+}
+
+function initGameIfNeeded(){
+  if(gameInited) return;
+  gameInited = true;
+  resizeCanvas();
+  window.addEventListener("resize", resizeCanvas);
+  buildLevel();
+  bindControls();
+  requestAnimationFrame(loop);
+}
+
+function resizeCanvas(){
+  var wrap = document.getElementById("gameWrap");
+  var w = wrap.clientWidth, h = wrap.clientHeight;
+  canvas.width = w; canvas.height = h;
+}
+
+/* ---- controles ---- */
+function bindControls(){
+  function bind(id, downFn, upFn){
+    var el = document.getElementById(id);
+    el.addEventListener("touchstart", function(e){ e.preventDefault(); downFn(); }, {passive:false});
+    el.addEventListener("touchend", function(e){ e.preventDefault(); upFn && upFn(); }, {passive:false});
+    el.addEventListener("mousedown", function(e){ e.preventDefault(); downFn(); });
+    el.addEventListener("mouseup", function(e){ e.preventDefault(); upFn && upFn(); });
+    el.addEventListener("mouseleave", function(){ upFn && upFn(); });
+  }
+  bind("btnLeft", function(){ keys.left=true; }, function(){ keys.left=false; });
+  bind("btnRight", function(){ keys.right=true; }, function(){ keys.right=false; });
+  bind("btnJump", function(){ keys.jump=true; }, function(){ keys.jump=false; });
+  bind("btnShoot", function(){ keys.shoot=true; }, function(){ keys.shoot=false; });
+  bind("btnSpecial", function(){ triggerSpecial(); }, null);
+
+  document.addEventListener("keydown", function(e){
+    if(e.key==="ArrowLeft") keys.left=true;
+    if(e.key==="ArrowRight") keys.right=true;
+    if(e.key===" "||e.key==="ArrowUp") keys.jump=true;
+    if(e.key==="z"||e.key==="Z") keys.shoot=true;
+    if(e.key==="x"||e.key==="X") triggerSpecial();
+  });
+  document.addEventListener("keyup", function(e){
+    if(e.key==="ArrowLeft") keys.left=false;
+    if(e.key==="ArrowRight") keys.right=false;
+    if(e.key===" "||e.key==="ArrowUp") keys.jump=false;
+    if(e.key==="z"||e.key==="Z") keys.shoot=false;
+  });
+}
+
+function triggerSpecial(){
+  if(player.specialReady && !triviaOpen){
+    // explosión solar: elimina todos los enemigos visibles
+    enemies.forEach(function(en){ if(en.alive){ en.alive=false; state.kills++; spawnBurst(en.x,en.y); } });
+    if(boss && boss.alive){ boss.hp -= 2; spawnBurst(boss.x, boss.y); if(boss.hp<=0){ defeatBoss(); } }
+    player.specialReady = false;
+    document.getElementById("btnSpecial").classList.remove("ready");
+  }
+}
+
+function spawnBurst(x,y){
+  for(var i=0;i<10;i++){
+    particles.push({x:x,y:y,vx:(Math.random()-0.5)*6,vy:(Math.random()-0.5)*6,life:24,color: Math.random()>0.5?COLORS.cian:COLORS.ambar});
+  }
+}
+
+/* ---- loop principal ---- */
+var lastTs = 0;
+function loop(ts){
+  requestAnimationFrame(loop);
+  if(!gameInited) return;
+  var dt = Math.min(32, ts-lastTs || 16);
+  lastTs = ts;
+  if(!triviaOpen && !gameOver){
+    update(dt);
+  }
+  render();
+}
+
+function update(dt){
+  totalTime += dt;
+
+  // movimiento jugador
+  var speed = 3.4;
+  if(keys.left){ player.vx=-speed; player.facing=-1; }
+  else if(keys.right){ player.vx=speed; player.facing=1; }
+  else { player.vx=0; }
+
+  player.x += player.vx;
+  if(player.x<20) player.x=20;
+  if(player.x>WORLD_WIDTH-20) player.x=WORLD_WIDTH-20;
+
+  if(keys.jump && player.onGround){
+    player.vy = -14;
+    player.onGround = false;
+  }
+
+  var prevFoot = player.y + player.h;
+  player.vy += GRAVITY;
+  player.y += player.vy;
+  var newFoot = player.y + player.h;
+
+  // colisión con plataformas (piso con huecos + plataformas flotantes)
+  var landed = false;
+  platforms.forEach(function(plat){
+    if(player.x > plat.x1-10 && player.x < plat.x2+10){
+      if(prevFoot <= plat.y+2 && newFoot >= plat.y && player.vy>=0){
+        player.y = plat.y - player.h;
+        player.vy = 0;
+        landed = true;
+      }
+    }
+  });
+  player.onGround = landed;
+  if(landed){ lastSafe.x = player.x; lastSafe.y = player.y; }
+
+  // si cae en un hueco/pozo, no hay fracaso permanente: vuelve al último lugar seguro
+  if(player.y > GROUND_Y+220){
+    player.x = lastSafe.x;
+    player.y = lastSafe.y;
+    player.vy = 0;
+    player.energy = Math.max(20, player.energy-5);
+    updateEnergyBar();
+  }
+
+  // disparo
+  if(player.shootCooldown>0) player.shootCooldown -= dt;
+  if(keys.shoot && player.shootCooldown<=0){
+    doShoot();
+    player.shootCooldown = player.ability==="triple" ? 260 : 220;
+  }
+
+  // cámara sigue al jugador (clamp a bordes del mundo)
+  var targetCam = player.x - canvas.width*0.35;
+  camera.x += (targetCam-camera.x)*0.12;
+  if(camera.x<0) camera.x=0;
+  if(camera.x>WORLD_WIDTH-canvas.width) camera.x=WORLD_WIDTH-canvas.width;
+
+  // proyectiles
+  projectiles.forEach(function(p){ p.x += p.vx; p.y += (p.vy||0); });
+  projectiles = projectiles.filter(function(p){ return p.x>camera.x-50 && p.x<camera.x+canvas.width+50; });
+
+  // enemigos: patrulla en tierra o vuelo ondulante
+  enemies.forEach(function(en){
+    if(!en.alive) return;
+    en.x += en.vx;
+    if(en.x<en.minX||en.x>en.maxX) en.vx*=-1;
+    if(en.flying){
+      en.y = en.baseY + Math.sin((totalTime+en.phase)*0.003)*22;
+    }
+  });
+
+  // colisiones proyectil-enemigo (los disparos normales necesitan 2 golpes)
+  projectiles.forEach(function(p){
+    if(p.owner!=="player"||p.hit) return;
+    enemies.forEach(function(en){
+      if(!en.alive) return;
+      if(Math.abs(p.x-en.x)<24 && Math.abs(p.y-en.y)<26){
+        p.hit=true;
+        en.hp -= (p.bomb?2:1);
+        spawnBurst(en.x,en.y);
+        if(en.hp<=0){ en.alive=false; state.kills++; }
+      }
+    });
+    if(boss && boss.alive && !p.hit){
+      if(Math.abs(p.x-boss.x)<40 && Math.abs(p.y-boss.y)<50){
+        boss.hp -= (player.ability==="bomba"?2:1);
+        p.hit=true;
+        spawnBurst(boss.x,boss.y);
+        if(boss.hp<=0) defeatBoss();
+      }
+    }
+    // los disparos también pueden activar las nubes de poder
+    if(!p.hit){
+      clouds.forEach(function(c){
+        if(!c.alive) return;
+        if(Math.abs(p.x-c.x)<32 && Math.abs(p.y-c.y)<32){
+          c.alive=false; p.hit=true;
+          openTrivia(c.qIndex);
+        }
+      });
+    }
+  });
+  projectiles = projectiles.filter(function(p){ return !p.hit; });
+
+  // colisión jugador-enemigo (rebote, sin daño permanente)
+  enemies.forEach(function(en){
+    if(!en.alive) return;
+    if(Math.abs(player.x-en.x)<26 && Math.abs((player.y+player.h/2)-en.y)<28){
+      player.x += (player.x<en.x? -14:14);
+      player.energy = Math.max(20, player.energy-6);
+      updateEnergyBar();
+    }
+  });
+
+  // nubes: bajas y en movimiento constante (oscilan en x/y)
+  clouds.forEach(function(c){
+    if(!c.alive) return;
+    c.x = c.baseX + Math.sin((totalTime+c.phase)*0.0015)*55;
+    c.y = c.baseY + Math.sin((totalTime+c.phase)*0.0027)*16;
+  });
+
+  // colisión jugador-nube: alcanza con tocarla (caminando o saltando)
+  clouds.forEach(function(c){
+    if(!c.alive) return;
+    if(Math.abs(player.x-c.x)<38 && Math.abs((player.y+player.h/2)-c.y)<40){
+      c.alive=false;
+      openTrivia(c.qIndex);
+    }
+  });
+
+  // el jugador debe tocar a la familia para completar el rescate
+  if(state.familyRescuable){
+    if(Math.abs(player.x-FAMILY_X)<40 && Math.abs((player.y+player.h/2)-FAMILY_Y)<45){
+      state.familyRescuable = false;
+      gameOver = true;
+      showScreen("rescueScreen");
+    }
+  }
+
+  // aparición del jefe tras última nube
+  var cloudsLeft = clouds.filter(function(c){return c.alive;}).length;
+  if(cloudsLeft===0 && !boss && !state.bossSpawned){
+    state.bossSpawned = true;
+    boss = { x: WORLD_WIDTH-300, y:GROUND_Y-35, w:60, h:70, hp:5, alive:true, vx:1.2, minX:WORLD_WIDTH-420, maxX:WORLD_WIDTH-120, shootCd:0 };
+  }
+  if(boss && boss.alive){
+    boss.x += boss.vx;
+    if(boss.x<boss.minX||boss.x>boss.maxX) boss.vx*=-1;
+    boss.shootCd -= dt;
+    if(boss.shootCd<=0){
+      projectiles.push({x:boss.x, y:boss.y, vx: (player.x<boss.x?-4:4), owner:"boss"});
+      boss.shootCd = 900;
+    }
+  }
+  // proyectiles del jefe golpean jugador -> rebote
+  projectiles.forEach(function(p){
+    if(p.owner==="boss" && Math.abs(p.x-player.x)<20 && Math.abs(p.y-(player.y+player.h/2))<22){
+      p.hit=true;
+      player.x += (player.x<p.x? -20:20);
+      player.energy = Math.max(20, player.energy-8);
+      updateEnergyBar();
+    }
+  });
+  projectiles = projectiles.filter(function(p){ return !p.hit; });
+
+  // partículas
+  particles.forEach(function(pt){ pt.x+=pt.vx; pt.y+=pt.vy; pt.life--; });
+  particles = particles.filter(function(pt){ return pt.life>0; });
+
+  document.getElementById("hudKills").textContent = state.kills;
+}
+
+function doShoot(){
+  var dir = player.facing;
+  var baseY = player.y+14;
+  if(player.ability==="triple"){
+    projectiles.push({x:player.x+dir*20,y:baseY-20,vx:6.5*dir,vy:-1.8,owner:"player"});
+    projectiles.push({x:player.x+dir*20,y:baseY,vx:6.5*dir,vy:0,owner:"player"});
+    projectiles.push({x:player.x+dir*20,y:baseY+20,vx:6.5*dir,vy:1.8,owner:"player"});
+  } else if(player.ability==="bomba"){
+    projectiles.push({x:player.x+dir*20,y:baseY,vx:4.2*dir,vy:0,owner:"player",bomb:true});
+  } else {
+    projectiles.push({x:player.x+dir*20,y:baseY,vx:7*dir,vy:0,owner:"player"});
+  }
+}
+
+function openTrivia(qIndex){
+  triviaOpen = true;
+  var q = QUESTIONS[qIndex];
+  var modal = document.getElementById("triviaModal");
+  modal.classList.add("active");
+  document.getElementById("triviaQuestion").textContent = q.q;
+  var optsWrap = document.getElementById("triviaOptions");
+  optsWrap.innerHTML = "";
+  document.getElementById("triviaFeedback").textContent = "";
+  q.opts.forEach(function(optText, i){
+    var b = document.createElement("button");
+    b.className = "opt";
+    b.textContent = optText;
+    b.addEventListener("click", function(){ answerTrivia(i, q, b, optsWrap); });
+    optsWrap.appendChild(b);
+  });
+}
+
+function answerTrivia(i, q, btn, wrap){
+  var buttons = wrap.querySelectorAll(".opt");
+  buttons.forEach(function(b){ b.disabled = true; });
+  if(i===q.correct){
+    btn.classList.add("correct");
+    document.getElementById("triviaFeedback").textContent = "¡Correcto! Habilidad desbloqueada.";
+    document.getElementById("triviaFeedback").style.color = "#5CFF9D";
+    state.correctAnswers++;
+    if(q.ability==="solar"){
+      player.specialReady = true;
+      document.getElementById("btnSpecial").classList.add("ready");
+      document.getElementById("hudAbility").textContent = "Explosión solar lista";
+    } else if(q.ability){
+      player.ability = q.ability;
+      document.getElementById("hudAbility").textContent = q.ability==="triple"?"Tiro triple":"Tiro de bombas";
+    }
+    setTimeout(function(){ closeTrivia(); }, 1100);
+  } else {
+    btn.classList.add("wrong");
+    document.getElementById("triviaFeedback").textContent = "No es correcto, ¡pero podés intentar de nuevo!";
+    document.getElementById("triviaFeedback").style.color = "var(--ambar)";
+    setTimeout(function(){
+      buttons.forEach(function(b){ b.disabled=false; b.classList.remove("wrong"); });
+      document.getElementById("triviaFeedback").textContent = "";
+    }, 1000);
+  }
+}
+
+function closeTrivia(){
+  document.getElementById("triviaModal").classList.remove("active");
+  triviaOpen = false;
+}
+
+function defeatBoss(){
+  boss.alive = false;
+  gameOver = true; // se detiene la lógica de juego (no el loop)
+  setTimeout(function(){
+    triviaOpen = true;
+    var modal = document.getElementById("triviaModal");
+    modal.classList.add("active");
+    document.getElementById("triviaQuestion").textContent = finalQuestion.q;
+    var optsWrap = document.getElementById("triviaOptions");
+    optsWrap.innerHTML = "";
+    document.getElementById("triviaFeedback").textContent = "";
+    finalQuestion.opts.forEach(function(optText, i){
+      var b = document.createElement("button");
+      b.className = "opt";
+      b.textContent = optText;
+      b.addEventListener("click", function(){
+        var buttons = optsWrap.querySelectorAll(".opt");
+        buttons.forEach(function(bb){ bb.disabled = true; });
+        if(i===finalQuestion.correct){
+          b.classList.add("correct");
+          document.getElementById("triviaFeedback").textContent = "¡Correcto! Ahora ve y toca a tu familia para rescatarla.";
+          document.getElementById("triviaFeedback").style.color = "#5CFF9D";
+          state.correctAnswers++;
+          setTimeout(function(){
+            closeTrivia();
+            state.familyRescuable = true;
+            gameOver = false; // se reanuda el juego para que el jugador camine hasta la familia
+          }, 1400);
+        } else {
+          b.classList.add("wrong");
+          document.getElementById("triviaFeedback").textContent = "Casi, ¡intentá de nuevo!";
+          setTimeout(function(){
+            buttons.forEach(function(bb){ bb.disabled=false; bb.classList.remove("wrong"); });
+            document.getElementById("triviaFeedback").textContent = "";
+          }, 1000);
+        }
+      });
+      optsWrap.appendChild(b);
+    });
+  }, 500);
+}
+
+function updateEnergyBar(){
+  document.getElementById("energyBarFill").style.width = player.energy+"%";
+}
+
+/* ---- render ---- */
+function render(){
+  var w=canvas.width, h=canvas.height;
+  var grad = ctx.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0,"#170f3a"); grad.addColorStop(1,"#070515");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,w,h);
+
+  // estrellas de fondo (parallax)
+  ctx.fillStyle = "rgba(255,255,255,.5)";
+  for(var i=0;i<40;i++){
+    var sx = (i*137 - camera.x*0.2) % (w+50);
+    if(sx<0) sx+=w+50;
+    ctx.fillRect(sx, (i*57)%h*0.6+10, 2, 2);
+  }
+
+  // plataformas (piso con huecos + plataformas flotantes) — nunca terreno plano continuo
+  platforms.forEach(function(plat){
+    var sx1 = plat.x1-camera.x, sx2 = plat.x2-camera.x;
+    if(sx2<-20||sx1>w+20) return;
+    if(plat.type==="ground"){
+      ctx.fillStyle = "#0c0722";
+      ctx.fillRect(sx1, plat.y, sx2-sx1, h-plat.y);
+      ctx.strokeStyle = COLORS.cian;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(sx1, plat.y);
+      ctx.lineTo(sx2, plat.y);
+      ctx.stroke();
+    } else {
+      ctx.save();
+      ctx.shadowColor = COLORS.ambar;
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = "rgba(255,184,77,.35)";
+      ctx.fillRect(sx1, plat.y, sx2-sx1, 14);
+      ctx.strokeStyle = COLORS.ambar;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(sx1, plat.y, sx2-sx1, 14);
+      ctx.restore();
+    }
+  });
+
+  // nubes de poder
+  clouds.forEach(function(c){
+    if(!c.alive) return;
+    var sx = c.x-camera.x;
+    if(sx<-80||sx>w+80) return;
+    drawGlowCloud(sx, c.y, c.w, c.h);
+  });
+
+  // enemigos (villanos emoji)
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  enemies.forEach(function(en){
+    if(!en.alive) return;
+    var sx = en.x-camera.x;
+    if(sx<-40||sx>w+40) return;
+    ctx.save();
+    ctx.shadowColor = "#ff5d5d";
+    ctx.shadowBlur = 14;
+    ctx.font = "30px serif";
+    ctx.fillText(en.emoji, sx, en.y);
+    ctx.restore();
+  });
+
+  // familia enjaulada detrás del jefe final (la jaula desaparece al derrotarlo)
+  if(boss){
+    var famX = WORLD_WIDTH-90-camera.x;
+    var famY = GROUND_Y-28;
+    if(famX>-60 && famX<w+60){
+      ctx.save();
+      ctx.font = "34px serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.shadowColor = COLORS.dorado;
+      ctx.shadowBlur = 10;
+      ctx.fillText("👨‍👩‍👧‍👦", famX, famY);
+      ctx.restore();
+      if(state.familyRescuable){
+        ctx.save();
+        ctx.font = "bold 16px Arial";
+        ctx.textAlign = "center";
+        ctx.fillStyle = COLORS.dorado;
+        ctx.shadowColor = COLORS.dorado;
+        ctx.shadowBlur = 10;
+        ctx.fillText("¡Tócalos para rescatarlos!", famX, famY-55);
+        ctx.restore();
+      }
+      if(boss.alive){
+        ctx.save();
+        ctx.strokeStyle = "#b3b3b3";
+        ctx.lineWidth = 3;
+        ctx.shadowColor = "#000"; ctx.shadowBlur = 4;
+        for(var barX=-30; barX<=30; barX+=12){
+          ctx.beginPath();
+          ctx.moveTo(famX+barX, famY-35);
+          ctx.lineTo(famX+barX, famY+22);
+          ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.moveTo(famX-32, famY-35); ctx.lineTo(famX+32, famY-35); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(famX-32, famY+22); ctx.lineTo(famX+32, famY+22); ctx.stroke();
+        ctx.restore();
+      }
+    }
+  }
+
+  // jefe (versión grande de los villanos)
+  if(boss && boss.alive){
+    var bsx = boss.x-camera.x;
+    ctx.save();
+    ctx.shadowColor = COLORS.ambar;
+    ctx.shadowBlur = 22;
+    ctx.font = "70px serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("👹", bsx, boss.y);
+    ctx.restore();
+    ctx.fillStyle = "rgba(0,0,0,.4)";
+    ctx.fillRect(bsx-32, boss.y-58, 64, 8);
+    ctx.fillStyle = COLORS.ambar;
+    ctx.fillRect(bsx-32, boss.y-58, 64*(boss.hp/5), 8);
+  }
+
+  // jugador (soldadito)
+  var psx = player.x-camera.x;
+  ctx.save();
+  ctx.shadowColor = COLORS.cian;
+  ctx.shadowBlur = 16;
+  ctx.translate(psx, player.y+player.h/2);
+  if(player.facing>0) ctx.scale(-1,1);
+  ctx.font = "34px serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(player.emoji, 0, 0);
+  ctx.restore();
+
+  // proyectiles
+  projectiles.forEach(function(p){
+    var sx = p.x-camera.x;
+    ctx.save();
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = p.owner==="boss" ? "#ff5d5d" : COLORS.ambar;
+    ctx.fillStyle = p.owner==="boss" ? "#ff5d5d" : (p.bomb? COLORS.dorado : COLORS.ambar);
+    ctx.beginPath();
+    ctx.arc(sx, p.y, p.bomb?7:4, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // partículas
+  particles.forEach(function(pt){
+    ctx.fillStyle = pt.color;
+    ctx.globalAlpha = Math.max(0, pt.life/24);
+    ctx.fillRect(pt.x-camera.x, pt.y, 3, 3);
+    ctx.globalAlpha = 1;
+  });
+}
+
+function drawGlowCloud(x,y,w,h){
+  ctx.save();
+  ctx.shadowColor = COLORS.dorado;
+  ctx.shadowBlur = 18;
+  ctx.fillStyle = "rgba(255,233,179,.85)";
+  ctx.beginPath();
+  ctx.ellipse(x, y, w*0.5, h*0.5, 0, 0, Math.PI*2);
+  ctx.ellipse(x-w*0.3, y+6, w*0.35, h*0.4, 0, 0, Math.PI*2);
+  ctx.ellipse(x+w*0.3, y+6, w*0.35, h*0.4, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+}
+
+/* ============ RESCATE -> REFLEXIÓN ============ */
+document.getElementById("continueToReflect").addEventListener("click", function(){
+  showScreen("reflectScreen");
+});
+
+/* ============ REFLEXIÓN ============ */
+document.getElementById("submitReflect").addEventListener("click", function(){
+  var v1 = limpiarTexto(document.getElementById("r1").value);
+  var v2 = limpiarTexto(document.getElementById("r2").value);
+  var v3 = limpiarTexto(document.getElementById("r3").value);
+  state.reflectAnswers = [v1,v2,v3];
+  state.reflectChars = (v1.length+v2.length+v3.length);
+
+  document.getElementById("ansShow1").textContent = v1 || "(sin respuesta)";
+  document.getElementById("ansShow2").textContent = v2 || "(sin respuesta)";
+  document.getElementById("ansShow3").textContent = v3 || "(sin respuesta)";
+
+  var base = state.kills*5 + state.correctAnswers*50;
+  var charBonus = state.reflectChars*5;
+  var total = base + charBonus;
+  document.getElementById("scoreValue").textContent = total;
+  document.getElementById("resKills").textContent = state.kills;
+  document.getElementById("resCorrect").textContent = state.correctAnswers;
+
+  var frases = [
+    "¡Tu diligencia es admirable, sigue escudriñando las Escrituras!",
+    "Como Nefi, ya estás encontrando el verdadero valor en las palabras de Isaías.",
+    "El Espíritu Santo puede seguir ayudándote a comprender aún más.",
+    "¡Gran misión cumplida! Sigue compartiendo lo que aprendiste."
+  ];
+  document.getElementById("encourageMsg").textContent = frases[Math.floor(Math.random()*frases.length)];
+
+  showScreen("resultsScreen");
+});
+
+/* ============ RESULTADOS: revelar puntaje ============ */
+document.getElementById("revealBtn").addEventListener("click", function(){
+  document.getElementById("scoreBlur").classList.add("revealed");
+  document.getElementById("afterReveal").style.display = "block";
+  this.style.display = "none";
+});
+
+/* ============ GENERAR TARJETA / CAPTURA ============ */
+document.getElementById("genShotBtn").addEventListener("click", function(){
+  var c = document.getElementById("resultsCanvas");
+  var rctx = c.getContext("2d");
+  var w=c.width, h=c.height;
+
+  var g = rctx.createLinearGradient(0,0,0,h);
+  g.addColorStop(0,"#120b2e"); g.addColorStop(1,"#070515");
+  rctx.fillStyle = g; rctx.fillRect(0,0,w,h);
+
+  rctx.strokeStyle = "#3ef7ff";
+  rctx.lineWidth = 6;
+  rctx.strokeRect(20,20,w-40,h-40);
+
+  rctx.textAlign = "center";
+  rctx.fillStyle = "#3ef7ff";
+  rctx.font = "bold 40px Arial";
+  rctx.shadowColor = "#3ef7ff"; rctx.shadowBlur = 20;
+  rctx.fillText("RESCATE EN ISAÍAS", w/2, 100);
+
+  rctx.shadowBlur = 0;
+  rctx.fillStyle = "#ffe9b3";
+  rctx.font = "bold 30px Arial";
+  rctx.fillText(state.playerName, w/2, 150);
+
+  rctx.fillStyle = "#ffb84d";
+  rctx.font = "bold 70px Arial";
+  rctx.shadowColor="#ffb84d"; rctx.shadowBlur=18;
+  rctx.fillText(document.getElementById("scoreValue").textContent + " pts", w/2, 250);
+  rctx.shadowBlur = 0;
+
+  rctx.fillStyle="#3ef7ff";
+  rctx.font="20px Arial";
+  rctx.fillText("Enemigos derrotados: "+state.kills+"   |   Preguntas correctas: "+state.correctAnswers+"/4", w/2, 300);
+
+  rctx.textAlign="left";
+  rctx.fillStyle="#fff";
+  rctx.font="18px Arial";
+  wrapText(rctx, "¿Por qué tenemos hoy las palabras de Isaías?", 50, 360, w-100, 24, "#3ef7ff");
+  wrapText(rctx, state.reflectAnswers[0]||"(sin respuesta)", 50, 390, w-100, 24, "#fff");
+
+  wrapText(rctx, "¿Qué haré para demostrar que las aprecio?", 50, 480, w-100, 24, "#3ef7ff");
+  wrapText(rctx, state.reflectAnswers[1]||"(sin respuesta)", 50, 510, w-100, 24, "#fff");
+
+  wrapText(rctx, "¿Con quién compartiré lo que aprendí?", 50, 600, w-100, 24, "#3ef7ff");
+  wrapText(rctx, state.reflectAnswers[2]||"(sin respuesta)", 50, 630, w-100, 24, "#fff");
+
+  rctx.textAlign="center";
+  rctx.fillStyle="#ffe9b3";
+  rctx.font="italic 20px Arial";
+  wrapText(rctx, document.getElementById("encourageMsg").textContent, w/2-260, 820, 520, 26, "#ffe9b3", "center");
+
+  var dataUrl = c.toDataURL("image/png");
+  document.getElementById("screenshotImg").src = dataUrl;
+  document.getElementById("screenshotPreview").classList.add("active");
+
+  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  document.getElementById("shareHint").textContent = isIOS
+    ? "Mantén presionada la imagen para guardarla, o usá el botón de WhatsApp."
+    : "Tocá el botón para compartir por WhatsApp, o mantené presionada la imagen para guardarla.";
+});
+
+function wrapText(ctx2, text, x, y, maxWidth, lineHeight, color, align){
+  ctx2.fillStyle = color || "#fff";
+  if(align) ctx2.textAlign = align;
+  var words = (text||"").split(" ");
+  var line = "";
+  var startX = align==="center" ? x+maxWidth/2 : x;
+  for(var n=0;n<words.length;n++){
+    var testLine = line + words[n] + " ";
+    if(ctx2.measureText(testLine).width > maxWidth && n>0){
+      ctx2.fillText(line, startX, y);
+      line = words[n] + " ";
+      y += lineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+  ctx2.fillText(line, startX, y);
+  if(align) ctx2.textAlign = "left";
+}
+
+document.getElementById("closePreviewBtn").addEventListener("click", function(){
+  document.getElementById("screenshotPreview").classList.remove("active");
+});
+
+document.getElementById("shareWhatsBtn").addEventListener("click", function(){
+  var c = document.getElementById("resultsCanvas");
+  var shareText = "¡Complete la misión Rescate en Isaías con " + document.getElementById("scoreValue").textContent + " puntos! 📖✨";
+
+  function openWhatsappText(){
+    var url = "https://wa.me/" + (WHATSAPP_NUMBER||"") + "?text=" + encodeURIComponent(shareText);
+    window.open(url, "_blank");
+  }
+
+  if(navigator.canShare && navigator.share){
+    c.toBlob(function(blob){
+      if(!blob){ openWhatsappText(); return; }
+      var file = new File([blob], "resultado-isaias.png", {type:"image/png"});
+      if(navigator.canShare({files:[file]})){
+        navigator.share({
+          files:[file],
+          title:"Rescate en Isaías",
+          text: shareText
+        }).catch(function(){ openWhatsappText(); });
+      } else {
+        openWhatsappText();
+      }
+    }, "image/png");
+  } else {
+    openWhatsappText();
+  }
+});
+
+})();
+</script>
+</body>
+</html>

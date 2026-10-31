@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Filo del Estandarte</title>
+<style>
+  :root{
+    --bg:#0A0E1A; --card:#141B2E; --card2:#1B2440; --gold:#E8B24D; --cyan:#2DD4E8;
+    --text:#F5F7FA; --muted:#94A3B8; --danger:#FF6B6B; --ok:#4ADE80;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    overflow:hidden; height:100%; width:100%;}
+  #app{position:relative; width:100%; height:100vh; height:100dvh; display:flex; align-items:center; justify-content:center;}
+  .screen{display:none; width:100%; height:100%; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center;}
+  .screen.active{display:flex;}
+  h1{font-family:Georgia,'Times New Roman',serif; color:var(--gold); font-size:clamp(28px,7vw,48px); margin:0 0 6px;}
+  h2{color:var(--gold); font-family:Georgia,'Times New Roman',serif; margin:0 0 10px; font-size:clamp(20px,5vw,28px);}
+  p{color:var(--muted); line-height:1.5; max-width:600px; margin:8px auto;}
+  .subtitle{color:var(--cyan); font-size:clamp(14px,3.5vw,18px); letter-spacing:1px; margin-bottom:24px;}
+  input[type=text], textarea{
+    width:100%; max-width:420px; background:var(--card); border:1px solid #2a3552; color:var(--text);
+    border-radius:10px; padding:12px 14px; font-size:16px; margin:8px 0; font-family:inherit;
+  }
+  textarea{min-height:80px; resize:vertical;}
+  button{cursor:pointer; border:none; font-family:inherit;}
+  .btn-primary{
+    background:linear-gradient(180deg,var(--gold),#c8933a); color:#1a1206; font-weight:700;
+    padding:14px 28px; border-radius:12px; font-size:17px; margin-top:14px; box-shadow:0 4px 14px rgba(232,178,77,.25);
+  }
+  .btn-primary:disabled{opacity:.4; cursor:not-allowed; box-shadow:none;}
+  .btn-secondary{
+    background:var(--card2); color:var(--cyan); font-weight:600; padding:10px 20px; border-radius:10px; font-size:14px; margin:6px;
+  }
+  .lang-toggle{position:absolute; top:14px; right:14px; z-index:20;}
+  .lang-toggle button{background:var(--card2); color:var(--text); padding:8px 12px; border-radius:8px; font-size:13px;}
+  #gameWrap{position:relative; width:100%; height:100%; max-width:960px; max-height:540px; aspect-ratio:16/9; margin:auto;}
+  #canvasBox{position:relative; width:100%; height:100%; aspect-ratio:16/9; background:#060812; border-radius:0; overflow:hidden;}
+  canvas{display:block; width:100%; height:100%;}
+  #hud{position:absolute; top:8px; left:8px; right:8px; display:flex; flex-direction:column; gap:6px; align-items:flex-start; pointer-events:none; z-index:5;}
+  #hudProgress{background:rgba(10,14,26,.7); color:var(--gold); font-weight:700; padding:6px 12px; border-radius:20px; font-size:13px; border:1px solid rgba(232,178,77,.3);}
+  #hudHint{background:rgba(10,14,26,.7); color:var(--cyan); padding:6px 12px; border-radius:20px; font-size:12px; max-width:60%;}
+  #hudHpWrap{background:rgba(10,14,26,.7); border-radius:20px; padding:6px 10px; border:1px solid rgba(255,107,107,.35);}
+  #hudHpBar{display:flex; gap:4px;}
+  #hudHpBar .seg{width:26px; height:10px; border-radius:4px; background:rgba(255,107,107,.9); transition:opacity .2s;}
+  #hudHpBar .seg.off{background:rgba(148,163,184,.25);}
+  #controls{position:absolute; bottom:10px; left:0; right:0; display:flex; justify-content:space-between; padding:0 10px; z-index:10; pointer-events:none;}
+  .ctrlGroup{display:flex; gap:8px; pointer-events:auto;}
+  .ctrlGroup.right{align-items:flex-end;}
+  .ctrlBtn{
+    width:58px; height:58px; border-radius:50%; background:rgba(20,27,46,.85); border:2px solid rgba(148,163,184,.3);
+    color:var(--text); font-size:11px; font-weight:700; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    user-select:none; -webkit-user-select:none; touch-action:manipulation;
+  }
+  .ctrlBtn:active, .ctrlBtn.held{background:rgba(45,212,232,.35); border-color:var(--cyan);}
+  .ctrlBtn.action{background:rgba(232,178,77,.18); border-color:rgba(232,178,77,.5);}
+  .ctrlBtn.action:active, .ctrlBtn.action.held{background:rgba(232,178,77,.45); border-color:var(--gold);}
+  .ctrlBtn .icon{font-size:20px; line-height:1;}
+  #overlay{position:absolute; inset:0; background:rgba(6,8,18,.92); display:none; z-index:30; align-items:center; justify-content:center; padding:16px;}
+  #overlay.active{display:flex;}
+  .modalCard{background:var(--card); border-radius:14px; padding:22px; max-width:440px; width:100%; text-align:center; box-shadow:0 10px 40px rgba(0,0,0,.5);}
+  .modalCard h3{color:var(--gold); font-size:18px; margin:0 0 12px;}
+  .modalCard .qtext{color:var(--text); font-size:15px; margin-bottom:14px; line-height:1.4;}
+  .opt{display:block; width:100%; text-align:left; background:var(--card2); color:var(--text); padding:11px 14px; border-radius:9px; margin:7px 0; font-size:14px; border:1px solid transparent;}
+  .opt.correct{background:rgba(74,222,128,.18); border-color:var(--ok); color:var(--ok);}
+  .opt.wrong{background:rgba(255,107,107,.18); border-color:var(--danger); color:var(--danger);}
+  .feedback{font-size:14px; font-weight:700; margin-top:8px; min-height:20px;}
+  #resultCanvasHolder{display:none;}
+  .scoreRow{display:flex; justify-content:space-between; max-width:380px; margin:6px auto; font-size:14px; color:var(--muted);}
+  .scoreRow b{color:var(--text);}
+  .bigscore{font-size:44px; color:var(--gold); font-weight:800; margin:10px 0;}
+  #resultImg{max-width:280px; width:80%; border-radius:12px; margin:14px auto; display:block; box-shadow:0 6px 24px rgba(0,0,0,.5);}
+  .charCount{font-size:11px; color:var(--muted); text-align:right; max-width:420px; margin:-4px auto 6px;}
+  footer.credits{position:absolute; bottom:4px; font-size:10px; color:#3c4967;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="lang-toggle"><button class="btn-secondary" id="langBtn">EN</button></div>
+
+  <!-- START -->
+  <div class="screen active" id="screen-start">
+    <h1 id="t-title">Filo del Estandarte</h1>
+    <div class="subtitle" id="t-subtitle">Isaías 11–12 · Lección 116</div>
+    <p id="t-startDesc">Corré, enganchate con la soga y cortá a los titanes para abrirte paso hasta el Titán Bestia — así como el estandarte reúne a los dispersos de las naciones.</p>
+    <input type="text" id="nameInput" maxlength="24" placeholder="Tu nombre">
+    <button class="btn-primary" id="startBtn" disabled>Comenzar</button>
+  </div>
+
+  <!-- GAME -->
+  <div class="screen" id="screen-game">
+    <div id="gameWrap">
+      <div id="canvasBox">
+        <canvas id="gameCanvas" width="960" height="540"></canvas>
+        <div id="hud">
+          <div id="hudTop" style="display:flex; justify-content:space-between; width:100%;">
+            <div id="hudProgress">Titanes: 0/4</div>
+            <div id="hudHint"></div>
+          </div>
+          <div id="hudHpWrap" style="display:none;">
+            <div id="hudHpBar"><div class="seg" id="hp0"></div><div class="seg" id="hp1"></div><div class="seg" id="hp2"></div></div>
+          </div>
+        </div>
+        <div id="controls">
+          <div class="ctrlGroup left">
+            <button class="ctrlBtn" id="btnRetro"><span class="icon">◀</span><span id="t-retro">Retroceder</span></button>
+            <button class="ctrlBtn" id="btnAdv"><span class="icon">▶</span><span id="t-adv">Avanzar</span></button>
+            <button class="ctrlBtn" id="btnJump"><span class="icon">⤴</span><span id="t-jump">Salto</span></button>
+          </div>
+          <div class="ctrlGroup right">
+            <button class="ctrlBtn action" id="btnRope"><span class="icon">🪝</span><span id="t-rope">Soga</span></button>
+            <button class="ctrlBtn action" id="btnCut"><span class="icon">⚔</span><span id="t-cut">Corte</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BLOCKING NARRATIVE OVERLAY (boss intro / boss defeat) -->
+  <div id="overlay">
+    <div class="modalCard" id="modalCardContent"></div>
+  </div>
+
+  <!-- EPILOGUE -->
+  <div class="screen" id="screen-epilogue">
+    <h2 id="t-epiTitle">Reflexión final</h2>
+    <div style="max-width:460px; width:100%;">
+      <p style="text-align:left; color:var(--text);" id="t-q1">¿Qué símbolo de Isaías te ayudó más a entender cómo Dios cumple Sus promesas?</p>
+      <textarea id="ans1" maxlength="500"></textarea>
+      <div class="charCount"><span id="cc1">0</span>/500</div>
+
+      <p style="text-align:left; color:var(--text);" id="t-q2">¿Cómo podés ser, como Wisan, un instrumento en las manos de Dios esta semana?</p>
+      <textarea id="ans2" maxlength="500"></textarea>
+      <div class="charCount"><span id="cc2">0</span>/500</div>
+
+      <p style="text-align:left; color:var(--text);" id="t-q3">¿Qué significa para vos congregarte "bajo el estandarte" del Evangelio?</p>
+      <textarea id="ans3" maxlength="500"></textarea>
+      <div class="charCount"><span id="cc3">0</span>/500</div>
+    </div>
+    <button class="btn-primary" id="submitEpilogueBtn" disabled>Compartir con el Maestro</button>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="screen" id="screen-results">
+    <h2 id="t-resultsTitle">Resultado</h2>
+    <div class="bigscore" id="bigScore">???</div>
+    <button class="btn-primary" id="revealBtn">Revelar puntaje</button>
+
+    <div id="breakdownBox" style="display:none;">
+      <div class="scoreRow"><span id="t-b1">Titanes derrotados</span><b id="bd1">-</b></div>
+      <div class="scoreRow"><span id="t-b2">Preguntas correctas</span><b id="bd2">-</b></div>
+      <div class="scoreRow"><span id="t-b3">Titán Bestia</span><b id="bd3">-</b></div>
+      <div class="scoreRow"><span id="t-b4">Reflexión</span><b id="bd4">-</b></div>
+      <img id="resultImg" alt="Resultado">
+      <div>
+        <button class="btn-secondary" id="shareBtn">Compartir imagen</button>
+        <button class="btn-secondary" id="downloadBtn">Descargar imagen</button>
+        <button class="btn-secondary" id="whatsappBtn">WhatsApp</button>
+      </div>
+      <button class="btn-primary" id="playAgainBtn">Jugar de nuevo</button>
+    </div>
+  </div>
+
+  <footer class="credits">Isaías 11–12 · Lección 116 — Seminario 2026</footer>
+</div>
+
+<canvas id="resultCanvas" width="900" height="1200" style="display:none;"></canvas>
+
+<script>
+(function(){
+"use strict";
+
+// ============ CONFIG ============
+const WHATSAPP_NUMBER = ""; // completar con el número del maestro/clase, formato 549XXXXXXXXXX (sin +)
+const COLORS = {
+  bg:"#0A0E1A", card:"#141B2E", card2:"#1B2440", gold:"#E8B24D", cyan:"#2DD4E8",
+  text:"#F5F7FA", muted:"#94A3B8", ground:"#0d1424", ground2:"#171f36",
+  jacket:"#D9C39A", pants:"#3B2A1E", hair:"#141414", skin:"#E0B28C",
+  titan:"#C2B280", titanDark:"#8f8459", boss:"#8a6a4a", bossDark:"#5f4630"
+};
+
+// ============ i18n ============
+const STR = {
+  es:{
+    title:"Filo del Estandarte", subtitle:"Isaías 11–12 · Lección 116",
+    startDesc:"Corré, enganchate con la soga y cortá a los titanes para abrirte paso hasta el Titán Bestia — así como el estandarte reúne a los dispersos de las naciones.",
+    namePh:"Tu nombre", start:"Comenzar",
+    retro:"Retroceder", adv:"Avanzar", jump:"Salto", rope:"Soga", cut:"Corte",
+    progress:n=>`Titanes: ${n}/4`,
+    hintApproach:"Acercate y usá la Soga para engancharte al titán",
+    hintRoped:"¡Ahora Corte para derrotarlo!",
+    hintBoss:"Encadená Soga + Corte para vencer al Titán Bestia",
+    correct:"¡Correcto!", wrong:"Intentá de nuevo",
+    bossIntroTitle:"El Titán Bestia",
+    bossIntro:"Este es más grande y más fuerte, y te va a tirar rocas — esquivalas moviéndote o saltando, porque si te quedás sin vida tenés que reintentar. Necesitás varios golpes seguidos de Soga + Corte para derrotarlo, así como reunir a los dispersos de las naciones requiere que cada persona cumpla su parte.",
+    bossIntroBtn:"Enfrentarlo",
+    bossDefeatTitle:"¡Estandarte levantado!",
+    bossDefeat:"Lograste abrirte paso. Los primeros santos y misioneros se sacrificaron para que hoy el evangelio restaurado llegue a nosotros — y ahora es tu turno de sostener esa bandera para otros.",
+    bossDefeatBtn:"Continuar",
+    epiTitle:"Reflexión final",
+    q1:'¿Qué símbolo de Isaías te ayudó más a entender cómo Dios cumple Sus promesas?',
+    q2:'¿Cómo podés ser, como Wisan, un instrumento en las manos de Dios esta semana?',
+    q3:'¿Qué significa para vos congregarte "bajo el estandarte" del Evangelio?',
+    submitEpilogue:"Compartir con el Maestro",
+    resultsTitle:"Resultado", reveal:"Revelar puntaje",
+    b1:"Titanes derrotados", b2:"Preguntas correctas", b3:"Titán Bestia", b4:"Reflexión",
+    share:"Compartir imagen", download:"Descargar imagen", whatsapp:"WhatsApp", playAgain:"Jugar de nuevo",
+    perfectChain:" (¡cadena perfecta! +100)",
+    trivia:[
+      {q:"¿Qué representa el TRONCO en Isaías 11:1, según Doctrina y Convenios 113?", opts:["José Smith","Cristo","David","Isaí"], correct:1},
+      {q:"¿Qué representa la VARA / VÁSTAGO que sale del tronco de Isaí?", opts:["Cristo","Un ángel","Un siervo — José Smith","El rey David"], correct:2},
+      {q:"Según el Presidente Joseph Fielding Smith, ¿dónde y cuándo se cumplió la profecía del estandarte?", opts:["Jerusalén, año 30","Kirtland, Ohio, 1836","Nauvoo, Illinois, 1840","Fayette, Nueva York, 1830"], correct:3},
+      {q:"¿Qué hizo el hermano Wisan que llevó a su hermano Winai a bautizarse?", opts:["Compartió sus sentimientos sobre el Libro de Mormón en redes sociales","Lo llevó directo a la iglesia","Le regaló el libro sin decir nada","Le predicó en la calle"], correct:0}
+    ]
+  },
+  en:{
+    title:"Edge of the Standard", subtitle:"Isaiah 11–12 · Lesson 116",
+    startDesc:"Run, hook your rope onto the titans and cut them down to reach the Beast Titan — just as the standard gathers the scattered of the nations.",
+    namePh:"Your name", start:"Start",
+    retro:"Back", adv:"Advance", jump:"Jump", rope:"Rope", cut:"Cut",
+    progress:n=>`Titans: ${n}/4`,
+    hintApproach:"Get closer and use the Rope to hook onto the titan",
+    hintRoped:"Now press Cut to defeat it!",
+    hintBoss:"Chain Rope + Cut hits to defeat the Beast Titan",
+    correct:"Correct!", wrong:"Try again",
+    bossIntroTitle:"The Beast Titan",
+    bossIntro:"This one is bigger and stronger, and it throws rocks at you — dodge by moving or jumping, because running out of health means retrying. You'll need several Rope + Cut hits in a row to defeat it, just as gathering the scattered of the nations requires every person to do their part.",
+    bossIntroBtn:"Face it",
+    bossDefeatTitle:"The standard is raised!",
+    bossDefeat:"You broke through. The early saints and missionaries sacrificed so the restored gospel could reach us today — now it's your turn to hold that banner up for others.",
+    bossDefeatBtn:"Continue",
+    epiTitle:"Final reflection",
+    q1:'Which symbol from Isaiah helped you understand how God fulfills His promises?',
+    q2:'How can you, like Wisan, be an instrument in God\'s hands this week?',
+    q3:'What does it mean for you to gather "under the standard" of the Gospel?',
+    submitEpilogue:"Share with the Teacher",
+    resultsTitle:"Result", reveal:"Reveal score",
+    b1:"Titans defeated", b2:"Correct answers", b3:"Beast Titan", b4:"Reflection",
+    share:"Share image", download:"Download image", whatsapp:"WhatsApp", playAgain:"Play again",
+    perfectChain:" (perfect chain! +100)",
+    trivia:[
+      {q:"What does the STEM in Isaiah 11:1 represent, according to Doctrine and Covenants 113?", opts:["Joseph Smith","Christ","David","Jesse"], correct:1},
+      {q:"What does the ROD / BRANCH that comes out of the stem of Jesse represent?", opts:["Christ","An angel","A servant — Joseph Smith","King David"], correct:2},
+      {q:"According to President Joseph Fielding Smith, where and when was the prophecy of the standard fulfilled?", opts:["Jerusalem, year 30","Kirtland, Ohio, 1836","Nauvoo, Illinois, 1840","Fayette, New York, 1830"], correct:3},
+      {q:"What did Brother Wisan do that led his brother Winai to be baptized?", opts:["Shared his feelings about the Book of Mormon on social media","Took him straight to church","Gave him the book without saying anything","Preached to him on the street"], correct:0}
+    ]
+  }
+};
+let lang = "es";
+
+// ============ Utilities ============
+function cleanName(raw){
+  let s = raw.normalize("NFD").replace(/[̀-ͯ]/g,"");
+  s = s.replace(/[^A-Za-z0-9 ]/g,"");
+  s = s.replace(/\s+/g," ").trim();
+  return s.slice(0,24);
+}
+function rand(min,max){ return Math.random()*(max-min)+min; }
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+
+// ============ Audio (synth, Web Audio API) ============
+let actx = null;
+function ensureAudio(){ if(!actx){ try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } }
+function beep(freq, dur, type, gainPeak, delay){
+  if(!actx) return;
+  const t0 = actx.currentTime + (delay||0);
+  const osc = actx.createOscillator();
+  const gain = actx.createGain();
+  osc.type = type||"sine";
+  osc.frequency.setValueAtTime(freq, t0);
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.exponentialRampToValueAtTime(gainPeak||0.2, t0+0.015);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+  osc.connect(gain); gain.connect(actx.destination);
+  osc.start(t0); osc.stop(t0+dur+0.02);
+}
+const SFX = {
+  jump:()=>beep(420,0.15,"square",0.15),
+  rope:()=>beep(700,0.08,"triangle",0.12),
+  cutHit:()=>{ beep(180,0.2,"sawtooth",0.2); beep(900,0.12,"square",0.12,0.03); },
+  cutMiss:()=>beep(120,0.2,"sawtooth",0.12),
+  correct:()=>{ beep(523,0.12,"sine",0.18); beep(659,0.12,"sine",0.18,0.1); beep(784,0.18,"sine",0.2,0.2); },
+  wrong:()=>{ beep(200,0.18,"sawtooth",0.15); beep(150,0.2,"sawtooth",0.15,0.12); },
+  bossDefeat:()=>{ [0,0.15,0.3,0.45].forEach((d,i)=>beep(392+i*110,0.25,"triangle",0.2,d)); },
+  rockHit:()=>{ beep(90,0.3,"sawtooth",0.22); beep(70,0.35,"square",0.18,0.05); }
+};
+
+// ============ Game constants ============
+const GRAVITY = 900;
+const JUMP_V = 330;
+const MOVE_SPEED = 340;
+const ACCEL_RATE = 9; // how fast vx approaches target speed (higher = snappier)
+const GROUND_Y = 0;
+const PLAYER_W = 34, PLAYER_H = 66;
+const TITAN_H = 220, BOSS_H = 360;
+const ROPE_RANGE_MIN = 40, ROPE_RANGE_MAX = 280;
+const SWING_DURATION = 0.85;
+const HIT_WINDOW = [0.22, 0.80]; // fraction of the swing where Corte can land
+
+const PLAYER_MAX_HP = 3;
+const ROCK_WAVE_INTERVAL = 3.4;   // seconds between rock volleys
+const ROCK_WAVE_INTERVAL_JITTER = 0.8;
+const ROCKS_PER_WAVE = 3;
+const ROCK_WARN_TIME = 0.7;       // shadow-warning duration before impact
+const ROCK_FALL_TIME = 0.45;      // fall duration after the warning
+const ROCK_HIT_RADIUS = 48;
+const ROCK_SPREAD = 170;          // how far from the player rocks can land
+
+const titanXs = [900,1800,2700,3600];
+const bossX = 4700;
+
+// ============ State ============
+let playerName = "";
+let state = null; // reset in initGame
+
+function initGame(){
+  state = {
+    x: 40, y: 0, vy: 0, vx: 0,
+    onGround: true, facing: 1,
+    held: {adv:false, retro:false},
+    swing: null, // {t, duration, startX, endX, peakY, target, hit}
+    titans: titanXs.map((tx,i)=>({x:tx, defeated:false, id:"t"+i})),
+    boss: {x:bossX, defeated:false, hits:0, attempts:0, active:false, introShown:false, rocks:[], nextRockAt:null, throwAnim:null},
+    hp: PLAYER_MAX_HP,
+    hpFlash: 0,
+    currentTarget: 0, // index into titans, or "boss"
+    triviaOpenFor: null,
+    triviaUsedRetry: {},
+    correctCount: 0,
+    defeatedCount: 0,
+    paused: false,
+    finished: false,
+    cutFlash: 0,
+    hitTitanFlashId: null,
+    camX: 0,
+    time: 0
+  };
+}
+
+// ============ DOM refs ============
+const el = id => document.getElementById(id);
+const screens = {
+  start: el("screen-start"), game: el("screen-game"),
+  epilogue: el("screen-epilogue"), results: el("screen-results")
+};
+function showScreen(name){
+  Object.values(screens).forEach(s=>s.classList.remove("active"));
+  screens[name].classList.add("active");
+}
+
+// ============ i18n apply ============
+function applyLang(){
+  const S = STR[lang];
+  el("t-title").textContent = S.title;
+  el("t-subtitle").textContent = S.subtitle;
+  el("t-startDesc").textContent = S.startDesc;
+  el("nameInput").placeholder = S.namePh;
+  el("startBtn").textContent = S.start;
+  el("t-retro").textContent = S.retro;
+  el("t-adv").textContent = S.adv;
+  el("t-jump").textContent = S.jump;
+  el("t-rope").textContent = S.rope;
+  el("t-cut").textContent = S.cut;
+  el("t-epiTitle").textContent = S.epiTitle;
+  el("t-q1").textContent = S.q1;
+  el("t-q2").textContent = S.q2;
+  el("t-q3").textContent = S.q3;
+  el("submitEpilogueBtn").textContent = S.submitEpilogue;
+  el("t-resultsTitle").textContent = S.resultsTitle;
+  el("revealBtn").textContent = S.reveal;
+  el("t-b1").textContent = S.b1; el("t-b2").textContent = S.b2;
+  el("t-b3").textContent = S.b3; el("t-b4").textContent = S.b4;
+  el("shareBtn").textContent = S.share;
+  el("downloadBtn").textContent = S.download;
+  el("whatsappBtn").textContent = S.whatsapp;
+  el("playAgainBtn").textContent = S.playAgain;
+  el("langBtn").textContent = lang==="es" ? "EN" : "ES";
+  document.documentElement.lang = lang;
+  if(state) updateHud();
+}
+el("langBtn").addEventListener("click", ()=>{ lang = lang==="es"?"en":"es"; applyLang(); });
+
+// ============ Start screen ============
+const nameInput = el("nameInput");
+nameInput.addEventListener("input", ()=>{
+  const cleaned = cleanName(nameInput.value);
+  el("startBtn").disabled = cleaned.length===0;
+});
+el("startBtn").addEventListener("click", ()=>{
+  playerName = cleanName(nameInput.value) || "Jugador";
+  ensureAudio();
+  initGame();
+  showScreen("game");
+  fitCanvas();
+  updateHud();
+  lastT = 0;
+  requestAnimationFrame(loop);
+});
+
+// ============ Controls ============
+function bindHold(btnId, key){
+  const b = el(btnId);
+  const start = e=>{ e.preventDefault(); state && (state.held[key]=true); b.classList.add("held"); ensureAudio(); };
+  const end = e=>{ e.preventDefault(); state && (state.held[key]=false); b.classList.remove("held"); };
+  b.addEventListener("pointerdown", start);
+  b.addEventListener("pointerup", end);
+  b.addEventListener("pointerleave", end);
+  b.addEventListener("pointercancel", end);
+}
+bindHold("btnAdv","adv");
+bindHold("btnRetro","retro");
+
+el("btnJump").addEventListener("pointerdown", e=>{ e.preventDefault(); ensureAudio(); doJump(); });
+el("btnRope").addEventListener("pointerdown", e=>{ e.preventDefault(); ensureAudio(); doRope(); });
+el("btnCut").addEventListener("pointerdown", e=>{ e.preventDefault(); ensureAudio(); doCut(); });
+
+// keyboard (desktop / testing convenience)
+window.addEventListener("keydown", e=>{
+  if(!state) return;
+  if(e.repeat) return;
+  if(e.key==="ArrowRight") state.held.adv = true;
+  if(e.key==="ArrowLeft") state.held.retro = true;
+  if(e.key===" " || e.key==="ArrowUp"){ e.preventDefault(); doJump(); }
+  if(e.key==="s" || e.key==="S") doRope();
+  if(e.key==="c" || e.key==="C") doCut();
+});
+window.addEventListener("keyup", e=>{
+  if(!state) return;
+  if(e.key==="ArrowRight") state.held.adv = false;
+  if(e.key==="ArrowLeft") state.held.retro = false;
+});
+
+function currentTargetObj(){
+  if(!state) return null;
+  if(state.currentTarget < state.titans.length) return state.titans[state.currentTarget];
+  return state.boss;
+}
+function targetHeight(t){ return t===state.boss ? BOSS_H : TITAN_H; }
+
+function doJump(){
+  if(!state || state.paused || state.finished) return;
+  if(state.onGround && !state.swing){
+    state.vy = JUMP_V;
+    state.onGround = false;
+    SFX.jump();
+  }
+}
+
+function doRope(){
+  if(!state || state.paused || state.finished) return;
+  if(state.swing) { cancelSwing(); return; }
+  const t = currentTargetObj();
+  if(!t) return;
+  const dx = t.x - state.x;
+  if(dx < ROPE_RANGE_MIN || dx > ROPE_RANGE_MAX) return;
+  const anchorX = (state.x + (t.x-12)) / 2;
+  const anchorH = targetHeight(t)*1.35; // hook point up on the "techo", above the titan's head
+  state.swing = {
+    t: 0, duration: SWING_DURATION,
+    startX: state.x, endX: t.x - 12,
+    peakY: targetHeight(t)*0.78,
+    anchorX, anchorH,
+    target: t, hit: false
+  };
+  state.onGround = false;
+  SFX.rope();
+  if(t===state.boss) state.boss.attempts++;
+}
+function cancelSwing(){
+  if(!state.swing) return;
+  state.swing = null;
+  state.y = 0; state.vy = 0; state.onGround = true;
+}
+function endSwing(landX){
+  state.swing = null;
+  state.x = clamp(landX, 20, currentApproachLimit());
+  state.y = 0; state.vy = 0; state.vx = -30; state.onGround = true;
+}
+
+function doCut(){
+  if(!state || state.paused || state.finished) return;
+  if(!state.swing){ SFX.cutMiss(); state.cutFlash = 0.15; return; }
+  const sw = state.swing;
+  const frac = sw.t / sw.duration;
+  if(!sw.hit && frac >= HIT_WINDOW[0] && frac <= HIT_WINDOW[1]){
+    sw.hit = true;
+    onCutSuccess(sw.target, sw);
+  } else {
+    SFX.cutMiss();
+    state.cutFlash = 0.15;
+  }
+}
+
+function onCutSuccess(t, sw){
+  SFX.cutHit();
+  state.hitTitanFlashId = t===state.boss? "boss": t.id;
+  state.cutFlash = 0.25;
+  const landX = state.x - 40;
+  state.swing = null;
+  state.x = clamp(landX, 20, 999999);
+  state.y = 0; state.vy = 0; state.vx = -30; state.onGround = true;
+  if(t===state.boss){
+    state.boss.hits++;
+    if(state.boss.hits >= 3){
+      state.boss.defeated = true;
+      state.boss.rocks = [];
+      state.boss.nextRockAt = null;
+      state.finished = true;
+      SFX.bossDefeat();
+      setTimeout(showBossDefeatNarrative, 500);
+    }
+  } else {
+    t.defeated = true;
+    state.defeatedCount++;
+    state.currentTarget++;
+    setTimeout(()=>openTrivia(t.id), 350);
+  }
+}
+
+// ============ Trivia ============
+function openTrivia(titanId){
+  state.paused = true;
+  state.triviaOpenFor = titanId;
+  const idx = parseInt(titanId.replace("t",""),10);
+  const S = STR[lang];
+  const qd = S.trivia[idx];
+  const order = shuffle(qd.opts.map((o,i)=>i));
+  const overlay = el("overlay");
+  const card = el("modalCardContent");
+  card.innerHTML = "";
+  const h3 = document.createElement("h3"); h3.textContent = (lang==="es"?"Pregunta":"Question"); card.appendChild(h3);
+  const qp = document.createElement("div"); qp.className="qtext"; qp.textContent = qd.q; card.appendChild(qp);
+  const fb = document.createElement("div"); fb.className="feedback";
+  let answered = false;
+  order.forEach(optIdx=>{
+    const b = document.createElement("button");
+    b.className = "opt";
+    b.textContent = qd.opts[optIdx];
+    b.addEventListener("click", ()=>{
+      if(answered) return;
+      if(optIdx === qd.correct){
+        answered = true;
+        b.classList.add("correct");
+        fb.textContent = S.correct; fb.style.color = "#4ADE80";
+        SFX.correct();
+        if(!state.triviaUsedRetry[titanId]) state.correctCount++;
+        setTimeout(closeTrivia, 700);
+      } else {
+        b.classList.add("wrong");
+        fb.textContent = S.wrong; fb.style.color = "#FF6B6B";
+        SFX.wrong();
+        state.triviaUsedRetry[titanId] = true;
+        b.disabled = true;
+      }
+    });
+    card.appendChild(b);
+  });
+  card.appendChild(fb);
+  overlay.classList.add("active");
+}
+function closeTrivia(){
+  el("overlay").classList.remove("active");
+  state.triviaOpenFor = null;
+  state.paused = false;
+  updateHud();
+  if(state.defeatedCount === state.titans.length && !state.boss.introShown){
+    setTimeout(showBossIntro, 250);
+  }
+}
+
+function showBossIntro(){
+  state.paused = true;
+  state.boss.introShown = true;
+  state.boss.active = true;
+  const S = STR[lang];
+  const overlay = el("overlay");
+  const card = el("modalCardContent");
+  card.innerHTML = "";
+  const h3 = document.createElement("h3"); h3.textContent = S.bossIntroTitle; card.appendChild(h3);
+  const p = document.createElement("div"); p.className="qtext"; p.textContent = S.bossIntro; card.appendChild(p);
+  const btn = document.createElement("button"); btn.className="btn-primary"; btn.textContent = S.bossIntroBtn;
+  btn.addEventListener("click", ()=>{
+    overlay.classList.remove("active"); state.paused=false;
+    state.boss.nextRockAt = state.time + ROCK_WAVE_INTERVAL;
+    updateHud();
+  });
+  card.appendChild(btn);
+  overlay.classList.add("active");
+}
+function showBossDefeatNarrative(){
+  const S = STR[lang];
+  const overlay = el("overlay");
+  const card = el("modalCardContent");
+  card.innerHTML = "";
+  const h3 = document.createElement("h3"); h3.textContent = S.bossDefeatTitle; card.appendChild(h3);
+  const p = document.createElement("div"); p.className="qtext"; p.textContent = S.bossDefeat; card.appendChild(p);
+  const btn = document.createElement("button"); btn.className="btn-primary"; btn.textContent = S.bossDefeatBtn;
+  btn.addEventListener("click", ()=>{ overlay.classList.remove("active"); goToEpilogue(); });
+  card.appendChild(btn);
+  overlay.classList.add("active");
+}
+
+// ============ HUD ============
+function updateHud(){
+  const S = STR[lang];
+  el("hudProgress").textContent = S.progress(state.defeatedCount);
+  let hint = "";
+  const t = currentTargetObj();
+  if(t && !state.finished){
+    if(t===state.boss) hint = S.hintBoss;
+    else if(state.swing) hint = S.hintRoped;
+    else hint = S.hintApproach;
+  }
+  el("hudHint").textContent = hint;
+
+  const showHp = state.boss.active && !state.boss.defeated;
+  el("hudHpWrap").style.display = showHp ? "block" : "none";
+  if(showHp){
+    for(let i=0;i<PLAYER_MAX_HP;i++){
+      el("hp"+i).classList.toggle("off", i >= state.hp);
+    }
+  }
+}
+
+// ============ Physics / update ============
+function update(dt){
+  if(!state || state.paused || state.finished) return;
+  state.time += dt;
+  if(state.cutFlash>0) state.cutFlash = Math.max(0, state.cutFlash-dt);
+
+  if(state.swing){
+    const sw = state.swing;
+    sw.t += dt;
+    const frac = clamp(sw.t / sw.duration, 0, 1);
+    const easeX = 1 - Math.pow(1-frac, 2); // ease-out: closes horizontal gap early
+    state.x = sw.startX + (sw.endX - sw.startX) * easeX;
+    state.y = sw.peakY * Math.sin(Math.PI*frac);
+    if(frac >= 1){ endSwing(sw.endX); }
+  } else {
+    let ax = 0;
+    if(state.held.adv) ax += MOVE_SPEED;
+    if(state.held.retro) ax -= MOVE_SPEED*0.8;
+    const accel = ACCEL_RATE * (state.onGround?1:0.55);
+    state.vx += (ax - state.vx) * Math.min(1, accel*dt);
+    if(!state.onGround){
+      state.vy -= GRAVITY*dt;
+      state.y += state.vy*dt;
+      state.x += state.vx*dt;
+      if(state.y<=0){ state.y=0; state.vy=0; state.onGround=true; }
+    } else {
+      state.x += state.vx*dt;
+    }
+    const limit = currentApproachLimit();
+    if(state.x > limit) state.x = limit;
+    if(state.x < 20) state.x = 20;
+  }
+  if(state.boss.active && !state.boss.defeated){
+    updateRocks(dt);
+  }
+  if(state.hpFlash>0) state.hpFlash = Math.max(0, state.hpFlash-dt);
+
+  state.camX = clamp(state.x - 260, 0, 999999);
+  updateHud();
+}
+function currentApproachLimit(){
+  const t = currentTargetObj();
+  if(!t) return 999999;
+  return t.x - 55;
+}
+
+// ============ Boss rock attack ============
+function updateRocks(dt){
+  const boss = state.boss;
+  if(boss.nextRockAt!==null && state.time >= boss.nextRockAt){
+    for(let i=0;i<ROCKS_PER_WAVE;i++){
+      const lx = clamp(state.x + rand(-ROCK_SPREAD, ROCK_SPREAD), boss.x-500, boss.x-30);
+      boss.rocks.push({ x:lx, phase:"warn", t: -rand(0,0.25)*i });
+    }
+    boss.nextRockAt = state.time + ROCK_WAVE_INTERVAL + rand(-ROCK_WAVE_INTERVAL_JITTER, ROCK_WAVE_INTERVAL_JITTER);
+    boss.throwAnim = { t:0, duration: ROCK_WARN_TIME };
+  }
+  if(boss.throwAnim){
+    boss.throwAnim.t += dt;
+    if(boss.throwAnim.t >= boss.throwAnim.duration) boss.throwAnim = null;
+  }
+  for(let i=boss.rocks.length-1; i>=0; i--){
+    const r = boss.rocks[i];
+    r.t += dt;
+    if(r.t < 0) continue;
+    if(r.phase==="warn" && r.t >= ROCK_WARN_TIME){ r.phase="falling"; r.t = 0; }
+    else if(r.phase==="falling" && r.t >= ROCK_FALL_TIME){
+      if(Math.abs(state.x - r.x) < ROCK_HIT_RADIUS){
+        onRockHit();
+      }
+      boss.rocks.splice(i,1);
+    }
+  }
+}
+function onRockHit(){
+  state.hp = Math.max(0, state.hp-1);
+  state.hpFlash = 0.3;
+  SFX.rockHit();
+  if(state.swing) cancelSwing();
+  if(state.hp<=0){
+    setTimeout(resetBossEncounter, 300);
+  }
+}
+function resetBossEncounter(){
+  if(!state || state.finished) return;
+  state.hp = PLAYER_MAX_HP;
+  state.boss.hits = 0;
+  state.boss.attempts = 0;
+  state.boss.rocks = [];
+  state.boss.nextRockAt = state.time + ROCK_WAVE_INTERVAL;
+  state.swing = null;
+  state.x = Math.max(20, state.boss.x - 420);
+  state.y = 0; state.vy = 0; state.vx = 0; state.onGround = true;
+}
+
+// ============ Render ============
+const canvas = el("gameCanvas");
+const ctx = canvas.getContext("2d");
+function fitCanvas(){
+  const box = el("canvasBox").getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio||1, 2);
+  canvas.width = Math.round(box.width*dpr);
+  canvas.height = Math.round(box.height*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener("resize", fitCanvas);
+if(window.ResizeObserver){
+  new ResizeObserver(()=>fitCanvas()).observe(el("canvasBox"));
+}
+
+function drawBackground(w,h){
+  const g = ctx.createLinearGradient(0,0,0,h);
+  g.addColorStop(0, "#060812"); g.addColorStop(1, COLORS.bg);
+  ctx.fillStyle = g; ctx.fillRect(0,0,w,h);
+  // simple parallax mountains
+  ctx.fillStyle = "#0e1424";
+  for(let i=0;i<6;i++){
+    const bx = (i*260 - (state.camX*0.15)%260);
+    ctx.beginPath();
+    ctx.moveTo(bx, h*0.62);
+    ctx.lineTo(bx+90, h*0.62-70);
+    ctx.lineTo(bx+180, h*0.62);
+    ctx.closePath(); ctx.fill();
+  }
+  // ground
+  const groundTopScreen = h*0.78;
+  ctx.fillStyle = COLORS.ground2;
+  ctx.fillRect(0, groundTopScreen, w, h-groundTopScreen);
+  ctx.strokeStyle = "rgba(45,212,232,.25)";
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0,groundTopScreen); ctx.lineTo(w,groundTopScreen); ctx.stroke();
+}
+
+function worldToScreen(wx, wy, groundTopScreen){
+  return { sx: wx - state.camX, sy: groundTopScreen - wy };
+}
+
+function drawPlayer(sx, sy){
+  ctx.save();
+  ctx.translate(sx, sy);
+  // legs
+  ctx.fillStyle = COLORS.pants;
+  ctx.fillRect(-11,-30,9,30);
+  ctx.fillRect(2,-30,9,30);
+  // torso (jacket)
+  ctx.fillStyle = COLORS.jacket;
+  ctx.fillRect(-13,-58,26,30);
+  // arms
+  ctx.fillStyle = COLORS.jacket;
+  ctx.fillRect(-18,-56,5,22);
+  ctx.fillRect(13,-56,5,22);
+  // head
+  ctx.fillStyle = COLORS.skin;
+  ctx.beginPath(); ctx.arc(0,-66,10,0,Math.PI*2); ctx.fill();
+  // hair
+  ctx.fillStyle = COLORS.hair;
+  ctx.beginPath(); ctx.arc(0,-69,10.5,Math.PI,Math.PI*2); ctx.fill();
+  ctx.fillRect(-10,-70,20,5);
+  if(state.cutFlash>0){
+    ctx.strokeStyle = "rgba(45,212,232,"+(state.cutFlash*3).toFixed(2)+")";
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(-24,-50); ctx.lineTo(24,-20); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawTitan(t, sx, sy, isBoss, groundTopScreen){
+  const h = isBoss? BOSS_H : TITAN_H;
+  const w = isBoss? 130 : 80;
+  const flashed = state.hitTitanFlashId === (isBoss?"boss":t.id) && state.cutFlash>0;
+  // idle motion: a gentle bob/sway so the titan never looks frozen, even outside a throw
+  const seed = isBoss ? 0 : (t.x||0)*0.01;
+  const idleBob = Math.sin(state.time*1.6 + seed*1.7) * (isBoss? 5:3);
+  const lean = Math.sin(state.time*1.6 + seed*1.7) * (isBoss? 0.035:0.02);
+  const throwAnim = isBoss ? state.boss.throwAnim : null;
+  const throwFrac = throwAnim ? Math.min(1, throwAnim.t/throwAnim.duration) : null;
+  ctx.save();
+  ctx.translate(sx, groundTopScreen + idleBob);
+  ctx.fillStyle = flashed ? "#ffffff" : (isBoss? COLORS.boss : COLORS.titan);
+  // body trapezoid (slight idle sway lean)
+  ctx.save();
+  ctx.rotate(lean);
+  ctx.beginPath();
+  ctx.moveTo(-w*0.32, 0);
+  ctx.lineTo(w*0.32, 0);
+  ctx.lineTo(w*0.22, -h*0.72);
+  ctx.lineTo(-w*0.22, -h*0.72);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+  // arms (shoulder -> elbow -> hand, slightly bent, hanging at the sides)
+  ctx.strokeStyle = flashed ? "#ffffff" : (isBoss? COLORS.bossDark : COLORS.titanDark);
+  ctx.lineWidth = isBoss? w*0.19 : w*0.16;
+  ctx.lineCap = "round";
+  [-1,1].forEach(side=>{
+    let shX = side*w*0.30, shY = -h*0.66;
+    let elX = side*w*0.42, elY = -h*0.42;
+    let haX = side*w*0.34, haY = -h*0.20;
+    // the boss's near arm (facing the player) animates a windup + throw motion while a rock throw is in progress
+    if(isBoss && throwAnim && side===-1){
+      if(throwFrac < 0.55){
+        const wf = throwFrac/0.55;
+        elX = w*0.30 + wf*w*0.10;
+        elY = -h*0.66 - wf*h*0.18;
+        haX = w*0.20 + wf*w*0.05;
+        haY = -h*0.66 - wf*h*0.34;
+      } else {
+        const tf = (throwFrac-0.55)/0.45;
+        elX = w*0.40 + tf*w*0.10;
+        elY = -h*0.84 + tf*h*0.48;
+        haX = w*0.25 + tf*w*0.55;
+        haY = -h*0.30 + tf*h*0.22;
+      }
+    } else if(!isBoss){
+      // regular titans get a subtle idle arm sway
+      const sway = Math.sin(state.time*1.6 + seed*1.7 + side*1.1) * 4;
+      elX += sway; haX += sway*1.4;
+    }
+    ctx.beginPath();
+    ctx.moveTo(shX, shY);
+    ctx.quadraticCurveTo(elX, elY, haX, haY);
+    ctx.stroke();
+    ctx.fillStyle = flashed ? "#ffffff" : (isBoss? COLORS.bossDark : COLORS.titanDark);
+    ctx.beginPath(); ctx.arc(haX, haY, w*0.09, 0, Math.PI*2); ctx.fill();
+  });
+  // gold chain around the neck/chest (imposing, menacing swagger — generic, no brand/text)
+  ctx.strokeStyle = "rgba(232,178,77,.75)";
+  ctx.lineWidth = isBoss? 3.5 : 2.5;
+  ctx.beginPath();
+  ctx.moveTo(-w*0.20,-h*0.68);
+  ctx.quadraticCurveTo(0,-h*0.58,w*0.20,-h*0.68);
+  ctx.stroke();
+  ctx.fillStyle = "rgba(232,178,77,.85)";
+  ctx.beginPath(); ctx.arc(0,-h*0.60, isBoss? 7:5, 0, Math.PI*2); ctx.fill();
+  // head
+  ctx.fillStyle = flashed ? "#ffffff" : (isBoss? COLORS.bossDark : COLORS.titanDark);
+  ctx.beginPath(); ctx.arc(0, -h*0.82, w*0.22, 0, Math.PI*2); ctx.fill();
+  // eyes (narrow, menacing)
+  ctx.fillStyle = "#1a1006";
+  ctx.beginPath(); ctx.ellipse(-w*0.085, -h*0.835, 3.4, 2, -0.2, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(w*0.085, -h*0.835, 3.4, 2, 0.2, 0, Math.PI*2); ctx.fill();
+  // wide open grin with teeth (imposing, unsettling — not tied to any character)
+  const gy = -h*0.775, gw = w*0.16, gh = h*0.028;
+  ctx.fillStyle = "#1a1006";
+  ctx.beginPath();
+  ctx.moveTo(-gw, gy);
+  ctx.quadraticCurveTo(0, gy+gh*2.4, gw, gy);
+  ctx.quadraticCurveTo(0, gy+gh*0.6, -gw, gy);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "#f2ede0";
+  for(let i=-2;i<=2;i++){
+    ctx.fillRect(i*gw*0.34-1.2, gy+1, 2.4, gh*1.1);
+  }
+  // neck hit marker (subtle)
+  ctx.fillStyle = "rgba(232,178,77,.35)";
+  ctx.beginPath(); ctx.arc(0, -h*0.85, 6, 0, Math.PI*2); ctx.fill();
+  if(isBoss){
+    ctx.fillStyle = COLORS.gold;
+    ctx.font = "bold 12px sans-serif"; ctx.textAlign="center";
+    ctx.fillText(state.boss.hits+"/3", 0, -h*1.02);
+  }
+  ctx.restore();
+}
+
+function drawRope(groundTopScreen){
+  if(!state.swing) return;
+  const sw = state.swing;
+  // rope hooks up onto the "techo" (an anchor above, off the top of the scene), not onto the titan
+  const a = worldToScreen(sw.anchorX, sw.anchorH, groundTopScreen);
+  const hookY = Math.max(a.sy, 2);
+  const p = worldToScreen(state.x, state.y, groundTopScreen);
+  ctx.strokeStyle = "rgba(45,212,232,.85)";
+  ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(a.sx, hookY); ctx.lineTo(p.sx,p.sy-58); ctx.stroke();
+  // small hook mark at the anchor
+  ctx.fillStyle = "rgba(45,212,232,.9)";
+  ctx.beginPath(); ctx.arc(a.sx, hookY, 4, 0, Math.PI*2); ctx.fill();
+}
+
+function render(){
+  const w = canvas.width / (Math.min(window.devicePixelRatio||1,2));
+  const h = canvas.height / (Math.min(window.devicePixelRatio||1,2));
+  drawBackground(w,h);
+  if(!state) return;
+  const groundTopScreen = h*0.78;
+
+  state.titans.forEach(t=>{
+    if(t.defeated) return;
+    const s = worldToScreen(t.x, 0, groundTopScreen);
+    if(s.sx > -150 && s.sx < w+150) drawTitan(t, s.sx, s.sy, false, groundTopScreen);
+  });
+  if(state.boss.active && !state.boss.defeated){
+    const s = worldToScreen(state.boss.x, 0, groundTopScreen);
+    drawTitan(state.boss, s.sx, s.sy, true, groundTopScreen);
+    drawRocks(groundTopScreen);
+  }
+  drawRope(groundTopScreen);
+  const p = worldToScreen(state.x, state.y, groundTopScreen);
+  drawPlayer(p.sx, p.sy);
+  if(state.hpFlash>0){
+    ctx.fillStyle = "rgba(255,107,107,"+(state.hpFlash*1.6).toFixed(2)+")";
+    ctx.fillRect(0,0,w,h);
+  }
+}
+
+function drawRocks(groundTopScreen){
+  state.boss.rocks.forEach(r=>{
+    const s = worldToScreen(r.x, 0, groundTopScreen);
+    if(r.phase==="warn"){
+      const grow = clamp(r.t/ROCK_WARN_TIME, 0, 1);
+      ctx.fillStyle = "rgba(255,107,107,"+(0.25+0.35*grow)+")";
+      ctx.beginPath(); ctx.ellipse(s.sx, s.sy-3, 22*grow+6, 8*grow+3, 0, 0, Math.PI*2); ctx.fill();
+    } else {
+      const frac = clamp(r.t/ROCK_FALL_TIME, 0, 1);
+      const fallY = groundTopScreen - (1-frac)*groundTopScreen*0.9;
+      ctx.save();
+      ctx.translate(s.sx, fallY);
+      ctx.rotate(frac*2.2);
+      ctx.fillStyle = "#5a4a3a";
+      ctx.beginPath();
+      ctx.moveTo(-11,-8); ctx.lineTo(9,-11); ctx.lineTo(13,4); ctx.lineTo(-3,12); ctx.lineTo(-13,3);
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+      // impact shadow still visible while falling
+      ctx.fillStyle = "rgba(255,107,107,.5)";
+      ctx.beginPath(); ctx.ellipse(s.sx, s.sy-3, 24, 9, 0, 0, Math.PI*2); ctx.fill();
+    }
+  });
+}
+
+let lastT = 0;
+function loop(ts){
+  if(!lastT) lastT = ts;
+  let dt = (ts-lastT)/1000;
+  dt = Math.min(dt, 0.033);
+  lastT = ts;
+  update(dt);
+  render();
+  requestAnimationFrame(loop);
+}
+fitCanvas();
+
+// ============ Epilogue ============
+function goToEpilogue(){
+  showScreen("epilogue");
+}
+["ans1","ans2","ans3"].forEach((id,i)=>{
+  const ta = el(id);
+  const cc = el("cc"+(i+1));
+  ta.addEventListener("input", ()=>{
+    cc.textContent = ta.value.length;
+    checkEpilogueReady();
+  });
+});
+function checkEpilogueReady(){
+  const ready = ["ans1","ans2","ans3"].every(id=>el(id).value.trim().length>0);
+  el("submitEpilogueBtn").disabled = !ready;
+}
+el("submitEpilogueBtn").addEventListener("click", ()=>{
+  showScreen("results");
+});
+
+// ============ Results / scoring ============
+function computeScore(){
+  const titanPts = state.defeatedCount*100;
+  let triviaPts = 0;
+  state.titans.forEach(t=>{
+    if(t.defeated){
+      triviaPts += state.triviaUsedRetry[t.id] ? 50 : 150;
+    }
+  });
+  let bossPts = 0;
+  let perfect = false;
+  if(state.boss.defeated){
+    bossPts = 300;
+    if(state.boss.attempts<=3 && state.boss.hits===3){ bossPts += 100; perfect = true; }
+  }
+  const reflectionChars = ["ans1","ans2","ans3"].reduce((s,id)=>s+el(id).value.trim().length,0);
+  const reflectionPts = reflectionChars*4;
+  const total = titanPts+triviaPts+bossPts+reflectionPts;
+  return {titanPts,triviaPts,bossPts,reflectionPts,total,perfect};
+}
+
+el("revealBtn").addEventListener("click", ()=>{
+  const S = STR[lang];
+  const sc = computeScore();
+  el("bigScore").textContent = sc.total;
+  el("bd1").textContent = state.defeatedCount+"/4 (+"+sc.titanPts+")";
+  el("bd2").textContent = state.correctCount+"/4 (+"+sc.triviaPts+")";
+  el("bd3").textContent = "+"+sc.bossPts + (sc.perfect? S.perfectChain : "");
+  el("bd4").textContent = "+"+sc.reflectionPts;
+  el("breakdownBox").style.display = "block";
+  el("revealBtn").style.display = "none";
+  buildResultImage(sc);
+});
+
+function buildResultImage(sc){
+  const rc = el("resultCanvas");
+  const rctx = rc.getContext("2d");
+  const W = rc.width, H = rc.height;
+  const g = rctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,"#0A0E1A"); g.addColorStop(1,"#141B2E");
+  rctx.fillStyle = g; rctx.fillRect(0,0,W,H);
+  rctx.textAlign="center";
+  rctx.fillStyle = "#E8B24D";
+  rctx.font = "bold 54px Georgia, serif";
+  rctx.fillText("Filo del Estandarte", W/2, 140);
+  rctx.fillStyle = "#2DD4E8";
+  rctx.font = "24px sans-serif";
+  rctx.fillText("Isaías 11–12 · Lección 116", W/2, 185);
+
+  rctx.fillStyle = "#F5F7FA";
+  rctx.font = "bold 34px sans-serif";
+  rctx.fillText(playerName, W/2, 280);
+
+  rctx.fillStyle = "#E8B24D";
+  rctx.font = "bold 130px sans-serif";
+  rctx.fillText(String(sc.total), W/2, 460);
+  rctx.fillStyle = "#94A3B8";
+  rctx.font = "22px sans-serif";
+  rctx.fillText(lang==="es"?"PUNTOS":"POINTS", W/2, 500);
+
+  const rows = [
+    [(lang==="es"?"Titanes derrotados":"Titans defeated"), state.defeatedCount+"/4"],
+    [(lang==="es"?"Preguntas correctas":"Correct answers"), state.correctCount+"/4"],
+    [(lang==="es"?"Titán Bestia":"Beast Titan"), state.boss.defeated ? (lang==="es"?"Derrotado":"Defeated") : "-"],
+  ];
+  rctx.font = "26px sans-serif";
+  let y = 600;
+  rows.forEach(r=>{
+    rctx.fillStyle = "#94A3B8"; rctx.textAlign="left";
+    rctx.fillText(r[0], 120, y);
+    rctx.fillStyle = "#F5F7FA"; rctx.textAlign="right";
+    rctx.fillText(r[1], W-120, y);
+    y += 50;
+  });
+
+  rctx.textAlign="center";
+  rctx.fillStyle="#2DD4E8";
+  rctx.font="20px sans-serif";
+  const d = new Date();
+  rctx.fillText(d.toLocaleDateString(lang==="es"?"es-AR":"en-US"), W/2, H-60);
+
+  const dataUrl = rc.toDataURL("image/png");
+  el("resultImg").src = dataUrl;
+}
+
+el("downloadBtn").addEventListener("click", ()=>{
+  const rc = el("resultCanvas");
+  const a = document.createElement("a");
+  a.href = rc.toDataURL("image/png");
+  a.download = "filo-del-estandarte-"+playerName.replace(/\s+/g,"_")+".png";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+});
+
+el("shareBtn").addEventListener("click", async ()=>{
+  const rc = el("resultCanvas");
+  rc.toBlob(async (blob)=>{
+    const file = new File([blob], "resultado.png", {type:"image/png"});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{
+        await navigator.share({files:[file], title:"Filo del Estandarte", text: (lang==="es"?"Mi resultado: ":"My result: ")+el("bigScore").textContent});
+      }catch(e){ /* user cancelled */ }
+    } else {
+      el("downloadBtn").click();
+    }
+  }, "image/png");
+});
+
+el("whatsappBtn").addEventListener("click", ()=>{
+  const text = encodeURIComponent((lang==="es"?"Terminé 'Filo del Estandarte' con ":"I finished 'Edge of the Standard' with ")+el("bigScore").textContent+(lang==="es"?" puntos.":" points."));
+  const num = WHATSAPP_NUMBER ? WHATSAPP_NUMBER : "";
+  const url = "https://wa.me/"+num+"?text="+text;
+  window.open(url, "_blank");
+});
+
+el("playAgainBtn").addEventListener("click", ()=>{
+  ["ans1","ans2","ans3"].forEach(id=>{ el(id).value=""; });
+  ["cc1","cc2","cc3"].forEach(id=>{ el(id).textContent="0"; });
+  el("breakdownBox").style.display="none";
+  el("revealBtn").style.display="inline-block";
+  el("bigScore").textContent = "???";
+  showScreen("start");
+});
+
+// ============ init ============
+applyLang();
+fitCanvas();
+})();
+</script>
+</body>
+</html>

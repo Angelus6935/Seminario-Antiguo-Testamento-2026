@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Grana a Blanco: El Camino del Arrepentimiento</title>
+<style>
+  :root{
+    --bg:#0b0e14;
+    --panel:#141a24;
+    --panel2:#1b2330;
+    --crimson:#dc2626;
+    --crimson-dark:#7f1d1d;
+    --snow:#f8fafc;
+    --gold:#fbbf24;
+    --text:#f1f5f9;
+    --muted:#94a3b8;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    overflow-x:hidden; width:100%; min-height:100%;}
+  #app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;
+    background:linear-gradient(180deg,#0b0e14 0%,#150c10 60%,#1a0d10 100%);}
+
+  .screen{display:none;flex-direction:column;flex:1;padding:20px 18px 32px;animation:fadeIn .35s ease;}
+  .screen.active{display:flex;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+  h1{font-size:1.5rem;margin:.2em 0;line-height:1.25;
+    background:linear-gradient(90deg,var(--crimson),var(--snow));
+    -webkit-background-clip:text;background-clip:text;color:transparent;}
+  h2{font-size:1.15rem;margin:.3em 0;color:var(--snow);}
+  p{line-height:1.5;color:var(--text);}
+  .muted{color:var(--muted);font-size:.85rem;}
+
+  .card{background:var(--panel);border:1px solid #2a3342;border-radius:16px;padding:16px;margin:10px 0;}
+  .scripture{border-left:4px solid var(--crimson);}
+  .quote{border-left:4px solid var(--gold);}
+  .quote .author{color:var(--gold);font-weight:600;margin-top:6px;display:block;}
+
+  .btn{display:block;width:100%;padding:14px;margin:8px 0;border:none;border-radius:14px;
+    font-size:1rem;font-weight:700;cursor:pointer;text-align:center;
+    background:linear-gradient(135deg,var(--crimson),var(--crimson-dark));color:var(--snow);
+    box-shadow:0 4px 14px rgba(220,38,38,.35); transition:transform .08s ease;}
+  .btn:active{transform:scale(.97);}
+  .btn.secondary{background:linear-gradient(135deg,#334155,#1e293b);box-shadow:none;}
+  .btn.gold{background:linear-gradient(135deg,var(--gold),#b45309);color:#1a1005;}
+  .btn:disabled{opacity:.4;cursor:default;}
+
+  input[type=text], textarea{width:100%;padding:12px;border-radius:12px;border:1px solid #334155;
+    background:var(--panel2);color:var(--text);font-size:1rem;font-family:inherit;}
+  textarea{min-height:90px;resize:vertical;}
+
+  .topbar{display:flex;justify-content:space-between;align-items:center;padding:6px 2px 14px;
+    font-size:.85rem;color:var(--muted);}
+  .topbar .level-pill{background:var(--panel2);padding:4px 10px;border-radius:999px;color:var(--snow);}
+  .topbar .timer{font-variant-numeric:tabular-nums;font-weight:700;color:var(--gold);}
+
+  /* Sliding puzzle */
+  #sliding-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:320px;margin:14px auto;aspect-ratio:1/1;}
+  .sl-tile{display:flex;align-items:center;justify-content:center;flex-direction:column;
+    border-radius:10px;font-size:1.5rem;font-weight:800;color:var(--snow);cursor:pointer;
+    background:linear-gradient(145deg,var(--crimson),var(--crimson-dark));user-select:none;}
+  .sl-tile.blank{background:transparent;cursor:default;}
+  .sl-tile small{font-size:.9rem;opacity:.85;}
+
+  /* Memory */
+  #memory-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:320px;margin:14px auto;}
+  .mem-card{aspect-ratio:1/1;border-radius:12px;display:flex;align-items:center;justify-content:center;
+    font-size:1.7rem;cursor:pointer;background:linear-gradient(145deg,#334155,#1e293b);
+    border:1px solid #475569;user-select:none;}
+  .mem-card.flipped{background:linear-gradient(145deg,var(--panel2),#0f172a);}
+  .mem-card.matched{background:linear-gradient(145deg,var(--crimson-dark),#3f0d0d);opacity:.55;cursor:default;}
+
+  /* Word order */
+  #wo-bank,#wo-answer{display:flex;flex-wrap:wrap;gap:8px;min-height:46px;margin:10px 0;padding:8px;
+    background:var(--panel2);border-radius:12px;border:1px dashed #334155;}
+  .wo-chip{padding:8px 12px;border-radius:10px;background:linear-gradient(135deg,var(--crimson),var(--crimson-dark));
+    color:var(--snow);font-size:.85rem;cursor:pointer;user-select:none;}
+  .wo-chip.used{opacity:.35;cursor:default;}
+  #wo-answer .wo-chip{background:linear-gradient(135deg,#475569,#1e293b);}
+
+  /* Cluster match */
+  #cluster-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;max-width:340px;margin:10px auto;}
+  .cl-cell{aspect-ratio:1/1;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    font-size:1.2rem;cursor:pointer;background:var(--panel2);user-select:none;}
+  .cluster-progress{background:#1e293b;border-radius:999px;height:10px;overflow:hidden;margin:8px 0 14px;}
+  .cluster-progress-fill{height:100%;background:linear-gradient(90deg,var(--crimson),var(--snow));width:0%;transition:width .3s ease;}
+
+  /* Question */
+  .opt-btn{display:block;width:100%;text-align:left;padding:14px;margin:8px 0;border-radius:12px;
+    border:1px solid #334155;background:var(--panel2);color:var(--text);font-size:.95rem;cursor:pointer;}
+  .opt-btn.correct{background:linear-gradient(135deg,#166534,#14532d);border-color:#22c55e;}
+  .opt-btn.wrong{background:linear-gradient(135deg,#7f1d1d,#450a0a);border-color:#ef4444;}
+  .shake{animation:shake .35s;}
+  @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+
+  /* Results */
+  .score-hidden{font-size:2.2rem;text-align:center;letter-spacing:.1em;color:var(--muted);margin:18px 0;}
+  .score-reveal{font-size:2.6rem;text-align:center;font-weight:800;color:var(--gold);margin:14px 0;}
+  .answer-block{margin:10px 0;}
+  .answer-block .q{color:var(--gold);font-size:.85rem;font-weight:700;margin-bottom:4px;}
+  .answer-block .a{background:var(--panel2);border-radius:10px;padding:10px;font-size:.9rem;white-space:pre-wrap;}
+  #capture-card{border:2px solid var(--gold);border-radius:18px;padding:16px;
+    background:radial-gradient(circle at top, #241017, #0b0e14 70%);}
+  .footer-tag{text-align:center;color:var(--muted);font-size:.7rem;margin-top:10px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- INTRO -->
+  <div class="screen active" id="screen-intro">
+    <h1>Grana a Blanco</h1>
+    <h2>El Camino del Arrepentimiento</h2>
+    <div class="card scripture">
+      <p><strong>Isaías 1:18</strong> — "Venid luego, dice Jehová, y estemos a cuenta: aunque vuestros pecados sean como la grana, como la nieve serán emblanquecidos; aunque sean rojos como el carmesí, vendrán a ser como blanca lana."</p>
+    </div>
+    <p class="muted">4 niveles, 4 preguntas y una reflexión final. Resolvé cada puzzle, contestá bien y sé rápido: cada segundo cuenta.</p>
+    <label class="muted" for="player-name">Tu nombre:</label>
+    <input type="text" id="player-name" placeholder="Escribí tu nombre" maxlength="40">
+    <button class="btn" id="btn-start">Comenzar</button>
+  </div>
+
+  <!-- TEACHING CARD -->
+  <div class="screen" id="screen-teaching">
+    <div class="topbar"><span class="level-pill" id="teach-level-pill">Nivel 1/4</span><span></span></div>
+    <h2 id="teach-title"></h2>
+    <div class="card scripture">
+      <strong id="teach-ref"></strong>
+      <p id="teach-scripture"></p>
+    </div>
+    <div class="card quote">
+      <p id="teach-quote"></p>
+      <span class="author" id="teach-author"></span>
+    </div>
+    <button class="btn" id="btn-teach-continue">Continuar</button>
+  </div>
+
+  <!-- PUZZLE -->
+  <div class="screen" id="screen-puzzle">
+    <div class="topbar">
+      <span class="level-pill" id="puzzle-level-pill">Nivel 1/4</span>
+      <span class="timer" id="puzzle-timer">00:00</span>
+    </div>
+    <h2 id="puzzle-title"></h2>
+    <p class="muted" id="puzzle-instructions"></p>
+    <div id="puzzle-host"></div>
+  </div>
+
+  <!-- QUESTION -->
+  <div class="screen" id="screen-question">
+    <div class="topbar"><span class="level-pill" id="question-level-pill">Nivel 1/4</span><span></span></div>
+    <h2>Pregunta</h2>
+    <p id="question-text" style="font-size:1.05rem;"></p>
+    <div id="question-options"></div>
+    <p class="muted" id="question-feedback"></p>
+  </div>
+
+  <!-- REFLECTION -->
+  <div class="screen" id="screen-reflection">
+    <h1 style="font-size:1.3rem;">Reflexión final</h1>
+    <p class="muted">Escribí con el corazón. Tomate tu tiempo.</p>
+    <div class="card">
+      <label class="muted">¿Qué es el arrepentimiento para mí?</label>
+      <textarea id="ref-q1" placeholder="Escribe tu respuesta..."></textarea>
+    </div>
+    <div class="card">
+      <label class="muted">¿Por qué, si no he cometido pecados graves, el arrepentimiento me puede ayudar?</label>
+      <textarea id="ref-q2" placeholder="Escribe tu respuesta..."></textarea>
+    </div>
+    <div class="card">
+      <label class="muted">¿Qué siento al saber que Jesucristo me conoce y sabe cómo ayudarme a mejorar?</label>
+      <textarea id="ref-q3" placeholder="Escribe tu respuesta..."></textarea>
+    </div>
+    <button class="btn" id="btn-submit-reflection">Terminar</button>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="screen" id="screen-results">
+    <div id="capture-card">
+      <h1 style="font-size:1.3rem;">Resultados</h1>
+      <p class="muted" id="results-name"></p>
+      <div class="score-hidden" id="score-hidden">❓ ❓ ❓ pts</div>
+      <div class="score-reveal" id="score-reveal" style="display:none;"></div>
+      <div id="results-answers" style="display:none;"></div>
+      <p class="footer-tag" id="results-date"></p>
+    </div>
+    <button class="btn gold" id="btn-reveal">📤 Compartir con el Maestro</button>
+    <div id="post-reveal-actions" style="display:none;">
+      <img id="result-preview" alt="Vista previa de la imagen para compartir" style="display:none;width:100%;border-radius:14px;margin:10px 0;border:1px solid #334155;">
+      <p class="muted" id="whatsapp-status" style="text-align:center;">Preparando la imagen para compartir...</p>
+      <button class="btn" id="btn-whatsapp" disabled>💬 Compartir imagen por WhatsApp</button>
+      <button class="btn secondary" id="btn-restart">🔄 Volver a jugar</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ===================== CONFIG =====================
+
+  var PUZZLE_POINTS = 100;
+  var TIME_BONUS_START = 100;
+  var TIME_BONUS_MIN = 20;
+  var TIME_BONUS_DECAY_PER_SEC = 2;
+  var QUESTION_POINTS_FIRST = 150;
+  var QUESTION_POINTS_RETRY = 50;
+  var CHAR_POINTS = 4;
+  var HINT_POINTS_COST = 3;
+
+  // ===================== CONTENT =====================
+  var LEVELS = [
+    {
+      title: "Diagnóstico Espiritual",
+      ref: "Isaías 1:5–6",
+      scripture: "“¿Por qué querréis ser castigados aún? ¿Todavía os rebelaréis? Toda cabeza está enferma, y todo corazón doliente. Desde la planta del pie hasta la cabeza no hay en él cosa sana, sino herida, hinchazón y llaga podrida; no están curadas, ni vendadas, ni suavizadas con aceite.”",
+      quote: "“El pecado es una enfermedad, no una sentencia de muerte. El arrepentimiento es el tratamiento, y la Expiación de Cristo es la cura.” (Broken Things to Mend, 2006)",
+      author: "Élder Jeffrey R. Holland",
+      puzzleType: "sliding",
+      instructions: "Ordená las piezas del 1 al 8 para sanar la herida.",
+      question: {
+        text: "Según el Élder Holland, ¿qué es el pecado?",
+        options: [
+          "Una sentencia de muerte sin remedio",
+          "Una enfermedad, y el arrepentimiento es el tratamiento",
+          "Un castigo que Dios impone para siempre",
+          "Algo que no tiene cura posible"
+        ],
+        correctIndex: 1
+      }
+    },
+    {
+      title: "Adoración Vacía",
+      ref: "Isaías 1:11",
+      scripture: "“¿Para qué me sirve, dice Jehová, la multitud de vuestros sacrificios? Hastiado estoy de holocaustos de carneros y de sebo de animales gordos; no quiero sangre de bueyes, ni de ovejas, ni de machos cabríos.”",
+      quote: "“El arrepentimiento no es un castigo; es una oportunidad maravillosa para convertirnos en la mejor versión de nosotros mismos.” (We Can Do Better and Be Better, 2019)",
+      author: "Presidente Russell M. Nelson",
+      puzzleType: "memory",
+      instructions: "Encontrá las 6 parejas antes de seguir.",
+      question: {
+        text: "Según el Presidente Nelson, ¿qué es realmente el arrepentimiento?",
+        options: [
+          "Un castigo por lo que hicimos mal",
+          "Algo que solo Dios necesita, no nosotros",
+          "Una oportunidad maravillosa para convertirnos en la mejor versión de nosotros mismos",
+          "Un ritual que se debe repetir sin sentir nada"
+        ],
+        correctIndex: 2
+      }
+    },
+    {
+      title: "Invitación al Cambio",
+      ref: "Isaías 1:16–17",
+      scripture: "“Lavaos y limpiaos; quitad la iniquidad de vuestras obras de delante de mis ojos; dejad de hacer lo malo; aprended a hacer el bien; buscad el juicio, restituid al agraviado, haced justicia al huérfano, amparad a la viuda.”",
+      quote: "“El arrepentimiento es un proceso alegre. Es la invitación del Salvador a dejar atrás lo que nos detiene y avanzar hacia una vida mejor.” (Point of Safe Return, 2007)",
+      author: "Élder Dieter F. Uchtdorf",
+      puzzleType: "wordorder",
+      instructions: "Tocá las frases en el orden correcto del versículo.",
+      wordChunks: [
+        "Lavaos y limpiaos",
+        "quitad la iniquidad",
+        "dejad de hacer lo malo",
+        "aprended a hacer el bien",
+        "buscad el juicio",
+        "restituid al agraviado",
+        "haced justicia al huérfano",
+        "amparad a la viuda"
+      ],
+      question: {
+        text: "Según Isaías 1:16-17, ¿qué se nos invita a hacer además de dejar de hacer lo malo?",
+        options: [
+          "Aprender a hacer el bien, buscar el juicio, restituir al agraviado y amparar a la viuda",
+          "Sacrificar más animales para agradar a Dios",
+          "Esperar en silencio sin actuar",
+          "Solo confesar el pecado sin cambiar nada"
+        ],
+        correctIndex: 0
+      }
+    },
+    {
+      title: "Promesa de Limpieza Completa",
+      ref: "Isaías 1:18",
+      scripture: "“Venid luego, dice Jehová, y estemos a cuenta: aunque vuestros pecados sean como la grana, como la nieve serán emblanquecidos; aunque sean rojos como el carmesí, vendrán a ser como blanca lana.”",
+      quote: "“El tinte escarlata era inalterable. No podía quitarse. Pero la gracia de Cristo es más poderosa que cualquier mancha.” (By Union of Feeling We Obtain Power with God, 2020)",
+      author: "Hermana Sharon Eubank",
+      puzzleType: "cluster",
+      instructions: "Tocá grupos de 3 o más manchas iguales para convertirlas en nieve. Meta: limpiar 15 manchas rojas.",
+      question: {
+        text: "Según la Hermana Eubank, ¿qué es más poderoso que la mancha del pecado (el tinte escarlata)?",
+        options: [
+          "El tiempo, que borra todo solo",
+          "El esfuerzo humano por perfeccionarse",
+          "El olvido",
+          "La gracia de Cristo"
+        ],
+        correctIndex: 3
+      }
+    }
+  ];
+
+  // ===================== STATE =====================
+  var state = {
+    playerName: "",
+    levelIndex: 0,
+    totalScore: 0,
+    timerStart: 0,
+    timerActive: false,
+    elapsedSeconds: 0,
+    questionFirstTryWrong: false,
+    resultImageBlob: null
+  };
+
+  // ===================== SCREEN CONTROL =====================
+  function showScreen(id){
+    var screens = document.querySelectorAll(".screen");
+    for (var i=0;i<screens.length;i++){ screens[i].classList.remove("active"); }
+    document.getElementById(id).classList.add("active");
+  }
+
+  // ===================== AUDIO =====================
+  var audioCtx = null;
+  function getAudioCtx(){
+    if (!audioCtx){
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) audioCtx = new AC();
+    }
+    return audioCtx;
+  }
+  function playTone(freq, duration, type){
+    try{
+      var ctx = getAudioCtx();
+      if (!ctx) return;
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = type || "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(); osc.stop(ctx.currentTime + duration + 0.02);
+    }catch(e){ /* silencio si el navegador bloquea audio */ }
+  }
+  function sfxClick(){ playTone(420,0.08,"square"); }
+  function sfxMatch(){ playTone(660,0.12,"triangle"); }
+  function sfxSolved(){ playTone(523,0.12,"sine"); setTimeout(function(){playTone(784,0.18,"sine");},120); }
+  function sfxCorrect(){ playTone(659,0.1,"sine"); setTimeout(function(){playTone(880,0.2,"sine");},100); }
+  function sfxWrong(){ playTone(180,0.25,"sawtooth"); }
+  function sfxShare(){ playTone(392,0.1,"sine"); setTimeout(function(){playTone(523,0.1,"sine");},90); setTimeout(function(){playTone(659,0.2,"sine");},180); }
+
+  // ===================== MAIN LOOP (never stops) =====================
+  function mainLoop(){
+    if (state.timerActive){
+      state.elapsedSeconds = (Date.now() - state.timerStart) / 1000;
+      var el = document.getElementById("puzzle-timer");
+      if (el) el.textContent = formatTime(state.elapsedSeconds);
+    }
+    requestAnimationFrame(mainLoop);
+  }
+  function formatTime(sec){
+    var s = Math.floor(sec);
+    var m = Math.floor(s/60);
+    var r = s%60;
+    return (m<10?"0"+m:m) + ":" + (r<10?"0"+r:r);
+  }
+
+  // ===================== FLOW =====================
+  function startGame(){
+    var nameInput = document.getElementById("player-name");
+    state.playerName = (nameInput.value || "").trim() || "Jugador";
+    state.levelIndex = 0;
+    state.totalScore = 0;
+    goToTeaching(0);
+  }
+
+  function goToTeaching(index){
+    state.levelIndex = index;
+    var lvl = LEVELS[index];
+    document.getElementById("teach-level-pill").textContent = "Nivel " + (index+1) + "/4";
+    document.getElementById("teach-title").textContent = lvl.title;
+    document.getElementById("teach-ref").textContent = lvl.ref;
+    document.getElementById("teach-scripture").textContent = lvl.scripture;
+    document.getElementById("teach-quote").textContent = lvl.quote;
+    document.getElementById("teach-author").textContent = "— " + lvl.author;
+    showScreen("screen-teaching");
+  }
+
+  function goToPuzzle(){
+    var lvl = LEVELS[state.levelIndex];
+    document.getElementById("puzzle-level-pill").textContent = "Nivel " + (state.levelIndex+1) + "/4";
+    document.getElementById("puzzle-title").textContent = lvl.title;
+    document.getElementById("puzzle-instructions").textContent = lvl.instructions;
+    var host = document.getElementById("puzzle-host");
+    host.innerHTML = "";
+    showScreen("screen-puzzle");
+
+    state.timerStart = Date.now();
+    state.elapsedSeconds = 0;
+    state.timerActive = true;
+    document.getElementById("puzzle-timer").textContent = "00:00";
+
+    var onSolved = function(){
+      state.timerActive = false;
+      sfxSolved();
+      var elapsed = state.elapsedSeconds;
+      var timeBonus = Math.max(TIME_BONUS_MIN, Math.round(TIME_BONUS_START - elapsed*TIME_BONUS_DECAY_PER_SEC));
+      state.totalScore += PUZZLE_POINTS + timeBonus;
+      setTimeout(function(){ goToQuestion(); }, 500);
+    };
+
+    if (lvl.puzzleType === "sliding") initSlidingPuzzle(host, onSolved);
+    else if (lvl.puzzleType === "memory") initMemoryGame(host, onSolved);
+    else if (lvl.puzzleType === "wordorder") initWordOrder(host, lvl.wordChunks, onSolved);
+    else if (lvl.puzzleType === "cluster") initClusterMatch(host, 15, onSolved);
+  }
+
+  function goToQuestion(){
+    var lvl = LEVELS[state.levelIndex];
+    state.questionFirstTryWrong = false;
+    document.getElementById("question-level-pill").textContent = "Nivel " + (state.levelIndex+1) + "/4";
+    document.getElementById("question-text").textContent = lvl.question.text;
+    document.getElementById("question-feedback").textContent = "";
+    var optsHost = document.getElementById("question-options");
+    optsHost.innerHTML = "";
+    lvl.question.options.forEach(function(opt, i){
+      var btn = document.createElement("button");
+      btn.className = "opt-btn";
+      btn.textContent = opt;
+      btn.addEventListener("click", function(){ handleAnswer(i, btn); });
+      optsHost.appendChild(btn);
+    });
+    showScreen("screen-question");
+  }
+
+  function handleAnswer(index, btnEl){
+    var lvl = LEVELS[state.levelIndex];
+    var allBtns = document.querySelectorAll("#question-options .opt-btn");
+    if (index === lvl.question.correctIndex){
+      for (var i=0;i<allBtns.length;i++){ allBtns[i].disabled = true; }
+      btnEl.classList.add("correct");
+      sfxCorrect();
+      var pts = state.questionFirstTryWrong ? QUESTION_POINTS_RETRY : QUESTION_POINTS_FIRST;
+      state.totalScore += pts;
+      document.getElementById("question-feedback").textContent = "¡Correcto!";
+      setTimeout(function(){
+        var next = state.levelIndex + 1;
+        if (next < LEVELS.length) goToTeaching(next);
+        else goToReflection();
+      }, 700);
+    } else {
+      state.questionFirstTryWrong = true;
+      btnEl.classList.add("wrong","shake");
+      sfxWrong();
+      document.getElementById("question-feedback").textContent = "No es correcto, intentá de nuevo.";
+      setTimeout(function(){ btnEl.classList.remove("shake"); }, 350);
+    }
+  }
+
+  function goToReflection(){
+    showScreen("screen-reflection");
+  }
+
+  function submitReflection(){
+    var q1 = document.getElementById("ref-q1").value.trim();
+    var q2 = document.getElementById("ref-q2").value.trim();
+    var q3 = document.getElementById("ref-q3").value.trim();
+    if (!q1 || !q2 || !q3){
+      alert("Por favor completá las tres respuestas antes de terminar.");
+      return;
+    }
+    state.reflectionAnswers = [q1,q2,q3];
+    var charPoints = (q1.length + q2.length + q3.length) * CHAR_POINTS;
+    state.totalScore += charPoints;
+    goToResults();
+  }
+
+  function goToResults(){
+    document.getElementById("results-name").textContent = state.playerName;
+    document.getElementById("results-date").textContent = "Isaías 1 · Seminario 2026";
+    showScreen("screen-results");
+  }
+
+  function revealResults(){
+    sfxShare();
+    document.getElementById("score-hidden").style.display = "none";
+    var reveal = document.getElementById("score-reveal");
+    reveal.style.display = "block";
+    reveal.textContent = state.totalScore + " pts";
+
+    var answersHost = document.getElementById("results-answers");
+    answersHost.style.display = "block";
+    var labels = [
+      "¿Qué es el arrepentimiento para mí?",
+      "¿Por qué, si no he cometido pecados graves, el arrepentimiento me puede ayudar?",
+      "¿Qué siento al saber que Jesucristo me conoce y sabe cómo ayudarme a mejorar?"
+    ];
+    answersHost.innerHTML = "";
+    labels.forEach(function(label, i){
+      var block = document.createElement("div");
+      block.className = "answer-block";
+      var q = document.createElement("div"); q.className = "q"; q.textContent = label;
+      var a = document.createElement("div"); a.className = "a"; a.textContent = state.reflectionAnswers[i];
+      block.appendChild(q); block.appendChild(a);
+      answersHost.appendChild(block);
+    });
+
+    document.getElementById("btn-reveal").style.display = "none";
+    document.getElementById("post-reveal-actions").style.display = "block";
+
+    prepareResultImage();
+  }
+
+  // ===================== RESULT IMAGE (Canvas, sin dependencias externas) =====================
+  function wrapLines(ctx, text, maxWidth){
+    var words = (text || "").split(/\s+/).filter(function(w){ return w.length > 0; });
+    var lines = [];
+    var current = "";
+    words.forEach(function(w){
+      var test = current ? current + " " + w : w;
+      if (ctx.measureText(test).width > maxWidth && current){
+        lines.push(current);
+        current = w;
+      } else {
+        current = test;
+      }
+    });
+    if (current) lines.push(current);
+    if (lines.length === 0) lines.push("");
+    return lines;
+  }
+
+  function getResultData(){
+    return {
+      name: state.playerName,
+      score: state.totalScore,
+      footer: "Isaías 1 · Seminario 2026",
+      qa: [
+        { q: "¿Qué es el arrepentimiento para mí?", a: state.reflectionAnswers[0] },
+        { q: "¿Por qué, si no he cometido pecados graves, el arrepentimiento me puede ayudar?", a: state.reflectionAnswers[1] },
+        { q: "¿Qué siento al saber que Jesucristo me conoce y sabe cómo ayudarme a mejorar?", a: state.reflectionAnswers[2] }
+      ]
+    };
+  }
+
+  function renderResultCard(ctx, W, draw, knownHeight, data){
+    var padding = 40;
+    var contentWidth = W - padding*2;
+    var y = padding;
+    var FONT = "-apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
+
+    if (draw){
+      var grad = ctx.createLinearGradient(0,0,0,knownHeight);
+      grad.addColorStop(0, "#241017");
+      grad.addColorStop(1, "#0b0e14");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0,0,W,knownHeight);
+      ctx.strokeStyle = "#fbbf24";
+      ctx.lineWidth = 4;
+      ctx.strokeRect(2,2,W-4,knownHeight-4);
+    }
+
+    ctx.textAlign = "center";
+    ctx.font = "700 34px " + FONT;
+    if (draw){ ctx.fillStyle = "#f8fafc"; ctx.fillText("Grana a Blanco", W/2, y+30); }
+    y += 46;
+
+    ctx.font = "400 18px " + FONT;
+    if (draw){ ctx.fillStyle = "#94a3b8"; ctx.fillText("El Camino del Arrepentimiento", W/2, y+14); }
+    y += 38;
+
+    ctx.font = "600 18px " + FONT;
+    if (draw){ ctx.fillStyle = "#f1f5f9"; ctx.fillText(data.name, W/2, y+14); }
+    y += 42;
+
+    ctx.font = "800 52px " + FONT;
+    if (draw){ ctx.fillStyle = "#fbbf24"; ctx.fillText(data.score + " pts", W/2, y+42); }
+    y += 84;
+
+    ctx.textAlign = "left";
+    data.qa.forEach(function(block){
+      ctx.font = "700 15px " + FONT;
+      var labelLines = wrapLines(ctx, block.q, contentWidth);
+      labelLines.forEach(function(line, i){
+        if (draw){ ctx.fillStyle = "#fbbf24"; ctx.fillText(line, padding, y + 14 + i*20); }
+      });
+      y += labelLines.length * 20 + 8;
+
+      ctx.font = "400 16px " + FONT;
+      var answerLines = wrapLines(ctx, block.a, contentWidth);
+      answerLines.forEach(function(line, i){
+        if (draw){ ctx.fillStyle = "#e2e8f0"; ctx.fillText(line, padding, y + 14 + i*22); }
+      });
+      y += answerLines.length * 22 + 26;
+    });
+
+    ctx.textAlign = "center";
+    ctx.font = "400 12px " + FONT;
+    if (draw){ ctx.fillStyle = "#64748b"; ctx.fillText(data.footer, W/2, y+12); }
+    y += 28 + padding;
+
+    return y;
+  }
+
+  function generateResultBlob(){
+    return new Promise(function(resolve){
+      var W = 720;
+      var data = getResultData();
+      var scratch = document.createElement("canvas");
+      scratch.width = W; scratch.height = 10;
+      var scratchCtx = scratch.getContext("2d");
+      var totalHeight = renderResultCard(scratchCtx, W, false, 0, data);
+
+      var canvas = document.createElement("canvas");
+      canvas.width = W; canvas.height = totalHeight;
+      var ctx = canvas.getContext("2d");
+      renderResultCard(ctx, W, true, totalHeight, data);
+
+      canvas.toBlob(function(blob){ resolve(blob); }, "image/png");
+    });
+  }
+
+  function prepareResultImage(){
+    var statusEl = document.getElementById("whatsapp-status");
+    var shareBtn = document.getElementById("btn-whatsapp");
+    generateResultBlob().then(function(blob){
+      state.resultImageBlob = blob;
+      var img = document.getElementById("result-preview");
+      img.src = URL.createObjectURL(blob);
+      img.style.display = "block";
+      statusEl.textContent = "Esta es la imagen que se va a compartir.";
+      shareBtn.disabled = false;
+    }).catch(function(){
+      statusEl.textContent = "No se pudo generar la imagen en este navegador.";
+    });
+  }
+
+  function shareResultImage(){
+    var statusEl = document.getElementById("whatsapp-status");
+    var proceed = function(blob){
+      var file;
+      try { file = new File([blob], "grana-a-blanco-resultado.png", { type: "image/png" }); }
+      catch(e){ file = null; }
+
+      if (file && navigator.canShare && navigator.canShare({ files: [file] })){
+        navigator.share({ files: [file], title: "Grana a Blanco", text: "Mis resultados de Isaías 1" })
+          .catch(function(err){
+            if (!err || err.name !== "AbortError"){
+              downloadImageFallback(blob);
+            }
+          });
+      } else {
+        downloadImageFallback(blob);
+      }
+    };
+
+    if (state.resultImageBlob){
+      proceed(state.resultImageBlob);
+    } else {
+      statusEl.textContent = "Generando imagen...";
+      generateResultBlob().then(function(blob){
+        state.resultImageBlob = blob;
+        proceed(blob);
+      });
+    }
+  }
+
+  function downloadImageFallback(blob){
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "grana-a-blanco-resultado.png";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 3000);
+    document.getElementById("whatsapp-status").textContent =
+      "Se descargó la imagen. Abrí WhatsApp, elegí el chat y adjuntala como imagen.";
+  }
+
+  function restartGame(){
+    window.location.reload();
+  }
+
+  // ===================== PUZZLE: SLIDING =====================
+  function initSlidingPuzzle(host, onSolved){
+    var grid = document.createElement("div");
+    grid.id = "sliding-grid";
+    host.appendChild(grid);
+
+    var solved = [1,2,3,4,5,6,7,8,0];
+    var board = solved.slice();
+
+    function neighborsOf(blankIdx){
+      var row = Math.floor(blankIdx/3), col = blankIdx%3;
+      var list = [];
+      if (row>0) list.push(blankIdx-3);
+      if (row<2) list.push(blankIdx+3);
+      if (col>0) list.push(blankIdx-1);
+      if (col<2) list.push(blankIdx+1);
+      return list;
+    }
+
+    function shuffle(){
+      var blank = board.indexOf(0);
+      for (var i=0;i<150;i++){
+        var opts = neighborsOf(blank);
+        var pick = opts[Math.floor(Math.random()*opts.length)];
+        board[blank] = board[pick];
+        board[pick] = 0;
+        blank = pick;
+      }
+      // evitar que quede ya resuelto por casualidad
+      if (board.join(",") === solved.join(",")){ shuffle(); }
+    }
+
+    function render(){
+      grid.innerHTML = "";
+      board.forEach(function(val, idx){
+        var tile = document.createElement("div");
+        tile.className = "sl-tile" + (val===0 ? " blank" : "");
+        if (val !== 0){
+          tile.innerHTML = val + "<small>🩹</small>";
+          tile.addEventListener("click", function(){ tryMove(idx); });
+        }
+        grid.appendChild(tile);
+      });
+    }
+
+    function tryMove(idx){
+      var blank = board.indexOf(0);
+      var neigh = neighborsOf(blank);
+      if (neigh.indexOf(idx) === -1) return;
+      board[blank] = board[idx];
+      board[idx] = 0;
+      sfxClick();
+      render();
+      if (board.join(",") === solved.join(",")){
+        onSolved();
+      }
+    }
+
+    shuffle();
+    render();
+  }
+
+  // ===================== PUZZLE: MEMORY =====================
+  function initMemoryGame(host, onSolved){
+    var grid = document.createElement("div");
+    grid.id = "memory-grid";
+    host.appendChild(grid);
+
+    var symbols = ["❤️","🎭","🙏","📖","✨","🕊️"];
+    var deck = symbols.concat(symbols);
+    for (var i=deck.length-1;i>0;i--){
+      var j = Math.floor(Math.random()*(i+1));
+      var tmp = deck[i]; deck[i]=deck[j]; deck[j]=tmp;
+    }
+
+    var flipped = [];
+    var matchedCount = 0;
+    var locked = false;
+
+    var cards = deck.map(function(sym, idx){
+      var card = document.createElement("div");
+      card.className = "mem-card";
+      card.dataset.symbol = sym;
+      card.dataset.idx = idx;
+      card.textContent = "❄️";
+      card.addEventListener("click", function(){ flip(card); });
+      grid.appendChild(card);
+      return card;
+    });
+
+    function flip(card){
+      if (locked) return;
+      if (card.classList.contains("flipped") || card.classList.contains("matched")) return;
+      card.classList.add("flipped");
+      card.textContent = card.dataset.symbol;
+      sfxClick();
+      flipped.push(card);
+      if (flipped.length === 2){
+        locked = true;
+        setTimeout(checkPair, 550);
+      }
+    }
+
+    function checkPair(){
+      var a = flipped[0], b = flipped[1];
+      if (a.dataset.symbol === b.dataset.symbol){
+        a.classList.add("matched");
+        b.classList.add("matched");
+        matchedCount += 2;
+        sfxMatch();
+        if (matchedCount === cards.length){
+          onSolved();
+        }
+      } else {
+        a.classList.remove("flipped");
+        b.classList.remove("flipped");
+        a.textContent = "❄️";
+        b.textContent = "❄️";
+      }
+      flipped = [];
+      locked = false;
+    }
+  }
+
+  // ===================== PUZZLE: WORD ORDER =====================
+  function initWordOrder(host, chunksOriginal, onSolved){
+    var bankWrap = document.createElement("div");
+    bankWrap.innerHTML = '<p class="muted">Banco de frases:</p>';
+    var bank = document.createElement("div"); bank.id = "wo-bank";
+    var answerWrap = document.createElement("div");
+    answerWrap.innerHTML = '<p class="muted">Tu orden:</p>';
+    var answer = document.createElement("div"); answer.id = "wo-answer";
+    var verifyBtn = document.createElement("button");
+    verifyBtn.className = "btn"; verifyBtn.textContent = "Verificar orden"; verifyBtn.style.display="none";
+    var msg = document.createElement("p"); msg.className = "muted";
+    var hintBtn = document.createElement("button");
+    hintBtn.className = "btn secondary";
+    hintBtn.textContent = "💡 Usar pista (-" + HINT_POINTS_COST + " pts)";
+    var hintCounter = document.createElement("p");
+    hintCounter.className = "muted";
+    hintCounter.textContent = "Pistas usadas: 0";
+
+    bankWrap.appendChild(bank);
+    answerWrap.appendChild(answer);
+    host.appendChild(answerWrap);
+    host.appendChild(bankWrap);
+    host.appendChild(verifyBtn);
+    host.appendChild(msg);
+    host.appendChild(hintBtn);
+    host.appendChild(hintCounter);
+
+    var chunks = chunksOriginal.slice();
+    var order = [];
+    var hintsUsed = 0;
+    var solved = false;
+
+    function shuffleChunks(){
+      var arr = chunksOriginal.map(function(c,i){ return {text:c, origIndex:i}; });
+      for (var i=arr.length-1;i>0;i--){
+        var j = Math.floor(Math.random()*(i+1));
+        var tmp = arr[i]; arr[i]=arr[j]; arr[j]=tmp;
+      }
+      return arr;
+    }
+
+    function renderBank(items){
+      bank.innerHTML = "";
+      items.forEach(function(item){
+        var chip = document.createElement("div");
+        chip.className = "wo-chip";
+        chip.textContent = item.text;
+        chip.dataset.orig = item.origIndex;
+        chip.addEventListener("click", function(){
+          if (chip.classList.contains("used")) return;
+          chip.classList.add("used");
+          sfxClick();
+          order.push(parseInt(chip.dataset.orig,10));
+          renderAnswer();
+          verifyBtn.style.display = (order.length === chunksOriginal.length) ? "block" : "none";
+        });
+        bank.appendChild(chip);
+      });
+    }
+
+    function renderAnswer(){
+      answer.innerHTML = "";
+      order.forEach(function(origIdx, pos){
+        var chip = document.createElement("div");
+        chip.className = "wo-chip";
+        chip.textContent = chunksOriginal[origIdx];
+        chip.addEventListener("click", function(){
+          order.splice(pos,1);
+          renderAnswer();
+          var bankChip = bank.querySelector('[data-orig="'+origIdx+'"]');
+          if (bankChip) bankChip.classList.remove("used");
+          verifyBtn.style.display = "none";
+        });
+        answer.appendChild(chip);
+      });
+    }
+
+    verifyBtn.addEventListener("click", function(){
+      var correct = true;
+      for (var i=0;i<order.length;i++){ if (order[i] !== i){ correct = false; break; } }
+      if (correct){
+        msg.textContent = "¡Orden correcto!";
+        verifyBtn.disabled = true;
+        solved = true;
+        hintBtn.disabled = true;
+        onSolved();
+      } else {
+        sfxWrong();
+        msg.textContent = "Ese no es el orden correcto. Volvé a intentarlo.";
+        order = [];
+        renderAnswer();
+        renderBank(shuffleChunks());
+        verifyBtn.style.display = "none";
+      }
+    });
+
+    hintBtn.addEventListener("click", function(){
+      if (solved) return;
+      var neededOrig = order.length;
+      if (neededOrig >= chunksOriginal.length) return;
+      var bankChip = bank.querySelector('[data-orig="'+neededOrig+'"]');
+      if (!bankChip || bankChip.classList.contains("used")) return;
+      hintsUsed++;
+      state.totalScore -= HINT_POINTS_COST;
+      hintCounter.textContent = "Pistas usadas: " + hintsUsed;
+      sfxClick();
+      bankChip.classList.add("used");
+      order.push(neededOrig);
+      renderAnswer();
+      verifyBtn.style.display = (order.length === chunksOriginal.length) ? "block" : "none";
+    });
+
+    renderBank(shuffleChunks());
+  }
+
+  // ===================== PUZZLE: CLUSTER MATCH =====================
+  function initClusterMatch(host, targetRed, onSolved){
+    var COLS = 6, ROWS = 6;
+    var TYPES = { red:"🔴", white:"❄️", gold:"⭐" };
+    var WEIGHTS = [["red",0.45],["white",0.35],["gold",0.20]];
+
+    var progressWrap = document.createElement("div");
+    progressWrap.className = "cluster-progress";
+    var progressFill = document.createElement("div");
+    progressFill.className = "cluster-progress-fill";
+    progressWrap.appendChild(progressFill);
+    host.appendChild(progressWrap);
+
+    var grid = document.createElement("div");
+    grid.id = "cluster-grid";
+    host.appendChild(grid);
+
+    var board = [];
+    var redCleared = 0;
+
+    function pickWeighted(){
+      var r = Math.random();
+      var acc = 0;
+      for (var i=0;i<WEIGHTS.length;i++){
+        acc += WEIGHTS[i][1];
+        if (r <= acc) return WEIGHTS[i][0];
+      }
+      return WEIGHTS[WEIGHTS.length-1][0];
+    }
+
+    for (var i=0;i<COLS*ROWS;i++){ board.push(pickWeighted()); }
+    ensureSolvable();
+
+    function hasValidMove(){
+      var visited = {};
+      for (var i=0;i<board.length;i++){
+        if (visited[i]) continue;
+        var group = floodFill(i);
+        group.forEach(function(g){ visited[g] = true; });
+        if (group.length >= 3) return true;
+      }
+      return false;
+    }
+
+    function ensureSolvable(){
+      var guard = 0;
+      while (!hasValidMove() && guard < 50){
+        for (var i=0;i<board.length;i++){ board[i] = pickWeighted(); }
+        guard++;
+      }
+    }
+
+    function render(){
+      grid.innerHTML = "";
+      board.forEach(function(type, idx){
+        var cell = document.createElement("div");
+        cell.className = "cl-cell";
+        cell.textContent = TYPES[type] || "";
+        cell.addEventListener("click", function(){ handleClick(idx); });
+        grid.appendChild(cell);
+      });
+      var pct = Math.min(100, Math.round((redCleared/targetRed)*100));
+      progressFill.style.width = pct + "%";
+    }
+
+    function neighborsOf(idx){
+      var row = Math.floor(idx/COLS), col = idx%COLS;
+      var list = [];
+      if (row>0) list.push(idx-COLS);
+      if (row<ROWS-1) list.push(idx+COLS);
+      if (col>0) list.push(idx-1);
+      if (col<COLS-1) list.push(idx+1);
+      return list;
+    }
+
+    function floodFill(startIdx){
+      var type = board[startIdx];
+      var visited = {};
+      var stack = [startIdx];
+      var group = [];
+      while (stack.length){
+        var cur = stack.pop();
+        if (visited[cur]) continue;
+        visited[cur] = true;
+        if (board[cur] !== type) continue;
+        group.push(cur);
+        neighborsOf(cur).forEach(function(n){ if (!visited[n]) stack.push(n); });
+      }
+      return group;
+    }
+
+    function applyGravityAndRefill(){
+      for (var col=0; col<COLS; col++){
+        var colVals = [];
+        for (var row=0; row<ROWS; row++){
+          var idx = row*COLS+col;
+          if (board[idx] !== null) colVals.push(board[idx]);
+        }
+        var missing = ROWS - colVals.length;
+        var newCol = [];
+        for (var m=0; m<missing; m++){ newCol.push(pickWeighted()); }
+        newCol = newCol.concat(colVals);
+        for (var row2=0; row2<ROWS; row2++){
+          board[row2*COLS+col] = newCol[row2];
+        }
+      }
+    }
+
+    function handleClick(idx){
+      var group = floodFill(idx);
+      if (group.length < 3){
+        sfxClick();
+        return;
+      }
+      var redInGroup = group.filter(function(i){ return board[i] === "red"; }).length;
+      redCleared += redInGroup;
+      sfxMatch();
+      group.forEach(function(i){ board[i] = null; });
+      applyGravityAndRefill();
+      ensureSolvable();
+      render();
+      if (redCleared >= targetRed){
+        onSolved();
+      }
+    }
+
+    render();
+  }
+
+  // ===================== INIT =====================
+  document.getElementById("btn-start").addEventListener("click", function(){ sfxClick(); startGame(); });
+  document.getElementById("btn-teach-continue").addEventListener("click", function(){ sfxClick(); goToPuzzle(); });
+  document.getElementById("btn-submit-reflection").addEventListener("click", function(){ sfxClick(); submitReflection(); });
+  document.getElementById("btn-reveal").addEventListener("click", revealResults);
+  document.getElementById("btn-whatsapp").addEventListener("click", shareResultImage);
+  document.getElementById("btn-restart").addEventListener("click", restartGame);
+
+  requestAnimationFrame(mainLoop);
+})();
+</script>
+</body>
+</html>

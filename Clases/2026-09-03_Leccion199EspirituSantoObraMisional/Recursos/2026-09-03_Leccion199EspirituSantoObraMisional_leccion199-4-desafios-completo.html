@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>El Espíritu Te Guía: 4 Desafíos</title>
+<style>
+:root{ --cyan:#3ef7ff; --amber:#ffb84d; --gold:#ffe9b3; --dark1:#070515; --ok:#5cff8f; --bad:#ff5c5c; }
+*{box-sizing:border-box; user-select:none; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; height:100%; background:#000; font-family:'Trebuchet MS',Arial,sans-serif; color:#eef3ff;}
+#app{max-width:460px; margin:0 auto; min-height:100vh; padding:16px; display:flex; flex-direction:column;
+  background:radial-gradient(ellipse at 50% 0%, #201250 0%, var(--dark1) 70%);}
+h1{text-align:center; font-size:1.25rem; color:var(--gold); text-shadow:0 0 14px rgba(255,184,77,.6); margin:6px 0 4px;}
+h2{text-align:center; font-size:1.05rem; color:var(--cyan); margin:0 0 10px;}
+p.sub{text-align:center; font-size:.78rem; color:#a9b8dd; margin:0 0 14px;}
+.screen{display:none;}
+.screen.active{display:flex; flex-direction:column; flex:1;}
+#hud{display:flex; justify-content:space-between; margin-bottom:12px; font-size:.82rem;}
+.pill{background:rgba(5,3,17,.7); border:1px solid rgba(62,247,255,.35); border-radius:20px; padding:6px 12px; color:var(--amber); font-weight:700;}
+.card{background:linear-gradient(180deg, rgba(20,14,48,.9), rgba(8,6,26,.95)); border:1px solid rgba(62,247,255,.35);
+  border-radius:16px; padding:22px 20px; margin:auto;}
+input[type=text]{width:100%; padding:12px 14px; border-radius:10px; border:1px solid rgba(62,247,255,.35);
+  background:#050311; color:#fff; font-size:16px; outline:none; text-align:center;}
+textarea{width:100%; min-height:66px; border-radius:10px; border:1px solid rgba(62,247,255,.35); background:#050311;
+  color:#fff; padding:10px; font-size:14px; font-family:inherit; resize:none;}
+.btn{display:block; width:100%; padding:14px 18px; border-radius:12px; border:none; cursor:pointer;
+  background:linear-gradient(135deg,var(--amber),#ff7a3d); color:#1a0a00; font-weight:bold; font-size:.95rem; margin-top:10px;}
+.btn.secondary{background:transparent; border:1px solid rgba(62,247,255,.4); color:var(--cyan);}
+
+/* Memory */
+#memGrid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px;}
+.mcard{aspect-ratio:1.5/1; border-radius:12px; background:linear-gradient(135deg,#1a1150,#0a0720);
+  border:2px solid rgba(62,247,255,.35); display:flex; align-items:center; justify-content:center;
+  font-size:.82rem; text-align:center; padding:8px; cursor:pointer;}
+.mcard.flipped{background:linear-gradient(135deg,#241a4d,#120b2e); border-color:var(--cyan);}
+.mcard.matched{background:linear-gradient(135deg,#0f3d1c,#0a2410); border-color:var(--ok); opacity:.85;}
+.mcard .back{font-size:1.5rem;} .mcard .front{display:none; font-weight:700; line-height:1.25;}
+.mcard.flipped .back, .mcard.matched .back{display:none;}
+.mcard.flipped .front, .mcard.matched .front{display:block;}
+
+/* Match3 */
+#m3Board{display:grid; grid-template-columns:repeat(7,1fr); gap:4px; background:rgba(5,3,17,.5);
+  border:2px solid rgba(62,247,255,.3); border-radius:14px; padding:6px;}
+.tile{aspect-ratio:1/1; border-radius:8px; display:flex; align-items:center; justify-content:center;
+  font-size:1.3rem; background:rgba(255,255,255,.05); cursor:pointer;}
+.tile.selected{background:rgba(62,247,255,.25); box-shadow:0 0 12px rgba(62,247,255,.5);}
+
+/* Scramble */
+#clue{text-align:center; font-size:.88rem; color:#cfe8ff; min-height:44px; margin-bottom:10px;}
+#answerRow{display:flex; justify-content:center; gap:6px; flex-wrap:wrap; min-height:52px; margin-bottom:14px;}
+.slot{width:34px; height:42px; border-bottom:3px solid var(--cyan); display:flex; align-items:center; justify-content:center;
+  font-size:1.15rem; font-weight:700; color:var(--gold);}
+#letterRow{display:flex; justify-content:center; gap:6px; flex-wrap:wrap; margin-bottom:10px;}
+.letter{width:34px; height:42px; border-radius:8px; background:linear-gradient(135deg,#1a1150,#0a0720);
+  border:2px solid rgba(62,247,255,.35); display:flex; align-items:center; justify-content:center;
+  font-size:1.05rem; font-weight:700; cursor:pointer;}
+.letter.used{opacity:.25; pointer-events:none;}
+
+/* Puzzle */
+#pBoard{display:grid; grid-template-columns:repeat(3,1fr); gap:5px; background:rgba(5,3,17,.5);
+  border:2px solid rgba(62,247,255,.3); border-radius:14px; padding:6px; aspect-ratio:1/1;}
+.ptile{border-radius:10px; display:flex; align-items:center; justify-content:center;
+  font-size:1.5rem; font-weight:800; color:var(--gold); background:linear-gradient(135deg,#241a4d,#0a0720);
+  border:1px solid rgba(62,247,255,.3); cursor:pointer;}
+.ptile.empty{background:transparent; border:none; cursor:default;}
+
+/* Trivia overlay */
+#triviaOverlay{position:fixed; inset:0; background:rgba(2,1,10,.94); z-index:40; display:none;
+  align-items:center; justify-content:center; padding:22px;}
+#triviaOverlay.show{display:flex;}
+#triviaBox{width:min(420px,94vw);}
+.qtext{font-size:1rem; margin-bottom:14px; color:#eef3ff; text-align:center; line-height:1.4;}
+.qopt{background:#0c0925; border:1px solid rgba(62,247,255,.35); color:#eef3ff; padding:12px 14px;
+  border-radius:10px; width:100%; margin:6px 0; font-size:.88rem; text-align:left; cursor:pointer;}
+.qopt.correct{border-color:var(--ok); background:#0f3d1c; color:#c9ffd8;}
+.qopt.wrong{border-color:var(--bad); background:#3d0f0f; color:#ffd0d0;}
+.feedback{text-align:center; margin-top:10px; font-size:.9rem; font-weight:700; min-height:20px;}
+.feedback.ok{color:var(--ok);}
+
+/* Results */
+#results-hidden{filter:blur(14px); transition:filter .4s;}
+#results-hidden.revealed{filter:none;}
+#resultCard{width:250px; height:160px; border-radius:16px; margin:6px auto; background:linear-gradient(180deg,#241a4d,#0a0720);
+  border:2px solid var(--gold); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:14px;}
+.score-big{font-size:1.8rem; font-weight:800; color:var(--gold); margin:6px 0;}
+#shareFullscreen{position:fixed; inset:0; background:#000; z-index:60; display:none; flex-direction:column; align-items:center; justify-content:center;}
+#shareFullscreen.active{display:flex;}
+#shareFullscreen img{max-width:90vw; max-height:70vh; border-radius:14px;}
+#shareHint{color:#eef3ff; font-size:12.5px; text-align:center; margin-top:14px; padding:0 24px;}
+#shareCloseBtn{position:absolute; top:14px; right:14px; width:32px; height:32px; border-radius:50%;
+  border:1px solid rgba(255,255,255,.4); background:rgba(0,0,0,.5); color:#fff; display:flex; align-items:center; justify-content:center;}
+.footer-note{font-size:.68rem; color:#6c7aa8; margin-top:14px; text-align:center;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="screen active" id="screen-name">
+    <h1>El Espíritu Te Guía</h1>
+    <div class="card">
+      <p class="sub">4 desafíos. Una guía que se aprende a sentir.</p>
+      <input type="text" id="playerName" placeholder="Tu nombre" maxlength="18">
+      <button class="btn" id="btnStartName">Comenzar</button>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-game">
+    <div id="hud">
+      <div class="pill" id="scorePillHud">Puntos: 0</div>
+      <div class="pill" id="stagePill">Juego 1/4</div>
+    </div>
+    <h2 id="gameTitle"></h2>
+    <p class="sub" id="gameSub"></p>
+    <div id="gameArea"></div>
+  </div>
+
+  <div class="screen" id="screen-reflect">
+    <h2>Reflexión final</h2>
+    <div style="text-align:left; width:100%; max-width:340px; margin:0 auto;">
+      <p class="sub" style="text-align:left; margin-bottom:4px;">¿Cómo se siente el Espíritu Santo?</p>
+      <textarea id="r1"></textarea>
+      <p class="sub" style="text-align:left; margin:10px 0 4px;">¿En qué me puede ayudar tenerlo conmigo?</p>
+      <textarea id="r2"></textarea>
+      <p class="sub" style="text-align:left; margin:10px 0 4px;">¿Cómo lo conseguiré? ¿Qué será diferente ahora?</p>
+      <textarea id="r3"></textarea>
+      <button class="btn" id="btnFinish">Finalizar</button>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-results">
+    <h1>¡Lo lograste!</h1>
+    <div id="results-hidden">
+      <div id="resultCard">
+        <div style="font-size:1.8rem;">🙏</div>
+        <p id="resultName" style="margin:4px 0; font-weight:700;"></p>
+        <div class="score-big" id="scoreBig">0 pts</div>
+      </div>
+      <p class="sub">Cada respuesta acercó tu corazón al Espíritu.</p>
+    </div>
+    <button class="btn" id="btnReveal">Ver mi puntaje y capturar</button>
+    <button class="btn secondary" id="btnShare" style="display:none;">📸 Compartir por WhatsApp</button>
+    <p class="footer-note">Lección 199 · Preparación misional</p>
+  </div>
+
+  <div id="triviaOverlay">
+    <div id="triviaBox">
+      <div class="qtext" id="qText"></div>
+      <div id="qOpts"></div>
+      <div class="feedback" id="qFeedback"></div>
+    </div>
+  </div>
+
+  <div id="shareFullscreen">
+    <div id="shareCloseBtn">✕</div>
+    <img id="shareImg" alt="Resultado">
+    <div id="shareHint"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+const S = { playerName:'', score:0 };
+const $ = id => document.getElementById(id);
+const screens = ['screen-name','screen-game','screen-reflect','screen-results'];
+function showScreen(id){ screens.forEach(s => $(s).classList.toggle('active', s===id)); }
+function addScore(n){ S.score += n; $('scorePillHud').textContent = 'Puntos: ' + S.score; }
+
+/* ============== QUESTION BANK (3 gates between the 4 games) ============== */
+const GATE_QUESTIONS = [
+  {q:"Según Moisés 6:32,34, ¿en qué te ayuda el Espíritu Santo?",
+   o:["A saber qué decir","A elegir tu ropa","A llegar más rápido","A ganar dinero"], c:0},
+  {q:"Según 2 Nefi 33:1, ¿adónde lleva el Espíritu Santo el mensaje?",
+   o:["A los oídos solamente","Al corazón","A la mente sin sentimiento","A ningún lugar"], c:1},
+  {q:"Según Alma 17:3, el Espíritu Santo nos ayuda a enseñar con...",
+   o:["Miedo","Poder y autoridad de Dios","Mucha rapidez","Perfección total"], c:1}
+];
+let gateIndex = 0;
+
+function askGate(onCorrect){
+  const q = GATE_QUESTIONS[gateIndex % GATE_QUESTIONS.length];
+  gateIndex++;
+  $('qText').textContent = q.q;
+  const optsDiv = $('qOpts'); optsDiv.innerHTML=''; $('qFeedback').textContent='';
+  q.o.forEach((opt,i) => {
+    const b = document.createElement('button'); b.className='qopt'; b.textContent=opt;
+    b.onclick = () => {
+      if (b.dataset.locked) return;
+      optsDiv.querySelectorAll('.qopt').forEach(o=>o.dataset.locked='1');
+      if (i===q.c){
+        b.classList.add('correct'); $('qFeedback').className='feedback ok'; $('qFeedback').textContent='¡Correcto!';
+        addScore(100);
+        setTimeout(()=>{ $('triviaOverlay').classList.remove('show'); onCorrect(); }, 900);
+      } else {
+        b.classList.add('wrong'); $('qFeedback').className='feedback'; $('qFeedback').textContent='Intenta de nuevo';
+        setTimeout(()=>{ optsDiv.querySelectorAll('.qopt').forEach(o=>{o.dataset.locked='';o.classList.remove('wrong');}); $('qFeedback').textContent=''; }, 800);
+      }
+    };
+    optsDiv.appendChild(b);
+  });
+  $('triviaOverlay').classList.add('show');
+}
+
+/* ============== NAME SCREEN ============== */
+$('btnStartName').onclick = () => {
+  const v = $('playerName').value.trim();
+  S.playerName = (v || 'Jugador')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9 ]/g,'').replace(/\s+/g,' ').trim();
+  showScreen('screen-game');
+  startStage(0);
+};
+
+/* ============== STAGE SEQUENCER ============== */
+const STAGES = ['memory','match3','scramble','puzzle'];
+const STAGE_TITLES = ['Memorama: Referencias del Espíritu','Dones del Espíritu (Match-3)','Ordena las Letras','El Camino del Espíritu (Puzzle)'];
+const STAGE_SUBS = ['Une cada referencia con su función','Combina 3 o más iguales','Vocabulario de la lección','Ordena las fichas del 1 al 8'];
+
+function startStage(i){
+  $('stagePill').textContent = 'Juego ' + (i+1) + '/4';
+  $('gameTitle').textContent = STAGE_TITLES[i];
+  $('gameSub').textContent = STAGE_SUBS[i];
+  $('gameArea').innerHTML = '';
+  if (STAGES[i]==='memory') initMemory();
+  if (STAGES[i]==='match3') initMatch3();
+  if (STAGES[i]==='scramble') initScramble();
+  if (STAGES[i]==='puzzle') initPuzzle();
+}
+
+function onStageComplete(i){
+  if (i < STAGES.length-1){
+    askGate(() => startStage(i+1));
+  } else {
+    showScreen('screen-reflect');
+  }
+}
+
+/* ============== GAME 1: MEMORY ============== */
+const MEM_PAIRS = [
+  {a:"Moisés 6:32", b:"Te ayuda a saber qué decir"},
+  {a:"2 Nefi 33:1", b:"Lleva el mensaje al corazón"},
+  {a:"Alma 17:3", b:"Enseñas con poder y autoridad"},
+  {a:"3 Nefi 28:11", b:"Da testimonio de Jesucristo"},
+  {a:"D. y C. 31:11", b:"Sabes qué hacer y adónde ir"}
+];
+let mem = {};
+function shuffleArr(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+function initMemory(){
+  $('gameArea').innerHTML = '<div id="memGrid"></div>';
+  const deck = [];
+  MEM_PAIRS.forEach((p,i) => { deck.push({pairId:i, text:p.a}); deck.push({pairId:i, text:p.b}); });
+  mem = { cards: shuffleArr(deck), flipped: [], matches: 0, locked: false };
+  renderMemory();
+}
+function renderMemory(){
+  const grid = $('memGrid'); grid.innerHTML = '';
+  mem.cards.forEach((c, idx) => {
+    const el = document.createElement('div');
+    el.className = 'mcard' + (c.matched?' matched':'') + (c.flipped&&!c.matched?' flipped':'');
+    el.innerHTML = '<div class="back">💎</div><div class="front">'+c.text+'</div>';
+    el.onclick = () => onMemClick(idx);
+    grid.appendChild(el);
+  });
+}
+function onMemClick(idx){
+  if (mem.locked) return;
+  const c = mem.cards[idx];
+  if (c.matched || c.flipped) return;
+  c.flipped = true; mem.flipped.push(idx); renderMemory();
+  if (mem.flipped.length === 2){
+    const [i1,i2] = mem.flipped;
+    if (mem.cards[i1].pairId === mem.cards[i2].pairId){
+      mem.cards[i1].matched = true; mem.cards[i2].matched = true;
+      mem.matches++; mem.flipped = []; addScore(20); renderMemory();
+      if (mem.matches === MEM_PAIRS.length){ setTimeout(()=>onStageComplete(0), 500); }
+    } else {
+      mem.locked = true;
+      setTimeout(() => {
+        mem.cards[i1].flipped=false; mem.cards[i2].flipped=false; mem.flipped=[]; mem.locked=false; renderMemory();
+      }, 800);
+    }
+  }
+}
+
+/* ============== GAME 2: MATCH-3 ============== */
+const M3_ICONS = ['💎','✨','🕊️','❤️','🙏','☀️'];
+const M3_SIZE = 7, M3_MOVES = 14;
+let m3 = {};
+function randIcon(){ return M3_ICONS[Math.floor(Math.random()*M3_ICONS.length)]; }
+function m3MakeGrid(){
+  const g = [];
+  for (let r=0;r<M3_SIZE;r++){ g.push([]);
+    for (let c=0;c<M3_SIZE;c++){ let icon; do{ icon=randIcon(); } while(
+      (c>=2 && g[r][c-1]===icon && g[r][c-2]===icon) || (r>=2 && g[r-1][c]===icon && g[r-2][c]===icon)
+    ); g[r].push(icon); } }
+  return g;
+}
+function m3FindMatches(g){
+  const matched = Array.from({length:M3_SIZE}, ()=>Array(M3_SIZE).fill(false));
+  for (let r=0;r<M3_SIZE;r++){ let run=1;
+    for (let c=1;c<=M3_SIZE;c++){ if (c<M3_SIZE && g[r][c] && g[r][c]===g[r][c-1]) run++;
+      else { if (run>=3){ for(let k=c-run;k<c;k++) matched[r][k]=true; } run=1; } } }
+  for (let c=0;c<M3_SIZE;c++){ let run=1;
+    for (let r=1;r<=M3_SIZE;r++){ if (r<M3_SIZE && g[r][c] && g[r][c]===g[r-1][c]) run++;
+      else { if (run>=3){ for(let k=r-run;k<r;k++) matched[k][c]=true; } run=1; } } }
+  return matched;
+}
+function m3AnyMatch(m){ for(let r=0;r<M3_SIZE;r++) for(let c=0;c<M3_SIZE;c++) if(m[r][c]) return true; return false; }
+function m3Collapse(g){ for(let c=0;c<M3_SIZE;c++){ const col=[]; for(let r=0;r<M3_SIZE;r++){ if(g[r][c]) col.push(g[r][c]); }
+  while(col.length<M3_SIZE) col.unshift(randIcon()); for(let r=0;r<M3_SIZE;r++){ g[r][c]=col[r]; } } }
+function m3Resolve(){
+  let matched = m3FindMatches(m3.grid); let gain=0;
+  while (m3AnyMatch(matched)){
+    let count=0;
+    for(let r=0;r<M3_SIZE;r++) for(let c=0;c<M3_SIZE;c++) if(matched[r][c]){ m3.grid[r][c]=null; count++; }
+    gain += count*10; m3Collapse(m3.grid); matched = m3FindMatches(m3.grid);
+  }
+  return gain;
+}
+function initMatch3(){
+  $('gameArea').innerHTML = '<div id="m3Board"></div><p class="sub" id="m3MovesLbl" style="margin-top:8px;"></p>';
+  m3 = { grid: m3MakeGrid(), movesLeft: M3_MOVES, selected: null, busy: false };
+  renderMatch3();
+}
+function renderMatch3(){
+  const board = $('m3Board'); board.innerHTML = '';
+  for (let r=0;r<M3_SIZE;r++) for (let c=0;c<M3_SIZE;c++){
+    const el = document.createElement('div'); el.className = 'tile';
+    if (m3.selected && m3.selected.r===r && m3.selected.c===c) el.classList.add('selected');
+    el.textContent = m3.grid[r][c];
+    el.onclick = () => onM3Click(r,c);
+    board.appendChild(el);
+  }
+  $('m3MovesLbl').textContent = 'Movimientos restantes: ' + Math.max(0,m3.movesLeft);
+}
+function m3Adjacent(a,b){ return (Math.abs(a.r-b.r)+Math.abs(a.c-b.c))===1; }
+function m3Swap(a,b){ const t=m3.grid[a.r][a.c]; m3.grid[a.r][a.c]=m3.grid[b.r][b.c]; m3.grid[b.r][b.c]=t; }
+function onM3Click(r,c){
+  if (m3.busy || m3.movesLeft<=0) return;
+  const pos = {r,c};
+  if (!m3.selected){ m3.selected=pos; renderMatch3(); return; }
+  if (m3.selected.r===r && m3.selected.c===c){ m3.selected=null; renderMatch3(); return; }
+  if (!m3Adjacent(m3.selected,pos)){ m3.selected=pos; renderMatch3(); return; }
+  m3.busy = true;
+  m3Swap(m3.selected,pos);
+  const matched = m3FindMatches(m3.grid);
+  if (!m3AnyMatch(matched)){
+    m3Swap(m3.selected,pos); m3.selected=null; renderMatch3(); m3.busy=false; return;
+  }
+  m3.movesLeft--;
+  const gained = m3Resolve();
+  addScore(gained);
+  m3.selected = null; renderMatch3(); m3.busy = false;
+  if (m3.movesLeft <= 0){ setTimeout(()=>onStageComplete(1), 500); }
+}
+
+/* ============== GAME 3: SCRAMBLE ============== */
+const SCR_WORDS = [
+  {word:"ESPIRITU", clue:"El don que te guía y te enseña qué decir"},
+  {word:"CORAZON", clue:"Adónde lleva el Espíritu el mensaje"},
+  {word:"TESTIMONIO", clue:"Lo que el Espíritu da de Jesucristo"},
+  {word:"GUIA", clue:"El Espíritu te ayuda a saber qué hacer y adónde ir"}
+];
+let scr = {};
+function scrambleWord(word){ let l; do{ l=shuffleArr(word.split('')); } while(l.join('')===word); return l; }
+function initScramble(){
+  $('gameArea').innerHTML = '<div id="clue"></div><div id="answerRow"></div><div id="letterRow"></div>'
+    + '<div class="feedback" id="scrFeedback"></div>'
+    + '<button class="btn secondary" id="btnScrClear">Borrar</button>'
+    + '<button class="btn" id="btnScrCheck">Comprobar</button>';
+  scr = { order: shuffleArr(SCR_WORDS.map((_,i)=>i)), current:0, answer:[], letters:[] };
+  $('btnScrClear').onclick = scrClear;
+  $('btnScrCheck').onclick = scrCheck;
+  scrLoadWord();
+}
+function scrLoadWord(){
+  const w = SCR_WORDS[scr.order[scr.current]];
+  $('clue').textContent = w.clue + ' (' + (scr.current+1) + '/' + SCR_WORDS.length + ')';
+  scr.answer = [];
+  scr.letters = scrambleWord(w.word).map((ch,i)=>({ch,id:i,used:false}));
+  scrRenderAnswer(w.word.length); scrRenderLetters();
+  $('scrFeedback').textContent=''; $('scrFeedback').className='feedback';
+}
+function scrRenderAnswer(len){
+  const row = $('answerRow'); row.innerHTML='';
+  for (let i=0;i<len;i++){ const el=document.createElement('div'); el.className='slot'; el.textContent = scr.answer[i]?scr.answer[i].ch:''; row.appendChild(el); }
+}
+function scrRenderLetters(){
+  const row = $('letterRow'); row.innerHTML='';
+  scr.letters.forEach(l=>{ const el=document.createElement('div'); el.className='letter'+(l.used?' used':''); el.textContent=l.ch;
+    el.onclick=()=>{ if(l.used) return; l.used=true; scr.answer.push(l); const w=SCR_WORDS[scr.order[scr.current]]; scrRenderAnswer(w.word.length); scrRenderLetters(); };
+    row.appendChild(el); });
+}
+function scrClear(){
+  scr.answer=[]; scr.letters.forEach(l=>l.used=false);
+  const w = SCR_WORDS[scr.order[scr.current]]; scrRenderAnswer(w.word.length); scrRenderLetters();
+  $('scrFeedback').textContent=''; $('scrFeedback').className='feedback';
+}
+function scrCheck(){
+  const w = SCR_WORDS[scr.order[scr.current]];
+  const built = scr.answer.map(l=>l.ch).join('');
+  const fb = $('scrFeedback');
+  if (built === w.word){
+    fb.textContent='¡Correcto! +20 puntos'; fb.className='feedback ok'; addScore(20);
+    setTimeout(()=>{ scr.current++; if (scr.current>=scr.order.length){ onStageComplete(2); } else { scrLoadWord(); } }, 800);
+  } else {
+    fb.textContent='Todavía no — intenta de nuevo'; fb.className='feedback';
+  }
+}
+
+/* ============== GAME 4: SLIDING PUZZLE (3x3) ============== */
+const PZ_N = 3;
+let pz = {};
+function pzSolvedArray(){ const a=[]; for(let i=1;i<PZ_N*PZ_N;i++) a.push(i); a.push(0); return a; }
+function pzIsSolved(arr){ const t=pzSolvedArray(); return arr.every((v,i)=>v===t[i]); }
+function pzIsSolvable(arr){
+  const flat = arr.filter(v=>v!==0);
+  let inv=0; for(let i=0;i<flat.length;i++) for(let j=i+1;j<flat.length;j++) if(flat[i]>flat[j]) inv++;
+  return inv % 2 === 0; // valid rule for odd-sized (3x3) boards
+}
+function pzShuffled(){
+  let arr;
+  do { arr = pzSolvedArray(); for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } }
+  while (!pzIsSolvable(arr) || pzIsSolved(arr));
+  return arr;
+}
+function initPuzzle(){
+  $('gameArea').innerHTML = '<div id="pBoard"></div><p class="sub" id="pzMovesLbl" style="margin-top:8px;"></p>';
+  pz = { tiles: pzShuffled(), moves:0 };
+  renderPuzzle();
+}
+function renderPuzzle(){
+  const board = $('pBoard'); board.innerHTML='';
+  pz.tiles.forEach((v,idx)=>{
+    const el = document.createElement('div'); el.className='ptile'+(v===0?' empty':'');
+    el.textContent = v===0?'':v;
+    el.onclick = () => onPzClick(idx);
+    board.appendChild(el);
+  });
+  $('pzMovesLbl').textContent = 'Movimientos: ' + pz.moves;
+}
+function onPzClick(idx){
+  const emptyIdx = pz.tiles.indexOf(0);
+  const r=Math.floor(idx/PZ_N), c=idx%PZ_N, er=Math.floor(emptyIdx/PZ_N), ec=emptyIdx%PZ_N;
+  if ((Math.abs(r-er)+Math.abs(c-ec)) !== 1) return;
+  [pz.tiles[idx], pz.tiles[emptyIdx]] = [pz.tiles[emptyIdx], pz.tiles[idx]];
+  pz.moves++; renderPuzzle();
+  if (pzIsSolved(pz.tiles)){
+    addScore(Math.max(20, 100 - pz.moves*2));
+    setTimeout(()=>onStageComplete(3), 400);
+  }
+}
+
+/* ============== REFLECTION ============== */
+$('btnFinish').onclick = () => {
+  const clean = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9 .,!?]/g,'').replace(/\s+/g,' ').trim();
+  const r1 = clean($('r1').value), r2 = clean($('r2').value), r3 = clean($('r3').value);
+  addScore((r1.length + r2.length + r3.length) * 5);
+  $('resultName').textContent = S.playerName;
+  $('scoreBig').textContent = S.score + ' pts';
+  showScreen('screen-results');
+};
+
+/* ============== RESULTS / REAL CAPTURE + SHARE ============== */
+$('btnReveal').onclick = () => {
+  $('results-hidden').classList.add('revealed'); $('btnReveal').style.display='none'; $('btnShare').style.display='block';
+};
+function isIOS(){
+  const ua = navigator.userAgent||''; const iOSDevice=/iPad|iPhone|iPod/.test(ua);
+  const iPadOS13 = navigator.platform==='MacIntel' && navigator.maxTouchPoints>1;
+  return iOSDevice || iPadOS13;
+}
+function buildResultCanvas(){
+  const W=700,H=420; const c=document.createElement('canvas'); c.width=W;c.height=H;
+  const cx=c.getContext('2d');
+  const g=cx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#241a4d'); g.addColorStop(1,'#05031a');
+  cx.fillStyle=g; cx.fillRect(0,0,W,H);
+  cx.strokeStyle='#ffe9b3'; cx.lineWidth=5; cx.strokeRect(14,14,W-28,H-28);
+  cx.strokeStyle='rgba(62,247,255,.5)'; cx.lineWidth=2; cx.strokeRect(24,24,W-48,H-48);
+  cx.textAlign='center';
+  cx.fillStyle='#ffe9b3'; cx.font='bold 24px Arial'; cx.fillText('¡Lo lograste!', W/2, 90);
+  cx.font='60px Arial'; cx.fillText('🙏', W/2, 190);
+  cx.fillStyle='#fff'; cx.font='bold 26px Arial'; cx.fillText(S.playerName, W/2, 250);
+  cx.fillStyle='#ffe9b3'; cx.font='bold 40px Arial'; cx.fillText(S.score+' pts', W/2, 320);
+  cx.fillStyle='#a9b8dd'; cx.font='14px Arial'; cx.fillText('Leccion 199 - 4 Desafios', W/2, H-30);
+  return c;
+}
+$('btnShare').onclick = async () => {
+  const c = buildResultCanvas();
+  const dataUrl = c.toDataURL('image/png');
+  const msg = 'Termine "El Espiritu Te Guia" con ' + S.score + ' pts! 🙏';
+  if (isIOS()){ showFullscreenShare(dataUrl); return; }
+  c.toBlob(async blob => {
+    if (!blob){ showFullscreenShare(dataUrl); return; }
+    const file = new File([blob], 'resultado-leccion199.png', {type:'image/png'});
+    let shared = false;
+    try{
+      if (navigator.canShare && navigator.canShare({files:[file]})){
+        await navigator.share({ files:[file], title:'¡Lo lograste!', text: msg });
+        shared = true;
+      }
+    }catch(e){ shared = false; }
+    if (!shared) showFullscreenShare(dataUrl);
+  }, 'image/png');
+};
+function showFullscreenShare(dataUrl){
+  $('shareImg').src = dataUrl;
+  $('shareHint').textContent = isIOS()
+    ? 'Mantén presionada la imagen para guardarla, o toma una captura de pantalla y compártela por WhatsApp.'
+    : 'Mantén presionada la imagen para guardarla, o toma una captura de pantalla.';
+  $('shareFullscreen').classList.add('active');
+}
+$('shareCloseBtn').onclick = () => { $('shareFullscreen').classList.remove('active'); };
+
+})();
+</script>
+</body>
+</html>

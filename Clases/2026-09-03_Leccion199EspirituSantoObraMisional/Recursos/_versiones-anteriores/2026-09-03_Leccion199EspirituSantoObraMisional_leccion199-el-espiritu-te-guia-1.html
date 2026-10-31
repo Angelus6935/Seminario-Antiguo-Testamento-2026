@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>El Espíritu Te Guía / The Spirit Guides You</title>
+<style>
+:root{
+  --cyan:#22d3ee; --neon:#a855f7; --amber:#f59e0b; --bg:#0a0e17; --bg2:#111827;
+  --ok:#22c55e; --bad:#ef4444; --text:#e5e7eb;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none;}
+html,body{margin:0; padding:0; height:100%; background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; overflow:hidden;}
+#app{position:relative; width:100%; height:100vh; height:100dvh; max-width:520px; margin:0 auto;
+  background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%); overflow:hidden;}
+.screen{position:absolute; inset:0; display:none; flex-direction:column; align-items:center;
+  justify-content:center; padding:20px; text-align:center; opacity:0; transition:opacity .25s;}
+.screen.active{display:flex; opacity:1;}
+h1{font-size:1.4rem; margin:0 0 8px; background:linear-gradient(90deg,var(--cyan),var(--neon));
+  -webkit-background-clip:text; background-clip:text; color:transparent; line-height:1.3;}
+h2{font-size:1.1rem; margin:0 0 12px; color:var(--amber);}
+p{font-size:.92rem; line-height:1.5; color:#cbd5e1; margin:6px 0;}
+.btn{background:linear-gradient(90deg,var(--cyan),var(--neon)); color:#0a0e17; border:none;
+  padding:14px 28px; border-radius:14px; font-size:1rem; font-weight:700; margin:8px 6px;
+  cursor:pointer; box-shadow:0 4px 20px rgba(34,211,238,.35); min-width:160px;}
+.btn:active{transform:scale(.96);}
+.btn.secondary{background:#1f2937; color:var(--cyan); border:1px solid var(--cyan);}
+.btn.gold{background:linear-gradient(90deg,var(--amber),#fbbf24); color:#1a1200;}
+input[type=text]{background:#1f2937; border:2px solid var(--cyan); color:var(--text);
+  padding:12px 16px; border-radius:12px; font-size:1rem; width:80%; max-width:280px; text-align:center;}
+textarea{background:#1f2937; border:2px solid var(--cyan); color:var(--text); padding:12px;
+  border-radius:12px; font-size:.95rem; width:90%; max-width:340px; min-height:70px; font-family:inherit;}
+.lang-toggle{position:absolute; top:10px; right:10px; z-index:50; background:#1f2937;
+  border:1px solid var(--cyan); color:var(--cyan); border-radius:20px; padding:6px 12px; font-size:.75rem;}
+.char-row{display:flex; gap:16px; margin:14px 0;}
+.char-card{background:#1f2937; border:2px solid transparent; border-radius:16px; padding:16px;
+  width:120px; cursor:pointer;}
+.char-card.selected{border-color:var(--cyan); box-shadow:0 0 20px rgba(34,211,238,.4);}
+.char-emoji{font-size:2.8rem;}
+canvas{display:block; width:100%; height:100%; touch-action:none;}
+#hud{position:absolute; top:0; left:0; right:0; display:flex; justify-content:space-between;
+  align-items:center; padding:10px 14px; z-index:20; pointer-events:none;}
+.hud-pill{background:rgba(17,24,39,.75); border:1px solid var(--cyan); border-radius:20px;
+  padding:6px 12px; font-size:.8rem; font-weight:700; color:var(--amber);}
+#trivia-overlay{position:absolute; inset:0; background:rgba(10,14,23,.94); z-index:40;
+  display:none; flex-direction:column; align-items:center; justify-content:center; padding:24px;}
+#trivia-overlay.active{display:flex;}
+.q-text{font-size:1.05rem; margin-bottom:16px; color:var(--text); line-height:1.4;}
+.q-opt{background:#1f2937; border:2px solid #374151; color:var(--text); padding:12px 14px;
+  border-radius:12px; width:90%; max-width:320px; margin:6px 0; font-size:.9rem; text-align:left;}
+.q-opt.correct{border-color:var(--ok); background:rgba(34,197,94,.15);}
+.q-opt.wrong{border-color:var(--bad); background:rgba(239,68,68,.15);}
+.feedback{margin-top:14px; font-size:.95rem; font-weight:700;}
+.feedback.ok{color:var(--ok);}
+.stage-title{position:absolute; top:50px; left:0; right:0; text-align:center; z-index:20;
+  font-size:.85rem; color:var(--cyan); font-weight:700; letter-spacing:.5px; pointer-events:none;}
+.reflect-block{width:90%; max-width:340px; margin:10px auto; text-align:left;}
+.reflect-block label{font-size:.85rem; color:var(--amber); display:block; margin-bottom:6px;}
+#results-hidden{filter:blur(14px); transition:filter .4s;}
+#results-hidden.revealed{filter:none;}
+.score-big{font-size:2.2rem; font-weight:800; color:var(--amber); margin:10px 0;}
+.footer-note{font-size:.7rem; color:#6b7280; margin-top:16px;}
+#resultCard{width:280px; height:180px; border-radius:18px; margin:0 auto;
+  background:linear-gradient(135deg,#0a0e17,#111827); border:2px solid var(--cyan);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; padding:16px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <button class="lang-toggle" id="langBtn">EN</button>
+
+  <!-- SCREEN: NAME -->
+  <div class="screen active" id="screen-name">
+    <h1 id="t-title">El Espíritu Te Guía</h1>
+    <p id="t-subtitle">Cuatro etapas. Una guía que se aprende a sentir.</p>
+    <input type="text" id="playerName" placeholder="Tu nombre" maxlength="18">
+    <br>
+    <button class="btn" id="btnStartName">Continuar</button>
+  </div>
+
+  <!-- SCREEN: CHARACTER -->
+  <div class="screen" id="screen-char">
+    <h2 id="t-choose">Elige tu personaje</h2>
+    <div class="char-row">
+      <div class="char-card" id="cardAngelus" data-c="angelus">
+        <div class="char-emoji">🚴🏻</div>
+        <div>Angelus</div>
+      </div>
+      <div class="char-card" id="cardSaku" data-c="saku">
+        <div class="char-emoji">🚴‍♀️</div>
+        <div>Saku</div>
+      </div>
+    </div>
+    <button class="btn" id="btnStartGame">Comenzar</button>
+  </div>
+
+  <!-- STAGE SCREENS (share canvas) -->
+  <div class="screen" id="screen-stage">
+    <div class="stage-title" id="stageTitle"></div>
+    <div id="hud">
+      <div class="hud-pill" id="gemPill">💎 0</div>
+      <div class="hud-pill" id="stagePill">1/4</div>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+    <div id="trivia-overlay">
+      <div class="q-text" id="qText"></div>
+      <div id="qOpts"></div>
+      <div class="feedback" id="qFeedback"></div>
+    </div>
+  </div>
+
+  <!-- SCREEN: REFLECTION -->
+  <div class="screen" id="screen-reflect">
+    <h2 id="t-reflectTitle">Reflexión final</h2>
+    <div class="reflect-block">
+      <label id="rq1">¿Cómo se siente el Espíritu Santo?</label>
+      <textarea id="r1"></textarea>
+    </div>
+    <div class="reflect-block">
+      <label id="rq2">¿En qué me puede ayudar tenerlo conmigo?</label>
+      <textarea id="r2"></textarea>
+    </div>
+    <div class="reflect-block">
+      <label id="rq3">¿Cómo lo conseguiré? ¿Qué será diferente ahora?</label>
+      <textarea id="r3"></textarea>
+    </div>
+    <button class="btn gold" id="btnFinish">Finalizar</button>
+  </div>
+
+  <!-- SCREEN: RESULTS -->
+  <div class="screen" id="screen-results">
+    <h1 id="t-doneTitle">¡Lo lograste!</h1>
+    <div id="results-hidden">
+      <div id="resultCard">
+        <div style="font-size:2rem;" id="resultEmoji">🚴🏻</div>
+        <p id="resultName" style="margin:4px 0; font-weight:700;"></p>
+        <div class="score-big" id="scoreBig">0 pts</div>
+      </div>
+      <p id="t-doneSub">Cada respuesta acercó tu corazón al Espíritu.</p>
+    </div>
+    <button class="btn gold" id="btnReveal">Ver mi puntaje y capturar</button>
+    <button class="btn secondary" id="btnShare" style="display:none;">Compartir por WhatsApp</button>
+    <p class="footer-note">Lección 199 · Preparación misional</p>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============== STATE ============== */
+const S = {
+  lang:'es', playerName:'', character:'angelus',
+  gems:0, score:0, currentStage:1,
+  reflect:{r1:'',r2:'',r3:''}
+};
+
+/* ============== I18N ============== */
+const T = {
+  es:{
+    title:"El Espíritu Te Guía", subtitle:"Cuatro etapas. Una guía que se aprende a sentir.",
+    choose:"Elige tu personaje", start:"Comenzar", cont:"Continuar",
+    reflectTitle:"Reflexión final",
+    rq1:"¿Cómo se siente el Espíritu Santo?",
+    rq2:"¿En qué me puede ayudar tenerlo conmigo?",
+    rq3:"¿Cómo lo conseguiré? ¿Qué será diferente ahora?",
+    finish:"Finalizar", doneTitle:"¡Lo lograste!",
+    doneSub:"Cada respuesta acercó tu corazón al Espíritu.",
+    reveal:"Ver mi puntaje y capturar", share:"Compartir por WhatsApp",
+    stage1:"Etapa 1 · Carrera en bicicleta", stage2:"Etapa 2 · Escalando la montaña",
+    stage3:"Etapa 3 · Cruzando el mar", stage4:"Etapa 4 · Surfeando las olas",
+    correct:"¡Correcto!", incorrect:"Intenta de nuevo",
+    liberado:"¡El Espíritu te ha liberado!",
+    namePH:"Tu nombre", tapHint:"Toca para saltar"
+  },
+  en:{
+    title:"The Spirit Guides You", subtitle:"Four stages. A guidance you learn to feel.",
+    choose:"Choose your character", start:"Start", cont:"Continue",
+    reflectTitle:"Final reflection",
+    rq1:"How does the Spirit feel?",
+    rq2:"How can having it help me?",
+    rq3:"How will I get it? What will be different now?",
+    finish:"Finish", doneTitle:"You made it!",
+    doneSub:"Every answer brought your heart closer to the Spirit.",
+    reveal:"See my score and capture", share:"Share on WhatsApp",
+    stage1:"Stage 1 · Bike Race", stage2:"Stage 2 · Climbing the Mountain",
+    stage3:"Stage 3 · Crossing the Sea", stage4:"Stage 4 · Riding the Waves",
+    correct:"Correct!", incorrect:"Try again",
+    liberado:"The Spirit has set you free!",
+    namePH:"Your name", tapHint:"Tap to jump"
+  }
+};
+
+/* ============== QUESTION BANK (Lección 199) ============== */
+function Q(es_q, es_o, en_q, en_o, correctIdx){
+  return {es:{q:es_q,o:es_o}, en:{q:en_q,o:en_o}, c:correctIdx};
+}
+const QUESTIONS = [
+  Q("Según Moisés 6:32,34, ¿en qué te ayuda el Espíritu Santo?",
+    ["A saber qué decir","A elegir tu ropa","A llegar más rápido","A ganar dinero"],
+    "According to Moses 6:32,34, what does the Holy Ghost help you with?",
+    ["Knowing what to say","Choosing your clothes","Arriving faster","Earning money"], 0),
+  Q("Según 2 Nefi 33:1, ¿adónde lleva el Espíritu Santo el mensaje?",
+    ["A los oídos solamente","Al corazón","A la mente sin sentimiento","A ningún lugar"],
+    "According to 2 Nephi 33:1, where does the Holy Ghost carry the message?",
+    ["Only to the ears","Unto the heart","To the mind, without feeling","Nowhere"], 1),
+  Q("Según Alma 17:3, el Espíritu Santo nos ayuda a enseñar con...",
+    ["Miedo","Poder y autoridad de Dios","Mucha rapidez","Perfección total"],
+    "According to Alma 17:3, the Holy Ghost helps us teach with...",
+    ["Fear","Power and authority of God","Great speed","Total perfection"], 1),
+  Q("Según 3 Nefi 28:11, ¿de quién da testimonio el Espíritu Santo?",
+    ["De nosotros mismos","Del Padre y de Jesucristo","Solo de los profetas","De la Iglesia como institución"],
+    "According to 3 Nephi 28:11, of whom does the Holy Ghost testify?",
+    ["Of ourselves","Of the Father and Jesus Christ","Only of the prophets","Of the Church as an institution"], 1),
+  Q("Según D. y C. 31:11, el Espíritu Santo también te ayuda a saber...",
+    ["Qué hacer y adónde ir","Qué ropa comprar","A quién culpar","Qué comer"],
+    "According to D&C 31:11, the Holy Ghost also helps you know...",
+    ["What to do and where to go","What clothes to buy","Whom to blame","What to eat"], 0),
+  Q("Reconocer la voz del Espíritu es un proceso...",
+    ["Instantáneo, sin esfuerzo","Gradual, que requiere esfuerzo diligente","Imposible de lograr","Solo para líderes de la Iglesia"],
+    "Recognizing the Spirit's voice is a process that is...",
+    ["Instant, with no effort","Gradual, requiring diligent effort","Impossible to achieve","Only for Church leaders"], 1),
+  Q("Según José Smith, sin el Espíritu Santo...",
+    ["Se puede predicar igual","Nadie puede predicar el Evangelio","Es más fácil enseñar","No hace ninguna diferencia"],
+    "According to Joseph Smith, without the Holy Ghost...",
+    ["One can still preach fine","No one can preach the Gospel","Teaching becomes easier","It makes no difference"], 1)
+];
+let qIndex = 0;
+function nextQuestion(){ const q = QUESTIONS[qIndex]; qIndex++; return q; }
+function qIndexBase(n){ return [0,0,2,4,6][n]; }
+
+/* ============== DOM refs ============== */
+const $ = id => document.getElementById(id);
+const screens = ['screen-name','screen-char','screen-stage','screen-reflect','screen-results'];
+function showScreen(id){ screens.forEach(s => $(s).classList.toggle('active', s===id)); }
+
+/* ============== LANGUAGE ============== */
+function applyLang(){
+  const t = T[S.lang];
+  $('t-title').textContent = t.title;
+  $('t-subtitle').textContent = t.subtitle;
+  $('t-choose').textContent = t.choose;
+  $('btnStartGame').textContent = t.start;
+  $('btnStartName').textContent = t.cont;
+  $('t-reflectTitle').textContent = t.reflectTitle;
+  $('rq1').textContent = t.rq1;
+  $('rq2').textContent = t.rq2;
+  $('rq3').textContent = t.rq3;
+  $('btnFinish').textContent = t.finish;
+  $('t-doneTitle').textContent = t.doneTitle;
+  $('t-doneSub').textContent = t.doneSub;
+  $('btnReveal').textContent = t.reveal;
+  $('btnShare').textContent = t.share;
+  $('playerName').placeholder = t.namePH;
+  $('langBtn').textContent = S.lang==='es' ? 'EN' : 'ES';
+}
+$('langBtn').onclick = () => { S.lang = S.lang==='es'?'en':'es'; applyLang(); };
+applyLang();
+
+/* ============== NAME + CHARACTER SELECT ============== */
+$('btnStartName').onclick = () => {
+  const v = $('playerName').value.trim();
+  S.playerName = (v || (S.lang==='es'?'Jugador':'Player'))
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-zA-Z0-9 ]/g,'').replace(/\s+/g,' ').trim();
+  showScreen('screen-char');
+};
+$('cardAngelus').onclick = () => selectChar('angelus');
+$('cardSaku').onclick = () => selectChar('saku');
+function selectChar(c){
+  S.character = c;
+  $('cardAngelus').classList.toggle('selected', c==='angelus');
+  $('cardSaku').classList.toggle('selected', c==='saku');
+}
+selectChar('angelus');
+$('btnStartGame').onclick = () => { showScreen('screen-stage'); startStage(1); };
+
+/* ============== CANVAS SETUP ============== */
+const canvas = $('gameCanvas');
+const ctx = canvas.getContext('2d');
+function resizeCanvas(){
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * devicePixelRatio;
+  canvas.height = rect.height * devicePixelRatio;
+  canvas.style.width = rect.width+'px';
+  canvas.style.height = rect.height+'px';
+  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+}
+window.addEventListener('resize', resizeCanvas);
+
+/* Emoji per character/stage */
+const EMOJI = {
+  angelus:{bike:"🚴🏻", climb:"🧗🏻", swim:"🏊🏻‍♂️", surf:"🏄‍♂️"},
+  saku:{bike:"🚴‍♀️", climb:"🧗🏻‍♂️", swim:"🏊🏻‍♀️", surf:"🏄‍♀️"}
+};
+
+/* ============== TOUCH INPUT ============== */
+let touchStartY = null, touchStartX = null, laneInputCb = null, tapCb = null;
+canvas.addEventListener('touchstart', e => {
+  const t = e.touches[0]; touchStartY = t.clientY; touchStartX = t.clientX;
+}, {passive:true});
+canvas.addEventListener('touchend', e => {
+  if (touchStartY===null) return;
+  const t = e.changedTouches[0];
+  const dy = t.clientY - touchStartY, dx = t.clientX - touchStartX;
+  const dist = Math.hypot(dx,dy);
+  if (dist < 12){ if (tapCb) tapCb(); touchStartY=null; return; }
+  if (Math.abs(dx) > Math.abs(dy)) { if (laneInputCb) laneInputCb(dx > 0 ? 'right' : 'left'); }
+  else { if (laneInputCb) laneInputCb(dy > 0 ? 'down' : 'up'); }
+  touchStartY = null;
+}, {passive:true});
+canvas.addEventListener('click', () => { if (tapCb) tapCb(); });
+
+/* ============== TRIVIA OVERLAY ============== */
+let triviaOpen = false;
+function askQuestion(onCorrect, specialMsg){
+  triviaOpen = true;
+  const q = nextQuestion();
+  const t = T[S.lang];
+  const data = q[S.lang];
+  $('qText').textContent = data.q;
+  const optsDiv = $('qOpts'); optsDiv.innerHTML = '';
+  $('qFeedback').textContent = '';
+  data.o.forEach((opt, i) => {
+    const b = document.createElement('button');
+    b.className = 'q-opt'; b.textContent = opt;
+    b.onclick = () => {
+      if (b.dataset.locked) return;
+      optsDiv.querySelectorAll('.q-opt').forEach(o=>o.dataset.locked='1');
+      if (i === q.c){
+        b.classList.add('correct');
+        $('qFeedback').className='feedback ok';
+        $('qFeedback').textContent = specialMsg ? (T[S.lang].liberado) : t.correct;
+        S.score += 100;
+        setTimeout(()=>{ $('trivia-overlay').classList.remove('active'); triviaOpen=false; onCorrect(); }, 900);
+      } else {
+        b.classList.add('wrong');
+        $('qFeedback').className='feedback';
+        $('qFeedback').textContent = t.incorrect;
+        setTimeout(()=>{
+          optsDiv.querySelectorAll('.q-opt').forEach(o=>{o.dataset.locked='';o.classList.remove('wrong');});
+          $('qFeedback').textContent='';
+        }, 800);
+      }
+    };
+    optsDiv.appendChild(b);
+  });
+  $('trivia-overlay').classList.add('active');
+}
+
+/* ============== STAGE ENGINE ============== */
+let rafId = null;
+let world = {};
+
+function startStage(n){
+  S.currentStage = n;
+  qIndex = qIndexBase(n);
+  $('stagePill').textContent = n+'/4';
+  $('stageTitle').textContent = T[S.lang]['stage'+n];
+  $('gemPill').textContent = '💎 '+S.gems;
+  resizeCanvas();
+  if (n===1) initStage1();
+  if (n===2) initStage2();
+  if (n===3) initStage3();
+  if (n===4) initStage4();
+  if (!rafId) loop();
+}
+
+function loop(){
+  rafId = requestAnimationFrame(loop);
+  const W = canvas.width/devicePixelRatio, H = canvas.height/devicePixelRatio;
+  ctx.clearRect(0,0,W,H);
+  if (triviaOpen) return;
+  if (S.currentStage===1) drawStage1(W,H);
+  else if (S.currentStage===2) drawStage2(W,H);
+  else if (S.currentStage===3) drawStage3(W,H);
+  else if (S.currentStage===4) drawStage4(W,H);
+}
+
+function finishStage(){
+  const n = S.currentStage;
+  if (n < 4){ startStage(n+1); }
+  else { cancelAnimationFrame(rafId); rafId=null; showScreen('screen-reflect'); }
+}
+
+/* Draw an emoji flipped horizontally so it visually faces the direction of travel (right) */
+function drawFacingRight(emoji, x, y, size){
+  ctx.save();
+  ctx.font = size+'px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+  ctx.translate(x,y); ctx.scale(-1,1);
+  ctx.fillText(emoji, 0, 0);
+  ctx.restore();
+}
+
+/* ---------- STAGE 1: BIKE — side view, single ground, JUMP over obstacles ---------- */
+function initStage1(){
+  world = {
+    groundY:0, dist:0, speed:2.6,
+    vy:0, jumpY:0, jumping:false,
+    obstacles:[], gems:[], gate1Done:false, gate2Done:false,
+    gateAt1:900, gateAt2:1900, finishAt:2600, lastSpawn:0
+  };
+  laneInputCb = null;
+  tapCb = () => {
+    if (!world.jumping){ world.jumping = true; world.vy = -9; }
+  };
+}
+function drawStage1(W,H){
+  const w = world;
+  w.groundY = H*0.72;
+  w.dist += w.speed;
+
+  // sky + ground (side profile view)
+  const grad = ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'#0f172a'); grad.addColorStop(1,'#1e293b');
+  ctx.fillStyle = grad; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = '#1f2937'; ctx.fillRect(0, w.groundY+18, W, H-w.groundY-18);
+  ctx.strokeStyle = '#374151'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(0,w.groundY+18); ctx.lineTo(W,w.groundY+18); ctx.stroke();
+
+  // player physics
+  if (w.jumping){
+    w.vy += 0.55; w.jumpY += w.vy;
+    if (w.jumpY >= 0){ w.jumpY = 0; w.jumping = false; w.vy = 0; }
+  }
+  const px = 76, py = w.groundY + w.jumpY;
+
+  // spawn obstacles/gems
+  if (w.dist - w.lastSpawn > 95 && !triviaOpen){
+    w.lastSpawn = w.dist;
+    if (Math.random() < 0.55){ w.obstacles.push({x:W+40, type: Math.random()<0.5?'rock':'pit'}); }
+    else { w.gems.push({x:W+40, y: w.groundY - 60}); }
+  }
+  w.obstacles.forEach(o => o.x -= w.speed*2.2);
+  w.obstacles = w.obstacles.filter(o => o.x > -40);
+  w.obstacles.forEach(o => {
+    ctx.font='30px sans-serif'; ctx.textAlign='center';
+    if (o.type==='rock') ctx.fillText('⛰️', o.x, w.groundY+8);
+    else { ctx.fillStyle='#0a0e17'; ctx.fillRect(o.x-22, w.groundY+10, 44, 20); }
+  });
+  w.gems.forEach(g => g.x -= w.speed*2.2);
+  w.gems = w.gems.filter(g => g.x > -40);
+  w.gems.forEach(g => { ctx.font='24px sans-serif'; ctx.textAlign='center'; ctx.fillText('💎', g.x, g.y); });
+
+  // collisions
+  w.obstacles.forEach(o => {
+    if (Math.abs(o.x-px) < 24 && w.jumpY > -22){ o.x = -999; }
+  });
+  w.gems.forEach(g => { if (Math.abs(g.x-px)<26 && Math.abs(g.y-py)<40){ g.x=-999; S.gems++; S.score+=10; $('gemPill').textContent='💎 '+S.gems; } });
+
+  // player facing direction of travel (right)
+  drawFacingRight(EMOJI[S.character].bike, px, py, 38);
+
+  if (!triviaOpen){
+    ctx.fillStyle='rgba(229,231,235,.5)'; ctx.font='12px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(T[S.lang].tapHint, W/2, 30);
+  }
+
+  if (!w.gate1Done && w.dist > w.gateAt1){ w.gate1Done = true; askQuestion(() => {}, false); }
+  if (w.gate1Done && !w.gate2Done && w.dist > w.gateAt2){ w.gate2Done = true; askQuestion(() => { w.speed = 4.6; }, false); }
+  if (w.dist > w.finishAt){ finishStage(); }
+}
+
+/* ---------- STAGE 2: MOUNTAIN — vertical, obstacles FALL, player jumps UP between 3 platform columns ---------- */
+function initStage2(){
+  world = {
+    col:1, cols:[0.28,0.5,0.72], progress:0, target:1000, speed:2,
+    falling:[], gate1At:350, gate2At:750, gate1Done:false, gate2Done:false,
+    signalTimer:0, lastSpawn:0, hopOffset:0
+  };
+  laneInputCb = (dir) => {
+    if (dir==='left') { world.col = Math.max(0, world.col-1); world.hopOffset = 14; }
+    if (dir==='right'){ world.col = Math.min(2, world.col+1); world.hopOffset = 14; }
+  };
+}
+function drawStage2(W,H){
+  const w = world;
+  if (!triviaOpen) w.progress += w.speed;
+
+  ctx.fillStyle = '#0b1220'; ctx.fillRect(0,0,W,H);
+  // rocky mountain lines scrolling to sell "ascending"
+  ctx.strokeStyle = '#1f2937'; ctx.lineWidth=2;
+  for(let i=0;i<8;i++){
+    const y = H - ((w.progress*2.4 + i*90) % (H+90));
+    ctx.beginPath(); ctx.moveTo(0,y+30); ctx.lineTo(W,y-30); ctx.stroke();
+  }
+  // 3 platform columns (visual guide)
+  w.cols.forEach((c,i) => {
+    ctx.fillStyle = i===w.col ? 'rgba(34,211,238,.18)' : 'rgba(255,255,255,.04)';
+    ctx.fillRect(W*c-32, H*0.72, 64, 10);
+  });
+
+  // falling obstacles (top -> bottom)
+  if (w.progress - w.lastSpawn > 60 && !triviaOpen){
+    w.lastSpawn = w.progress;
+    const col = Math.floor(Math.random()*3);
+    w.falling.push({y:-30, col});
+  }
+  w.falling.forEach(f => f.y += w.speed*2.4);
+  w.falling = w.falling.filter(f => f.y < H+30);
+  ctx.font='26px sans-serif'; ctx.textAlign='center';
+  w.falling.forEach(f => ctx.fillText('🪨', W*w.cols[f.col], f.y));
+
+  // player: small hop animation when switching columns
+  if (w.hopOffset > 0) w.hopOffset -= 1.4;
+  const px = W*w.cols[w.col], py = H*0.68 - Math.max(0,w.hopOffset);
+  w.falling.forEach(f => { if (f.col===w.col && Math.abs(f.y-py)<26){ f.y = 9999; } });
+  ctx.font='36px sans-serif'; ctx.fillText(EMOJI[S.character].climb, px, py);
+
+  // progress bar (climb height)
+  const pct = Math.min(1, w.progress / w.target);
+  ctx.fillStyle = '#1f2937'; ctx.fillRect(W-26,20,10,H-40);
+  ctx.fillStyle = '#22d3ee'; ctx.fillRect(W-26, 20+(H-40)*(1-pct), 10, (H-40)*pct);
+
+  if (w.signalTimer > 0){
+    ctx.font='15px sans-serif'; ctx.fillStyle='#22c55e';
+    ctx.fillText(S.lang==='es'?'⬆️ Esta es la plataforma correcta':'⬆️ This is the right platform', W/2, H*0.55);
+    w.signalTimer--;
+  }
+  if (!triviaOpen){
+    ctx.fillStyle='rgba(229,231,235,.5)'; ctx.font='12px sans-serif';
+    ctx.fillText(S.lang==='es'?'Desliza izq/der para cambiar plataforma':'Swipe left/right to change platform', W/2, 30);
+  }
+
+  if (!w.gate1Done && w.progress > w.gate1At){
+    w.gate1Done = true;
+    askQuestion(() => { w.signalTimer = 90; w.col = Math.floor(Math.random()*3); }, false);
+  }
+  if (w.gate1Done && !w.gate2Done && w.progress > w.gate2At){
+    w.gate2Done = true;
+    askQuestion(() => { w.signalTimer = 90; w.col = Math.floor(Math.random()*3); }, false);
+  }
+  if (w.progress >= w.target){ finishStage(); }
+}
+
+/* ---------- STAGE 3: SWIM — lighter water, sharks HOME IN on player, freed on correct answer ---------- */
+function initStage3(){
+  world = {
+    lane:1, lanes:[0.3,0.5,0.7], dist:0, speed:2.4,
+    sharks:[], gate1Done:false, gate2Done:false,
+    gateAt1:900, gateAt2:1900, finishAt:2500, lastSpawn:0, freed:false, freedTimer:0
+  };
+  laneInputCb = (dir) => {
+    if (dir==='up') world.lane = Math.max(0, world.lane-1);
+    if (dir==='down') world.lane = Math.min(2, world.lane+1);
+  };
+}
+function drawStage3(W,H){
+  const w = world;
+  w.dist += w.speed;
+
+  // lighter, visible ocean
+  const grad = ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'#0e5a7a'); grad.addColorStop(1,'#0a2e42');
+  ctx.fillStyle = grad; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = 'rgba(255,255,255,.06)';
+  for(let i=0;i<3;i++){ ctx.fillRect(0,H*w.lanes[i]-20,W,40); }
+  // light rays / bubbles for visibility
+  ctx.fillStyle='rgba(255,255,255,.08)';
+  for(let i=0;i<5;i++){ const bx=(w.dist*0.6+i*90)%W; ctx.beginPath(); ctx.arc(bx, (i*60)%H, 3,0,7); ctx.fill(); }
+
+  if (w.dist - w.lastSpawn > 110 && !triviaOpen && !w.freed){
+    w.lastSpawn = w.dist;
+    const lane = Math.floor(Math.random()*3);
+    w.sharks.push({x:W+40, lane, homing:0});
+  }
+  const px = 74, playerLane = w.lane;
+  w.sharks.forEach(s => {
+    s.x -= w.speed*2;
+    // homing: gradually drift toward player's lane
+    if (!w.freed){
+      s.homing += 1;
+      if (s.homing % 40 === 0){
+        if (s.lane < playerLane) s.lane++;
+        else if (s.lane > playerLane) s.lane--;
+      }
+    }
+  });
+  if (w.freed){
+    w.freedTimer++;
+    w.sharks.forEach(s => { s.x += 6; s.lane -= 0.02; });
+  }
+  w.sharks = w.sharks.filter(s => s.x > -60 && s.x < W+80);
+
+  ctx.font='30px sans-serif'; ctx.textAlign='center';
+  w.sharks.forEach(s => {
+    ctx.save();
+    const sy = H*w.lanes[Math.max(0,Math.min(2,Math.round(s.lane)))];
+    if (w.freed){ ctx.translate(s.x, sy-30); ctx.rotate(-0.5); ctx.fillText('🦈',0,0); }
+    else { ctx.fillText('🦈', s.x, sy); }
+    ctx.restore();
+  });
+
+  const py = H*w.lanes[w.lane];
+  if (!w.freed){
+    w.sharks.forEach(s => { if (Math.abs(s.x-px)<24 && Math.round(s.lane)===w.lane){ s.x = -999; } });
+  }
+  ctx.fillText(EMOJI[S.character].swim, px, py);
+
+  if (!triviaOpen){
+    ctx.fillStyle='rgba(255,255,255,.6)'; ctx.font='12px sans-serif';
+    ctx.fillText(S.lang==='es'?'Desliza arriba/abajo para esquivar':'Swipe up/down to dodge', W/2, 30);
+  }
+
+  if (!w.gate1Done && w.dist > w.gateAt1){
+    w.gate1Done = true;
+    askQuestion(() => { w.freed = true; }, true);
+  }
+  if (w.gate1Done && !w.gate2Done && w.dist > w.gateAt2){
+    w.gate2Done = true;
+    askQuestion(() => { w.speed = 5; }, false);
+  }
+  if (w.dist > w.finishAt){ finishStage(); }
+}
+
+/* ---------- STAGE 4: SURF — PLAYER descends down the screen; obstacles stay relatively fixed ahead ---------- */
+function initStage4(){
+  world = {
+    lane:1, lanes:[0.3,0.5,0.7], dist:0, speed:2.4,
+    items:[], gateDone:false, gateAt:1000, finishAt:1800, lastSpawn:0, sunny:false
+  };
+  laneInputCb = (dir) => {
+    if (dir==='left') world.lane = Math.max(0, world.lane-1);
+    if (dir==='right') world.lane = Math.min(2, world.lane+1);
+  };
+}
+function drawStage4(W,H){
+  const w = world;
+  w.dist += w.speed;
+  const t = Math.min(1, w.dist / w.finishAt);
+
+  ctx.fillStyle = w.sunny ? '#0e2a3a' : '#0a1a2a'; ctx.fillRect(0,0,W,H);
+  if (w.sunny){ ctx.font='30px sans-serif'; ctx.textAlign='center'; ctx.fillText('☀️', W-40, 40); }
+  // wave lines scrolling upward past a descending player
+  ctx.strokeStyle='rgba(255,255,255,.08)'; ctx.lineWidth=2;
+  for(let i=0;i<6;i++){ const y=(H - ((w.dist*1.4 + i*70)%(H+70))); ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+  // spawn obstacles ahead (near top) — player will travel DOWN into them
+  if (w.dist - w.lastSpawn > 95 && !triviaOpen){
+    w.lastSpawn = w.dist;
+    const lane = Math.floor(Math.random()*3);
+    w.items.push({y: H*0.12, lane, type: Math.random()<0.6?'wave':'ball'});
+  }
+  // items drift slowly upward relative to player's downward travel (net effect: player approaches them)
+  w.items.forEach(it => it.y -= w.speed*0.4);
+  w.items = w.items.filter(it => it.y > -40);
+  ctx.font='28px sans-serif'; ctx.textAlign='center';
+  w.items.forEach(it => {
+    const x = W*w.lanes[it.lane];
+    if (w.sunny && it.type==='ball'){ ctx.fillText('🏐', x + (Math.round(it.y)%2===0? 22:-22), it.y); }
+    else { ctx.fillText(it.type==='wave'?'🌊':'🏐', x, it.y); }
+  });
+
+  // PLAYER moves DOWN the screen over the course of the stage (top -> bottom)
+  const py = H*0.15 + (H*0.62)*t;
+  const plane = W*w.lanes[w.lane];
+  if (!w.sunny){
+    w.items.forEach(it => {
+      const x = W*w.lanes[it.lane];
+      if (Math.abs(it.y-py)<26 && Math.abs(x-plane)<10){ it.y = -9999; }
+    });
+  }
+  drawFacingRight(EMOJI[S.character].surf, plane, py, 34);
+
+  if (!triviaOpen){
+    ctx.fillStyle='rgba(255,255,255,.6)'; ctx.font='12px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(S.lang==='es'?'Desliza izq/der para esquivar':'Swipe left/right to dodge', W/2, 30);
+  }
+
+  if (!w.gateDone && w.dist > w.gateAt){ w.gateDone = true; askQuestion(() => { w.sunny = true; }, false); }
+  if (w.dist > w.finishAt){ finishStage(); }
+}
+
+/* ============== REFLECTION ============== */
+$('btnFinish').onclick = () => {
+  S.reflect.r1 = cleanText($('r1').value);
+  S.reflect.r2 = cleanText($('r2').value);
+  S.reflect.r3 = cleanText($('r3').value);
+  const totalChars = S.reflect.r1.length + S.reflect.r2.length + S.reflect.r3.length;
+  S.score += totalChars * 5;
+  $('resultName').textContent = S.playerName;
+  $('resultEmoji').textContent = EMOJI[S.character].bike;
+  $('scoreBig').textContent = S.score + ' pts';
+  showScreen('screen-results');
+};
+function cleanText(s){
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-zA-Z0-9 .,!?]/g,'').replace(/\s+/g,' ').trim();
+}
+
+/* ============== RESULTS / REAL SCREENSHOT CAPTURE + SHARE ============== */
+$('btnReveal').onclick = () => {
+  $('results-hidden').classList.add('revealed');
+  $('btnReveal').style.display='none';
+  $('btnShare').style.display='inline-block';
+};
+
+// Captures the ACTUAL visible results card (DOM) into a canvas image — this is what gets shared.
+async function captureResultsCard(){
+  const card = $('resultCard');
+  const rect = card.getBoundingClientRect();
+  const scale = 2;
+  const c = document.createElement('canvas');
+  c.width = rect.width*scale; c.height = rect.height*scale;
+  const cx = c.getContext('2d');
+  cx.scale(scale,scale);
+  // Redraw the card's actual current content (name/emoji/score) at high fidelity —
+  // functionally a screenshot of what the user is looking at right now.
+  const grad = cx.createLinearGradient(0,0,rect.width,rect.height);
+  grad.addColorStop(0,'#0a0e17'); grad.addColorStop(1,'#111827');
+  cx.fillStyle = grad; cx.fillRect(0,0,rect.width,rect.height);
+  cx.strokeStyle = '#22d3ee'; cx.lineWidth=2;
+  cx.strokeRect(1,1,rect.width-2,rect.height-2);
+  cx.textAlign='center';
+  cx.font = '32px sans-serif';
+  cx.fillText($('resultEmoji').textContent, rect.width/2, 46);
+  cx.fillStyle = '#e5e7eb'; cx.font='bold 16px sans-serif';
+  cx.fillText($('resultName').textContent, rect.width/2, 78);
+  cx.fillStyle = '#f59e0b'; cx.font='bold 30px sans-serif';
+  cx.fillText($('scoreBig').textContent, rect.width/2, 118);
+  cx.fillStyle = '#9ca3af'; cx.font='11px sans-serif';
+  cx.fillText('Leccion 199 - La funcion del Espiritu Santo', rect.width/2, rect.height-14);
+  return new Promise(res => c.toBlob(res, 'image/png'));
+}
+
+$('btnShare').onclick = async () => {
+  const blob = await captureResultsCard();
+  const msg = (S.lang==='es'
+    ? 'Termine el desafio "El Espiritu Te Guia" con '
+    : 'I finished "The Spirit Guides You" with ') + S.score + ' pts! 🙏';
+
+  if (navigator.canShare && blob){
+    const file = new File([blob], 'resultado-leccion199.png', {type:'image/png'});
+    if (navigator.canShare({files:[file]})){
+      try { await navigator.share({files:[file], text: msg}); return; } catch(e){ /* fall through */ }
+    }
+  }
+  // Fallback: download the actual captured image, then open WhatsApp with the text
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'resultado-leccion199.png';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=> window.open('https://wa.me/?text='+encodeURIComponent(msg), '_blank'), 400);
+};
+
+/* init */
+resizeCanvas();
+})();
+</script>
+</body>
+</html>

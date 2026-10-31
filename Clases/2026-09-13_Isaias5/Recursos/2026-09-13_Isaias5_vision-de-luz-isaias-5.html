@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Visión de Luz: El Discernimiento de Isaías 5</title>
+<style>
+  :root{
+    --bg:#070a12;
+    --bg2:#0c1120;
+    --panel:#0f1626;
+    --cyan:#00e5ff;
+    --neon:#b026ff;
+    --amber:#ffb300;
+    --text:#e8f1ff;
+    --muted:#8aa0c4;
+    --good:#ffd54a;
+    --bad:#7c3aed;
+    --danger:#ff4d6d;
+    --ok:#2be08a;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:radial-gradient(circle at 50% -10%, #14203a 0%, var(--bg) 55%, #04060a 100%);
+    color:var(--text);
+    font-family:'Segoe UI',system-ui,-apple-system,Arial,sans-serif;
+    min-height:100vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:16px;
+  }
+  #app{width:100%;max-width:560px;}
+  .screen{display:none;flex-direction:column;gap:14px;animation:fadeIn .35s ease;}
+  .screen.active{display:flex;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  h1,h2,h3{margin:0;line-height:1.25;}
+  h1{font-size:1.5rem;background:linear-gradient(90deg,var(--cyan),var(--amber));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  h2{font-size:1.2rem;color:var(--cyan);}
+  p{margin:0;color:var(--muted);font-size:.92rem;line-height:1.5;}
+  .card{background:linear-gradient(160deg,var(--panel),#0a0f1c);border:1px solid #1c2a44;border-radius:16px;padding:18px;box-shadow:0 8px 24px rgba(0,0,0,.35);}
+  .btn{
+    appearance:none;border:none;cursor:pointer;
+    background:linear-gradient(135deg,var(--cyan),var(--neon));
+    color:#04060a;font-weight:700;font-size:1rem;
+    padding:13px 20px;border-radius:12px;
+    box-shadow:0 4px 16px rgba(0,229,255,.25);
+    transition:transform .12s ease, box-shadow .12s ease;
+    touch-action:manipulation;
+  }
+  .btn:active{transform:scale(.96);}
+  .btn.secondary{background:linear-gradient(135deg,#1c2a44,#141c2f);color:var(--text);border:1px solid #2a3a5c;}
+  .btn.good{background:linear-gradient(135deg,#2be08a,#12a866);color:#04160c;}
+  .btn.bad{background:linear-gradient(135deg,#ff4d6d,#b0203a);color:#1a0006;}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;}
+  input[type=text],textarea{
+    width:100%;background:#0a0f1c;border:1px solid #253559;color:var(--text);
+    border-radius:10px;padding:12px;font-size:1rem;font-family:inherit;resize:vertical;
+  }
+  textarea{min-height:70px;}
+  .lang-toggle{position:absolute;top:14px;right:14px;font-size:.75rem;background:#0a0f1c;border:1px solid #253559;color:var(--muted);border-radius:20px;padding:6px 10px;cursor:pointer;}
+  .wrap-relative{position:relative;}
+  .badge{display:inline-block;font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;color:var(--amber);border:1px solid var(--amber);border-radius:20px;padding:3px 10px;}
+  .progress-dots{display:flex;gap:6px;justify-content:center;}
+  .progress-dots span{width:9px;height:9px;border-radius:50%;background:#25324f;}
+  .progress-dots span.done{background:var(--cyan);}
+  .progress-dots span.current{background:var(--amber);}
+
+  /* ---------- Nivel 1: Detective de la Luz ---------- */
+  .battery-bar{width:100%;height:14px;background:#0a0f1c;border:1px solid #253559;border-radius:8px;overflow:hidden;}
+  .battery-fill{height:100%;width:100%;background:linear-gradient(90deg,var(--ok),var(--amber));transition:width .1s linear;}
+  .scene-wrap{max-width:100%;}
+  .scene{
+    position:relative;width:100%;aspect-ratio:4/3;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(0,229,255,.05), transparent 40%),
+      linear-gradient(160deg,#0a1f14 0%,#031507 60%,#020a05 100%);
+    border-radius:16px;overflow:hidden;border:2px solid #1c2a44;
+    touch-action:none;cursor:crosshair;
+  }
+  .light-overlay{
+    position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(circle at var(--lx,50%) var(--ly,50%), transparent 0px, transparent var(--radius,80px), rgba(2,4,8,.95) calc(var(--radius,80px) + 55px));
+  }
+  .hidden-object{
+    position:absolute;width:74px;height:74px;transform:translate(-50%,-50%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-size:26px;text-align:center;opacity:.12;transition:opacity .12s ease;
+    padding:2px;
+  }
+  .hidden-object .icon{filter:drop-shadow(0 0 6px rgba(0,0,0,.6));}
+  .hidden-object .label{font-size:8.5px;color:var(--text);margin-top:2px;line-height:1.1;}
+  .hidden-object.lit{opacity:1;}
+  .hidden-object.resolved{opacity:.08 !important;filter:grayscale(1);}
+  .classify-pop{
+    position:absolute;transform:translate(-50%,10px);display:flex;gap:6px;z-index:5;
+  }
+  .classify-pop button{padding:7px 10px;font-size:.78rem;border-radius:8px;border:none;font-weight:700;cursor:pointer;}
+  .classify-pop .b-bien{background:var(--ok);color:#04160c;}
+  .classify-pop .b-mal{background:var(--danger);color:#1a0006;}
+
+  /* ---------- Nivel 2: Clasificador de la Viña ---------- */
+  .track{position:relative;width:100%;height:320px;background:linear-gradient(180deg,#0a1420,#050a14);border:2px solid #1c2a44;border-radius:16px;overflow:hidden;}
+  .falling-item{
+    position:absolute;left:50%;top:-40px;transform:translateX(-50%);
+    background:#0f1626;border:1px solid #2a3a5c;border-radius:10px;padding:8px 12px;
+    font-size:.85rem;font-weight:700;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.4);
+  }
+  .baskets{display:flex;justify-content:space-between;gap:10px;position:absolute;left:0;right:0;bottom:8px;padding:0 8px;}
+  .basket-btn{flex:1;padding:12px 6px;border-radius:12px;border:none;font-weight:700;font-size:.85rem;cursor:pointer;}
+  .basket-buena{background:linear-gradient(135deg,var(--good),#c98f00);color:#221600;}
+  .basket-silvestre{background:linear-gradient(135deg,var(--bad),#4a1078);color:#f4e9ff;}
+
+  /* ---------- Nivel 3: Revelador de Disfraces ---------- */
+  .cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .flip-card{
+    background:#0f1626;border:1px solid #2a3a5c;border-radius:12px;padding:10px;
+    min-height:96px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;font-size:.8rem;gap:4px;cursor:pointer;
+  }
+  .flip-card .icon{font-size:1.6rem;}
+  .flip-card.revealed{cursor:default;}
+  .flip-card.revealed.verdad-bien{border-color:var(--ok);}
+  .flip-card.revealed.verdad-mal{border-color:var(--danger);}
+  .flip-card.used{opacity:.4;}
+  .active-card-panel{display:flex;flex-direction:column;gap:8px;align-items:center;}
+  .timer-ring{width:100%;height:8px;background:#0a0f1c;border-radius:6px;overflow:hidden;}
+  .timer-ring-fill{height:100%;background:linear-gradient(90deg,var(--amber),var(--danger));width:100%;}
+
+  /* ---------- Nivel 4: Juicio Rápido ---------- */
+  .judge-card{
+    background:linear-gradient(160deg,#101a2e,#0a0f1c);border:2px solid var(--cyan);border-radius:16px;
+    padding:26px 18px;text-align:center;font-size:1.05rem;font-weight:600;min-height:120px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .judge-timer{width:100%;height:10px;background:#0a0f1c;border-radius:6px;overflow:hidden;}
+  .judge-timer-fill{height:100%;background:linear-gradient(90deg,var(--ok),var(--danger));width:100%;transition:width .05s linear;}
+
+  /* ---------- Trivia ---------- */
+  .trivia-options{display:flex;flex-direction:column;gap:8px;}
+  .trivia-opt{
+    text-align:left;background:#0f1626;border:1px solid #2a3a5c;color:var(--text);
+    padding:12px 14px;border-radius:10px;cursor:pointer;font-size:.92rem;
+  }
+  .trivia-opt.correct{background:linear-gradient(135deg,var(--ok),#128a52);border-color:var(--ok);color:#04160c;font-weight:700;}
+  .trivia-opt.wrong{background:linear-gradient(135deg,var(--danger),#7a0e28);border-color:var(--danger);color:#fff;}
+  .trivia-opt:disabled{cursor:default;}
+  .feedback{font-size:.85rem;font-weight:600;min-height:1.2em;}
+  .feedback.ok{color:var(--ok);}
+  .feedback.bad{color:var(--danger);}
+
+  /* ---------- Resultados ---------- */
+  .score-reveal{font-size:2.6rem;font-weight:800;text-align:center;background:linear-gradient(90deg,var(--amber),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .answer-block{border-left:3px solid var(--cyan);padding-left:10px;margin-bottom:8px;}
+  .answer-block .q{color:var(--amber);font-size:.8rem;font-weight:700;}
+  .answer-block .a{color:var(--text);font-size:.9rem;}
+  #resultCanvas{display:none;}
+  .hidden-score-box{text-align:center;font-size:2.4rem;color:#25324f;letter-spacing:.2em;}
+
+  @media (max-width:380px){
+    .cards-grid{grid-template-columns:1fr 1fr;}
+    h1{font-size:1.3rem;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- PANTALLA INICIO -->
+  <div class="screen active" id="screen-start">
+    <div class="card wrap-relative">
+      <button class="lang-toggle" id="btnLang">EN</button>
+      <span class="badge" data-i18n="badge">Clase de Seminario</span>
+      <h1 data-i18n="title">Visión de Luz: El Discernimiento de Isaías 5</h1>
+      <p data-i18n="intro">"¡Ay de los que a lo malo llaman bueno, y a lo bueno, malo!" (Isaías 5:20). Cuatro desafíos pondrán a prueba tu capacidad de discernir entre el bien y el mal.</p>
+      <label style="font-size:.85rem;color:var(--muted);" data-i18n="nameLabel">¿Cómo te llamas?</label>
+      <input type="text" id="playerName" maxlength="30" placeholder="Escribe tu nombre">
+      <div class="btn-row">
+        <button class="btn" id="btnStart" data-i18n="startBtn">Comenzar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NIVEL 1 -->
+  <div class="screen" id="screen-level1">
+    <div class="progress-dots" id="dots1"></div>
+    <h2 data-i18n="l1title">Nivel 1: Detective de la Luz</h2>
+    <p data-i18n="l1instr">Mueve el dedo o el mouse sobre la escena para iluminarla con la Luz de Cristo. Toca cada situación revelada y decide si es Bien o Mal antes de que se agote la batería.</p>
+    <div class="battery-bar"><div class="battery-fill" id="l1-battery"></div></div>
+    <div class="scene-wrap">
+      <div class="scene" id="l1-scene">
+        <div class="light-overlay" id="l1-overlay"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NIVEL 2 -->
+  <div class="screen" id="screen-level2">
+    <div class="progress-dots" id="dots2"></div>
+    <h2 data-i18n="l2title">Nivel 2: Clasificador de la Viña</h2>
+    <p data-i18n="l2instr">Los racimos caen cada vez más rápido. Toca la canasta correcta antes de que lleguen abajo: Buena o Silvestre.</p>
+    <div class="track" id="l2-track">
+      <div class="baskets">
+        <button class="basket-btn basket-buena" id="l2-basket-buena" data-i18n="basketGood">🧺 Buena</button>
+        <button class="basket-btn basket-silvestre" id="l2-basket-silvestre" data-i18n="basketWild">🌵 Silvestre</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NIVEL 3 -->
+  <div class="screen" id="screen-level3">
+    <div class="progress-dots" id="dots3"></div>
+    <h2 data-i18n="l3title">Nivel 3: Revelador de Disfraces</h2>
+    <p data-i18n="l3instr">Toca una carta para ver su verdadera naturaleza y decide rápido: ¿es bueno o es malo?</p>
+    <div class="cards-grid" id="l3-grid"></div>
+    <div class="active-card-panel" id="l3-panel" hidden>
+      <div class="timer-ring"><div class="timer-ring-fill" id="l3-timerfill"></div></div>
+      <div class="btn-row">
+        <button class="btn good" id="l3-btn-bien" data-i18n="isGood">✅ Es bueno</button>
+        <button class="btn bad" id="l3-btn-mal" data-i18n="isBad">❌ Es malo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NIVEL 4 -->
+  <div class="screen" id="screen-level4">
+    <div class="progress-dots" id="dots4"></div>
+    <h2 data-i18n="l4title">Nivel 4: Juicio Rápido</h2>
+    <p data-i18n="l4instr">Decide antes de que se acabe el tiempo: ¿Bueno o Malo?</p>
+    <div class="judge-timer"><div class="judge-timer-fill" id="l4-timerfill"></div></div>
+    <div class="judge-card" id="l4-statement">...</div>
+    <div class="btn-row">
+      <button class="btn bad" id="l4-btn-mal" data-i18n="isBad">❌ Malo</button>
+      <button class="btn good" id="l4-btn-bien" data-i18n="isGood">✅ Bueno</button>
+    </div>
+  </div>
+
+  <!-- TRIVIAS (plantilla compartida x4) -->
+  <div class="screen" id="screen-trivia1"><div class="card"><h2 data-i18n="triviaTitle">Pregunta</h2><p id="t1-question"></p><div class="trivia-options" id="t1-options"></div><p class="feedback" id="t1-feedback"></p><div class="btn-row"><button class="btn" id="t1-continue" hidden data-i18n="continueBtn">Continuar</button></div></div></div>
+  <div class="screen" id="screen-trivia2"><div class="card"><h2 data-i18n="triviaTitle">Pregunta</h2><p id="t2-question"></p><div class="trivia-options" id="t2-options"></div><p class="feedback" id="t2-feedback"></p><div class="btn-row"><button class="btn" id="t2-continue" hidden data-i18n="continueBtn">Continuar</button></div></div></div>
+  <div class="screen" id="screen-trivia3"><div class="card"><h2 data-i18n="triviaTitle">Pregunta</h2><p id="t3-question"></p><div class="trivia-options" id="t3-options"></div><p class="feedback" id="t3-feedback"></p><div class="btn-row"><button class="btn" id="t3-continue" hidden data-i18n="continueBtn">Continuar</button></div></div></div>
+  <div class="screen" id="screen-trivia4"><div class="card"><h2 data-i18n="triviaTitle">Pregunta</h2><p id="t4-question"></p><div class="trivia-options" id="t4-options"></div><p class="feedback" id="t4-feedback"></p><div class="btn-row"><button class="btn" id="t4-continue" hidden data-i18n="continueBtn">Continuar</button></div></div></div>
+
+  <!-- EPILOGO -->
+  <div class="screen" id="screen-epilogue">
+    <div class="card">
+      <h2 data-i18n="epilogueTitle">Reflexión final</h2>
+      <p data-i18n="q1">1. ¿Cómo puedo saber qué es lo bueno?</p>
+      <textarea id="ans1"></textarea>
+      <p data-i18n="q2">2. ¿Cómo puedo ser parte de lo bueno?</p>
+      <textarea id="ans2"></textarea>
+      <p data-i18n="q3">3. ¿Cómo y con quién compartiré lo que sé que es bueno?</p>
+      <textarea id="ans3"></textarea>
+      <div class="btn-row"><button class="btn" id="btnFinish" data-i18n="finishBtn">Finalizar</button></div>
+    </div>
+  </div>
+
+  <!-- RESULTADOS -->
+  <div class="screen" id="screen-results">
+    <div class="card" style="text-align:center;">
+      <h2 data-i18n="resultsTitle">Resultados</h2>
+      <div id="hiddenScoreBox" class="hidden-score-box">???</div>
+      <div id="revealedBox" hidden>
+        <div class="score-reveal" id="finalScoreNum">0</div>
+        <p data-i18n="pointsLabel" style="margin-bottom:10px;">puntos</p>
+        <div style="text-align:left;">
+          <div class="answer-block"><div class="q" data-i18n="q1">1. ¿Cómo puedo saber qué es lo bueno?</div><div class="a" id="review1"></div></div>
+          <div class="answer-block"><div class="q" data-i18n="q2">2. ¿Cómo puedo ser parte de lo bueno?</div><div class="a" id="review2"></div></div>
+          <div class="answer-block"><div class="q" data-i18n="q3">3. ¿Cómo y con quién compartiré lo que sé que es bueno?</div><div class="a" id="review3"></div></div>
+        </div>
+      </div>
+      <div class="btn-row" style="justify-content:center;margin-top:10px;">
+        <button class="btn" id="btnRevealShare" data-i18n="revealBtn">Compartir con el Maestro</button>
+      </div>
+      <div class="btn-row" id="postShareRow" hidden style="justify-content:center;">
+        <button class="btn secondary" id="btnWa" data-i18n="waBtn">Enviar por WhatsApp</button>
+      </div>
+      <p id="shareStatus" style="margin-top:8px;"></p>
+    </div>
+  </div>
+
+</div>
+<canvas id="resultCanvas" width="900" height="1200"></canvas>
+
+<script>
+(function(){
+  "use strict";
+
+  /* =====================================================
+     CONFIGURACIÓN
+  ===================================================== */
+  var WHATSAPP_NUMBER = ""; // Ej: "5491122334455". Vacío = abre selector de contacto.
+
+  var state = {
+    name: "",
+    score: 0,
+    answers: ["", "", ""],
+    lang: "es"
+  };
+
+  /* =====================================================
+     TRADUCCIONES (interfaz)
+  ===================================================== */
+  var I18N = {
+    es: {
+      badge:"Clase de Seminario",
+      title:"Visión de Luz: El Discernimiento de Isaías 5",
+      intro:"\"¡Ay de los que a lo malo llaman bueno, y a lo bueno, malo!\" (Isaías 5:20). Cuatro desafíos pondrán a prueba tu capacidad de discernir entre el bien y el mal.",
+      nameLabel:"¿Cómo te llamas?",
+      startBtn:"Comenzar",
+      l1title:"Nivel 1: Detective de la Luz",
+      l1instr:"Mueve el dedo o el mouse sobre la escena para iluminarla con la Luz de Cristo. Toca cada situación revelada y decide si es Bien o Mal antes de que se agote la batería.",
+      l2title:"Nivel 2: Clasificador de la Viña",
+      l2instr:"Los racimos caen cada vez más rápido. Toca la canasta correcta antes de que lleguen abajo: Buena o Silvestre.",
+      basketGood:"🧺 Buena",
+      basketWild:"🌵 Silvestre",
+      l3title:"Nivel 3: Revelador de Disfraces",
+      l3instr:"Toca una carta para ver su verdadera naturaleza y decide rápido: ¿es bueno o es malo?",
+      isGood:"✅ Es bueno",
+      isBad:"❌ Es malo",
+      l4title:"Nivel 4: Juicio Rápido",
+      l4instr:"Decide antes de que se acabe el tiempo: ¿Bueno o Malo?",
+      triviaTitle:"Pregunta",
+      continueBtn:"Continuar",
+      epilogueTitle:"Reflexión final",
+      q1:"1. ¿Cómo puedo saber qué es lo bueno?",
+      q2:"2. ¿Cómo puedo ser parte de lo bueno?",
+      q3:"3. ¿Cómo y con quién compartiré lo que sé que es bueno?",
+      finishBtn:"Finalizar",
+      resultsTitle:"Resultados",
+      pointsLabel:"puntos",
+      revealBtn:"Compartir con el Maestro",
+      waBtn:"Enviar por WhatsApp"
+    },
+    en: {
+      badge:"Seminary Class",
+      title:"Vision of Light: Discernment in Isaiah 5",
+      intro:"\"Woe unto them that call evil good, and good evil\" (Isaiah 5:20). Four challenges will test your ability to discern good from evil.",
+      nameLabel:"What is your name?",
+      startBtn:"Start",
+      l1title:"Level 1: Light Detective",
+      l1instr:"Move your finger or mouse over the scene to light it with the Light of Christ. Tap each revealed situation and decide if it is Good or Evil before the battery runs out.",
+      l2title:"Level 2: Vineyard Sorter",
+      l2instr:"Clusters fall faster and faster. Tap the right basket before they reach the bottom: Good or Wild.",
+      basketGood:"🧺 Good",
+      basketWild:"🌵 Wild",
+      l3title:"Level 3: Disguise Revealer",
+      l3instr:"Tap a card to see its true nature and decide fast: is it good or evil?",
+      isGood:"✅ It's good",
+      isBad:"❌ It's evil",
+      l4title:"Level 4: Quick Judgment",
+      l4instr:"Decide before time runs out: Good or Evil?",
+      triviaTitle:"Question",
+      continueBtn:"Continue",
+      epilogueTitle:"Final reflection",
+      q1:"1. How can I know what is good?",
+      q2:"2. How can I be part of what is good?",
+      q3:"3. How and with whom will I share what I know is good?",
+      finishBtn:"Finish",
+      resultsTitle:"Results",
+      pointsLabel:"points",
+      revealBtn:"Share with the Teacher",
+      waBtn:"Send via WhatsApp"
+    }
+  };
+
+  function applyI18n(){
+    var dict = I18N[state.lang];
+    document.querySelectorAll("[data-i18n]").forEach(function(el){
+      var key = el.getAttribute("data-i18n");
+      if(dict[key]) el.textContent = dict[key];
+    });
+    document.getElementById("playerName").placeholder = state.lang==="es" ? "Escribe tu nombre" : "Type your name";
+    document.getElementById("btnLang").textContent = state.lang==="es" ? "EN" : "ES";
+  }
+
+  /* =====================================================
+     UTILIDADES
+  ===================================================== */
+  function $(id){ return document.getElementById(id); }
+  function shuffle(arr){
+    var a = arr.slice();
+    for(var i=a.length-1;i>0;i--){
+      var j = Math.floor(Math.random()*(i+1));
+      var tmp=a[i]; a[i]=a[j]; a[j]=tmp;
+    }
+    return a;
+  }
+  function clamp(v,min,max){ return Math.max(min,Math.min(max,v)); }
+  function cleanText(str){ return (str||"").trim(); }
+
+  function showScreen(id){
+    document.querySelectorAll(".screen").forEach(function(s){ s.classList.remove("active"); });
+    $(id).classList.add("active");
+  }
+
+  function renderDots(containerId, levelIndex){
+    var el = $(containerId);
+    if(!el) return;
+    el.innerHTML = "";
+    for(var i=1;i<=4;i++){
+      var d = document.createElement("span");
+      if(i < levelIndex) d.className = "done";
+      else if(i === levelIndex) d.className = "current";
+      el.appendChild(d);
+    }
+  }
+
+  /* =====================================================
+     AUDIO SINTÉTICO (Web Audio API)
+  ===================================================== */
+  var audioCtx = null;
+  function ensureAudio(){
+    if(!audioCtx){
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if(Ctx) audioCtx = new Ctx();
+    }
+    if(audioCtx && audioCtx.state === "suspended"){
+      audioCtx.resume();
+    }
+  }
+  function beep(freq, dur, type, vol, delay){
+    if(!audioCtx) return;
+    dur = dur || 0.15; type = type || "sine"; vol = vol || 0.15; delay = delay || 0;
+    try{
+      var t0 = audioCtx.currentTime + delay;
+      var osc = audioCtx.createOscillator();
+      var gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t0);
+      gain.gain.setValueAtTime(vol, t0);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.03);
+    }catch(e){ /* silencioso: el audio nunca debe romper el juego */ }
+  }
+  function sndCorrect(){ beep(880,0.12,"sine",0.18,0); beep(1320,0.12,"sine",0.14,0.08); }
+  function sndWrong(){ beep(180,0.25,"sawtooth",0.15,0); }
+  function sndReveal(){ beep(1100,0.05,"sine",0.08,0); }
+  function sndLevelComplete(){ [523,659,784,1047].forEach(function(f,i){ beep(f,0.16,"triangle",0.15,i*0.09); }); }
+  function sndFinalReveal(){ [392,494,587,784,988].forEach(function(f,i){ beep(f,0.2,"triangle",0.16,i*0.11); }); }
+
+  /* =====================================================
+     PUNTAJE (oculto)
+  ===================================================== */
+  function addScore(points){
+    state.score = Math.max(0, state.score + points);
+  }
+
+  /* =====================================================
+     NIVEL 1: DETECTIVE DE LA LUZ
+  ===================================================== */
+  var L1_OBJECTS = [
+    {x:18,y:28,icon:"📖",es:"Estudiar las Escrituras",en:"Studying the scriptures",bien:true},
+    {x:72,y:22,icon:"🙏",es:"Orar con fe",en:"Praying with faith",bien:true},
+    {x:47,y:75,icon:"🤝",es:"Servir a un amigo",en:"Serving a friend",bien:true},
+    {x:82,y:62,icon:"📱",es:"Buscar aprobación en redes",en:"Chasing likes online",bien:false},
+    {x:14,y:66,icon:"😂",es:"Burlarse del pecado",en:"Joking about sin",bien:false},
+    {x:55,y:42,icon:"👥",es:"Presión para \"encajar\"",en:"Pressure to \"fit in\"",bien:false}
+  ];
+  var l1 = null; // estado runtime del nivel
+
+  function initLevel1(){
+    renderDots("dots1", 1);
+    var scene = $("l1-scene");
+    // limpiar objetos previos (si se reinicia)
+    scene.querySelectorAll(".hidden-object, .classify-pop").forEach(function(n){ n.remove(); });
+
+    l1 = {
+      battery: 100,
+      resolved: 0,
+      correct: 0,
+      wrong: 0,
+      finished: false,
+      timerId: null,
+      objects: []
+    };
+
+    L1_OBJECTS.forEach(function(def, idx){
+      var el = document.createElement("div");
+      el.className = "hidden-object";
+      el.style.left = def.x + "%";
+      el.style.top = def.y + "%";
+      el.innerHTML = "<div class='icon'>" + def.icon + "</div><div class='label'>" + (state.lang==="es"?def.es:def.en) + "</div>";
+      scene.appendChild(el);
+      var obj = {def:def, el:el, lit:false, resolved:false, idx:idx};
+      el.addEventListener("click", function(){ onTapL1Object(obj); });
+      l1.objects.push(obj);
+    });
+
+    var overlay = $("l1-overlay");
+    overlay.style.setProperty("--lx","50%");
+    overlay.style.setProperty("--ly","50%");
+    overlay.style.setProperty("--radius","80px");
+
+    function updateLight(clientX, clientY){
+      var rect = scene.getBoundingClientRect();
+      var lx = clamp(clientX - rect.left, 0, rect.width);
+      var ly = clamp(clientY - rect.top, 0, rect.height);
+      overlay.style.setProperty("--lx", lx + "px");
+      overlay.style.setProperty("--ly", ly + "px");
+      l1.objects.forEach(function(obj){
+        if(obj.resolved) return;
+        var ox = (obj.def.x/100) * rect.width;
+        var oy = (obj.def.y/100) * rect.height;
+        var dist = Math.hypot(lx-ox, ly-oy);
+        var wasLit = obj.lit;
+        obj.lit = dist < 78;
+        if(obj.lit && !wasLit) sndReveal();
+        obj.el.classList.toggle("lit", obj.lit);
+      });
+    }
+
+    function pointerHandler(e){
+      var p = e.touches && e.touches[0] ? e.touches[0] : e;
+      updateLight(p.clientX, p.clientY);
+    }
+    scene.addEventListener("pointermove", pointerHandler);
+    scene.addEventListener("touchmove", function(e){ e.preventDefault(); pointerHandler(e); }, {passive:false});
+    l1._pointerHandler = pointerHandler;
+
+    $("l1-battery").style.width = "100%";
+    l1.timerId = setInterval(function(){
+      if(l1.finished) return;
+      l1.battery -= (100/300); // ~30s a 100ms tick
+      if(l1.battery <= 0){
+        l1.battery = 0;
+        $("l1-battery").style.width = "0%";
+        finishLevel1();
+        return;
+      }
+      $("l1-battery").style.width = l1.battery + "%";
+    }, 100);
+  }
+
+  function onTapL1Object(obj){
+    if(l1.finished || obj.resolved || !obj.lit) return;
+    // eliminar popover anterior
+    var prev = document.querySelector(".classify-pop");
+    if(prev) prev.remove();
+
+    var pop = document.createElement("div");
+    pop.className = "classify-pop";
+    pop.style.left = obj.def.x + "%";
+    pop.style.top = obj.def.y + "%";
+    pop.innerHTML =
+      "<button class='b-bien'>" + (state.lang==="es"?"✅ Bien":"✅ Good") + "</button>" +
+      "<button class='b-mal'>" + (state.lang==="es"?"❌ Mal":"❌ Evil") + "</button>";
+    $("l1-scene").appendChild(pop);
+
+    pop.querySelector(".b-bien").addEventListener("click", function(){ resolveL1(obj, true, pop); });
+    pop.querySelector(".b-mal").addEventListener("click", function(){ resolveL1(obj, false, pop); });
+  }
+
+  function resolveL1(obj, choseBien, pop){
+    if(obj.resolved) return;
+    obj.resolved = true;
+    obj.el.classList.add("resolved");
+    pop.remove();
+    var correct = (choseBien === obj.def.bien);
+    if(correct){ l1.correct++; addScore(15); sndCorrect(); }
+    else { l1.wrong++; addScore(-8); sndWrong(); }
+    l1.resolved++;
+    if(l1.resolved >= l1.objects.length) finishLevel1();
+  }
+
+  function finishLevel1(){
+    if(l1.finished) return;
+    l1.finished = true;
+    clearInterval(l1.timerId);
+    var scene = $("l1-scene");
+    scene.removeEventListener("pointermove", l1._pointerHandler);
+    var batteryBonus = Math.max(5, Math.round(l1.battery/2));
+    addScore(100 + batteryBonus);
+    sndLevelComplete();
+    setTimeout(function(){ startTrivia(0); }, 400);
+  }
+
+  /* =====================================================
+     NIVEL 2: CLASIFICADOR DE LA VIÑA
+  ===================================================== */
+  var L2_ITEMS_DEF = [
+    {es:"🍇 Buena", en:"🍇 Good", bien:true},
+    {es:"🍇 Silvestre", en:"🍇 Wild", bien:false}
+  ];
+  var l2 = null;
+
+  function buildL2Queue(){
+    var arr = [];
+    for(var i=0;i<5;i++){ arr.push(L2_ITEMS_DEF[0]); arr.push(L2_ITEMS_DEF[1]); }
+    return shuffle(arr);
+  }
+
+  function initLevel2(){
+    renderDots("dots2", 2);
+    var track = $("l2-track");
+    track.querySelectorAll(".falling-item").forEach(function(n){ n.remove(); });
+
+    l2 = {
+      queue: buildL2Queue(),
+      index: 0,
+      correct: 0,
+      wrong: 0,
+      finished: false,
+      currentItem: null,
+      rafId: null,
+      speed: 40 // px/seg inicial, aumenta
+    };
+
+    $("l2-basket-buena").onclick = function(){ judgeL2(true); };
+    $("l2-basket-silvestre").onclick = function(){ judgeL2(false); };
+
+    spawnNextL2();
+  }
+
+  function spawnNextL2(){
+    if(l2.finished) return;
+    if(l2.index >= l2.queue.length){ finishLevel2(); return; }
+    var def = l2.queue[l2.index];
+    var track = $("l2-track");
+    var trackHeight = track.clientHeight;
+    var el = document.createElement("div");
+    el.className = "falling-item";
+    el.textContent = state.lang === "es" ? def.es : def.en;
+    track.appendChild(el);
+
+    var duration = Math.max(1500, 3200 - l2.index*180); // más rápido con cada item
+    var startTime = null;
+    var bottomLimit = trackHeight - 70;
+
+    l2.currentItem = {def:def, el:el, resolved:false};
+
+    function step(ts){
+      if(!startTime) startTime = ts;
+      var elapsed = ts - startTime;
+      var progress = clamp(elapsed/duration, 0, 1);
+      el.style.top = (progress * bottomLimit) + "px";
+      if(progress >= 1){
+        if(!l2.currentItem.resolved){
+          // se le pasó: cuenta como fallo
+          l2.wrong++;
+          sndWrong();
+          l2.currentItem.resolved = true;
+          el.remove();
+          l2.index++;
+          spawnNextL2();
+        }
+        return;
+      }
+      if(!l2.currentItem.resolved){
+        l2.rafId = requestAnimationFrame(step);
+      }
+    }
+    l2.rafId = requestAnimationFrame(step);
+  }
+
+  function judgeL2(choseBuena){
+    if(!l2 || l2.finished || !l2.currentItem || l2.currentItem.resolved) return;
+    var item = l2.currentItem;
+    item.resolved = true;
+    cancelAnimationFrame(l2.rafId);
+    var correct = (choseBuena === item.def.bien);
+    if(correct){ l2.correct++; addScore(12); sndCorrect(); }
+    else { l2.wrong++; addScore(-6); sndWrong(); }
+    item.el.remove();
+    l2.index++;
+    setTimeout(spawnNextL2, 120);
+  }
+
+  function finishLevel2(){
+    if(l2.finished) return;
+    l2.finished = true;
+    var accuracyBonus = Math.max(5, l2.correct * 6);
+    addScore(100 + accuracyBonus);
+    sndLevelComplete();
+    setTimeout(function(){ startTrivia(1); }, 400);
+  }
+
+  /* =====================================================
+     NIVEL 3: REVELADOR DE DISFRACES
+  ===================================================== */
+  var L3_CARDS = [
+    {icon:"😊", apariencia_es:"Todos se ríen y lo comparten", apariencia_en:"Everyone laughs and shares it", verdad_es:"Burlarse del pecado como si fuera inofensivo", verdad_en:"Mocking sin as if it were harmless", bien:false, convincente:true},
+    {icon:"😬", apariencia_es:"Tu papá te corrige con firmeza", apariencia_en:"Your dad corrects you firmly", verdad_es:"Corrección que viene del amor", verdad_en:"Correction that comes from love", bien:true, convincente:true},
+    {icon:"🔥", apariencia_es:"Miles de \"me gusta\" validan una idea", apariencia_en:"Thousands of likes validate an idea", verdad_es:"Popularidad no es lo mismo que verdad", verdad_en:"Popularity is not the same as truth", bien:false, convincente:true},
+    {icon:"😴", apariencia_es:"Levantarte temprano a orar", apariencia_en:"Waking up early to pray", verdad_es:"Un sacrificio pequeño que fortalece el espíritu", verdad_en:"A small sacrifice that strengthens the spirit", bien:true, convincente:false},
+    {icon:"💬", apariencia_es:"Un amigo te dice una verdad incómoda", apariencia_en:"A friend tells you an uncomfortable truth", verdad_es:"Corrección hecha con amor genuino", verdad_en:"Correction made with genuine love", bien:true, convincente:true},
+    {icon:"✨", apariencia_es:"\"Sé tú mismo, sin límites ni reglas\"", apariencia_en:"\"Be yourself, no limits or rules\"", verdad_es:"Un mensaje que rechaza toda corrección o mandamiento", verdad_en:"A message that rejects all correction or commandment", bien:false, convincente:true}
+  ];
+  var l3 = null;
+
+  function initLevel3(){
+    renderDots("dots3", 3);
+    var grid = $("l3-grid");
+    grid.innerHTML = "";
+    $("l3-panel").hidden = true;
+
+    l3 = { resolved:0, correct:0, wrong:0, finished:false, cards:[], timerId:null, activeCard:null };
+
+    L3_CARDS.forEach(function(def, idx){
+      var el = document.createElement("div");
+      el.className = "flip-card";
+      el.innerHTML = "<div class='icon'>" + def.icon + "</div><div>" + (state.lang==="es"?def.apariencia_es:def.apariencia_en) + "</div>";
+      grid.appendChild(el);
+      var card = {def:def, el:el, flipped:false, used:false, idx:idx};
+      el.addEventListener("click", function(){ flipL3Card(card); });
+      l3.cards.push(card);
+    });
+  }
+
+  function flipL3Card(card){
+    if(l3.finished || card.used || card.flipped || l3.activeCard) return;
+    card.flipped = true;
+    l3.activeCard = card;
+    sndReveal();
+    card.el.classList.add(card.def.bien ? "verdad-bien" : "verdad-mal", "revealed");
+    card.el.innerHTML = "<div class='icon'>" + (card.def.bien ? "💡" : "🎭") + "</div><div>" + (state.lang==="es"?card.def.verdad_es:card.def.verdad_en) + "</div>";
+
+    var panel = $("l3-panel");
+    panel.hidden = false;
+    var fill = $("l3-timerfill");
+    fill.style.transition = "none";
+    fill.style.width = "100%";
+    void fill.offsetWidth;
+    fill.style.transition = "width 4s linear";
+    fill.style.width = "0%";
+
+    l3.timerId = setTimeout(function(){ judgeL3Card(card, null); }, 4000);
+
+    $("l3-btn-bien").onclick = function(){ judgeL3Card(card, true); };
+    $("l3-btn-mal").onclick = function(){ judgeL3Card(card, false); };
+  }
+
+  function judgeL3Card(card, choseBien){
+    if(!l3.activeCard || card.used) return;
+    clearTimeout(l3.timerId);
+    card.used = true;
+    card.el.classList.add("used");
+    $("l3-panel").hidden = true;
+    l3.activeCard = null;
+
+    var correct = (choseBien === card.def.bien);
+    if(choseBien === null){ // timeout
+      l3.wrong++; addScore(-10); sndWrong();
+    } else if(correct){
+      l3.correct++;
+      addScore(card.def.convincente ? 20 : 10);
+      sndCorrect();
+    } else {
+      l3.wrong++; addScore(-10); sndWrong();
+    }
+    l3.resolved++;
+    if(l3.resolved >= l3.cards.length) finishLevel3();
+  }
+
+  function finishLevel3(){
+    if(l3.finished) return;
+    l3.finished = true;
+    var bonus = Math.max(5, l3.correct * 8);
+    addScore(100 + bonus);
+    sndLevelComplete();
+    setTimeout(function(){ startTrivia(2); }, 400);
+  }
+
+  /* =====================================================
+     NIVEL 4: JUICIO RÁPIDO
+  ===================================================== */
+  var L4_ITEMS = [
+    {es:"Compartir un versículo que te ayudó, aunque temas que se rían", en:"Sharing a verse that helped you, even if you fear being mocked", bien:true},
+    {es:"Callar la verdad para no incomodar a nadie", en:"Staying silent about the truth so no one feels uncomfortable", bien:false},
+    {es:"Perdonar a alguien que te lastimó", en:"Forgiving someone who hurt you", bien:true},
+    {es:"Justificar una mentira porque \"no le hizo daño a nadie\"", en:"Excusing a lie because \"it didn't hurt anyone\"", bien:false},
+    {es:"Pedir perdón después de reconocer un error", en:"Apologizing after recognizing a mistake", bien:true},
+    {es:"Seguir una tendencia solo porque todos la siguen", en:"Following a trend just because everyone else does", bien:false},
+    {es:"Ayunar y orar por una decisión difícil", en:"Fasting and praying about a hard decision", bien:true},
+    {es:"Comparar tu vida con la de otros en redes para sentirte mejor", en:"Comparing your life to others online to feel better", bien:false}
+  ];
+  var l4 = null;
+
+  function initLevel4(){
+    renderDots("dots4", 4);
+    l4 = { index:0, correct:0, wrong:0, finished:false, timerId:null, startTime:0, duration:4000, rafId:null };
+    nextL4Item();
+  }
+
+  function nextL4Item(){
+    if(l4.index >= L4_ITEMS.length){ finishLevel4(); return; }
+    var def = L4_ITEMS[l4.index];
+    $("l4-statement").textContent = state.lang === "es" ? def.es : def.en;
+    l4.duration = Math.max(1500, 4000 - l4.index * 300);
+    l4.startTime = null;
+    l4.resolved = false;
+
+    var fill = $("l4-timerfill");
+    fill.style.width = "100%";
+
+    function step(ts){
+      if(!l4.startTime) l4.startTime = ts;
+      var elapsed = ts - l4.startTime;
+      var progress = clamp(1 - elapsed/l4.duration, 0, 1);
+      fill.style.width = (progress*100) + "%";
+      if(progress <= 0){
+        if(!l4.resolved){ judgeL4(null); }
+        return;
+      }
+      if(!l4.resolved) l4.rafId = requestAnimationFrame(step);
+    }
+    l4.rafId = requestAnimationFrame(step);
+
+    $("l4-btn-bien").onclick = function(){ judgeL4(true); };
+    $("l4-btn-mal").onclick = function(){ judgeL4(false); };
+  }
+
+  function judgeL4(choseBien){
+    if(!l4 || l4.finished || l4.resolved) return;
+    l4.resolved = true;
+    cancelAnimationFrame(l4.rafId);
+    var def = L4_ITEMS[l4.index];
+    if(choseBien === null){
+      l4.wrong++; addScore(-5); sndWrong();
+    } else if(choseBien === def.bien){
+      l4.correct++; addScore(10); sndCorrect();
+    } else {
+      l4.wrong++; addScore(-5); sndWrong();
+    }
+    l4.index++;
+    setTimeout(nextL4Item, 250);
+  }
+
+  function finishLevel4(){
+    if(l4.finished) return;
+    l4.finished = true;
+    var bonus = Math.max(5, l4.correct * 7);
+    addScore(100 + bonus);
+    sndLevelComplete();
+    setTimeout(function(){ startTrivia(3); }, 400);
+  }
+
+  /* =====================================================
+     TRIVIAS (Gates)
+  ===================================================== */
+  var TRIVIA = [
+    {
+      es:{
+        q:"Según Isaías 5, ¿en qué se convirtieron las uvas de la viña del Señor debido a la desobediencia de Israel?",
+        options:["Uvas silvestres","Uvas de oro","Frutos maduros","Espinas de trigo"]
+      },
+      en:{
+        q:"According to Isaiah 5, what did the grapes of the Lord's vineyard become because of Israel's disobedience?",
+        options:["Wild grapes","Golden grapes","Ripe fruit","Wheat thorns"]
+      },
+      correctIndex:0
+    },
+    {
+      es:{
+        q:"¿Qué comparó el élder David A. Bednar con las ideas y acciones espiritualmente peligrosas?",
+        options:["El pelaje camuflado de un guepardo","Un lobo aullando de noche","Una serpiente venenosa","Un espejo roto"]
+      },
+      en:{
+        q:"What did Elder David A. Bednar compare to spiritually dangerous ideas and actions?",
+        options:["A cheetah's camouflaged coat","A wolf howling at night","A venomous snake","A broken mirror"]
+      },
+      correctIndex:0
+    },
+    {
+      es:{
+        q:"En Death Note, ¿qué hace Light Yagami que ejemplifica llamar \"bueno\" a lo malo?",
+        options:["Se convence a sí mismo de que sus asesinatos son un acto de justicia","Se declara villano abiertamente ante todos","Ayuda a la policía a atrapar criminales sin matarlos","Renuncia a su libreta al descubrir el daño que causa"]
+      },
+      en:{
+        q:"In Death Note, what does Light Yagami do that shows calling evil \"good\"?",
+        options:["He convinces himself his killings are an act of justice","He openly declares himself a villain","He helps the police catch criminals without killing","He gives up his notebook once he sees the harm it causes"]
+      },
+      correctIndex:0
+    },
+    {
+      es:{
+        q:"Según el presidente Russell M. Nelson, ¿cómo se comunican los mensajes de nuestro Padre Celestial, a diferencia de los del adversario?",
+        options:["Con sencillez, en voz baja y con claridad","De forma estruendosa y llamativa","Solo a través de señales visibles","Únicamente por medio de sueños"]
+      },
+      en:{
+        q:"According to President Russell M. Nelson, how does our Heavenly Father's message come, unlike the adversary's?",
+        options:["Simply, quietly, and with clarity","Loudly and flashily","Only through visible signs","Only through dreams"]
+      },
+      correctIndex:0
+    }
+  ];
+
+  var triviaRuntime = { index:0, attempts:0, options:[] };
+
+  function startTrivia(index){
+    triviaRuntime = { index:index, attempts:0, options:[] };
+    var screenNum = index + 1;
+    var data = TRIVIA[index][state.lang];
+    $("t"+screenNum+"-question").textContent = data.q;
+    var optsBox = $("t"+screenNum+"-options");
+    optsBox.innerHTML = "";
+    $("t"+screenNum+"-feedback").textContent = "";
+    $("t"+screenNum+"-continue").hidden = true;
+
+    var opts = data.options.map(function(text, i){ return {text:text, correct: i === TRIVIA[index].correctIndex}; });
+    opts = shuffle(opts);
+    triviaRuntime.options = opts;
+
+    opts.forEach(function(opt){
+      var btn = document.createElement("button");
+      btn.className = "trivia-opt";
+      btn.textContent = opt.text;
+      btn.addEventListener("click", function(){ answerTrivia(screenNum, opt, btn); });
+      optsBox.appendChild(btn);
+    });
+
+    showScreen("screen-trivia" + screenNum);
+  }
+
+  function answerTrivia(screenNum, opt, btn){
+    var feedback = $("t"+screenNum+"-feedback");
+    if(opt.correct){
+      btn.classList.add("correct");
+      triviaRuntime.attempts++;
+      var pts = triviaRuntime.attempts === 1 ? 150 : 50;
+      addScore(pts);
+      sndCorrect();
+      feedback.textContent = state.lang === "es" ? "¡Correcto! +" + pts + " pts" : "Correct! +" + pts + " pts";
+      feedback.className = "feedback ok";
+      document.querySelectorAll("#t"+screenNum+"-options button").forEach(function(b){ b.disabled = true; });
+      $("t"+screenNum+"-continue").hidden = false;
+      $("t"+screenNum+"-continue").onclick = function(){ afterTrivia(screenNum - 1); };
+    } else {
+      btn.classList.add("wrong");
+      btn.disabled = true;
+      triviaRuntime.attempts++;
+      sndWrong();
+      feedback.textContent = state.lang === "es" ? "Intenta de nuevo." : "Try again.";
+      feedback.className = "feedback bad";
+    }
+  }
+
+  function afterTrivia(index){
+    if(index === 0){ showScreen("screen-level2"); initLevel2(); }
+    else if(index === 1){ showScreen("screen-level3"); initLevel3(); }
+    else if(index === 2){ showScreen("screen-level4"); initLevel4(); }
+    else if(index === 3){ showScreen("screen-epilogue"); }
+  }
+
+  /* =====================================================
+     EPÍLOGO Y RESULTADOS
+  ===================================================== */
+  function finishEpilogue(){
+    state.answers[0] = cleanText($("ans1").value);
+    state.answers[1] = cleanText($("ans2").value);
+    state.answers[2] = cleanText($("ans3").value);
+    var totalChars = state.answers.join("").replace(/\s/g,"").length;
+    addScore(totalChars * 4);
+    showScreen("screen-results");
+  }
+
+  function revealResults(){
+    $("hiddenScoreBox").hidden = true;
+    $("revealedBox").hidden = false;
+    $("finalScoreNum").textContent = state.score;
+    $("review1").textContent = state.answers[0] || "—";
+    $("review2").textContent = state.answers[1] || "—";
+    $("review3").textContent = state.answers[2] || "—";
+    sndFinalReveal();
+    $("btnRevealShare").hidden = true;
+    generateAndShareImage();
+  }
+
+  function generateAndShareImage(){
+    var canvas = $("resultCanvas");
+    var ctx = canvas.getContext("2d");
+    var W = canvas.width, H = canvas.height;
+
+    var grad = ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0,"#0c1120");
+    grad.addColorStop(1,"#04060a");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,W,H);
+
+    ctx.strokeStyle = "#00e5ff";
+    ctx.lineWidth = 6;
+    ctx.strokeRect(20,20,W-40,H-40);
+
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#ffb300";
+    ctx.font = "bold 34px Arial";
+    ctx.fillText(state.lang==="es" ? "VISIÓN DE LUZ" : "VISION OF LIGHT", W/2, 130);
+    ctx.font = "24px Arial";
+    ctx.fillStyle = "#8aa0c4";
+    ctx.fillText("Isaías 5:20", W/2, 170);
+
+    ctx.fillStyle = "#e8f1ff";
+    ctx.font = "bold 30px Arial";
+    ctx.fillText(state.name || (state.lang==="es"?"Jugador":"Player"), W/2, 260);
+
+    ctx.font = "bold 110px Arial";
+    var scoreGrad = ctx.createLinearGradient(0,300,0,420);
+    scoreGrad.addColorStop(0,"#ffb300");
+    scoreGrad.addColorStop(1,"#00e5ff");
+    ctx.fillStyle = scoreGrad;
+    ctx.fillText(String(state.score), W/2, 420);
+
+    ctx.font = "26px Arial";
+    ctx.fillStyle = "#8aa0c4";
+    ctx.fillText(state.lang==="es" ? "puntos de discernimiento" : "discernment points", W/2, 460);
+
+    ctx.textAlign = "left";
+    ctx.font = "bold 22px Arial";
+    ctx.fillStyle = "#00e5ff";
+    var qs = state.lang==="es" ? [I18N.es.q1, I18N.es.q2, I18N.es.q3] : [I18N.en.q1, I18N.en.q2, I18N.en.q3];
+    var y = 540;
+    for(var i=0;i<3;i++){
+      ctx.fillStyle = "#ffb300";
+      ctx.font = "bold 20px Arial";
+      wrapText(ctx, qs[i], 60, y, W-120, 26);
+      y += 60;
+      ctx.fillStyle = "#e8f1ff";
+      ctx.font = "20px Arial";
+      var ansText = state.answers[i] || "—";
+      y = wrapText(ctx, ansText, 60, y, W-120, 26) + 30;
+    }
+
+    ctx.textAlign = "center";
+    ctx.font = "18px Arial";
+    ctx.fillStyle = "#8aa0c4";
+    ctx.fillText(state.lang==="es" ? "¡Ay de los que a lo malo llaman bueno, y a lo bueno, malo!" : "Woe unto them that call evil good, and good evil!", W/2, H-60);
+
+    canvas.toBlob(function(blob){
+      shareOrDownload(blob);
+    }, "image/png");
+  }
+
+  function wrapText(ctx, text, x, y, maxWidth, lineHeight){
+    var words = String(text).split(" ");
+    var line = "";
+    for(var n=0;n<words.length;n++){
+      var testLine = line + words[n] + " ";
+      if(ctx.measureText(testLine).width > maxWidth && n > 0){
+        ctx.fillText(line, x, y);
+        line = words[n] + " ";
+        y += lineHeight;
+      } else {
+        line = testLine;
+      }
+    }
+    ctx.fillText(line, x, y);
+    return y;
+  }
+
+  function shareOrDownload(blob){
+    var statusEl = $("shareStatus");
+    var fileName = "vision-de-luz-isaias-5.png";
+    var file = null;
+    try{ file = new File([blob], fileName, {type:"image/png"}); }catch(e){ file = null; }
+
+    if(file && navigator.canShare && navigator.canShare({files:[file]})){
+      navigator.share({
+        files:[file],
+        title: state.lang==="es" ? "Mi resultado: Visión de Luz" : "My result: Vision of Light",
+        text: state.lang==="es" ? "Comparto mi resultado de la clase de Seminario sobre Isaías 5." : "Sharing my Seminary class result on Isaiah 5."
+      }).then(function(){
+        statusEl.textContent = state.lang==="es" ? "¡Compartido!" : "Shared!";
+      }).catch(function(){
+        offerDownload(blob, fileName, statusEl);
+      });
+    } else {
+      offerDownload(blob, fileName, statusEl);
+    }
+    $("postShareRow").hidden = false;
+  }
+
+  function offerDownload(blob, fileName, statusEl){
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+    statusEl.textContent = state.lang==="es"
+      ? "Imagen descargada. Adjúntala manualmente en WhatsApp."
+      : "Image downloaded. Attach it manually on WhatsApp.";
+  }
+
+  function openWhatsApp(){
+    var text = (state.lang==="es"
+      ? "Terminé el juego \"Visión de Luz: Isaías 5\" con " + state.score + " puntos de discernimiento. ¡Adjunto mi imagen de resultados!"
+      : "I finished \"Vision of Light: Isaiah 5\" with " + state.score + " discernment points. Attaching my results image!");
+    var base = WHATSAPP_NUMBER ? ("https://wa.me/" + WHATSAPP_NUMBER) : "https://wa.me/";
+    var url = base + "?text=" + encodeURIComponent(text);
+    window.open(url, "_blank");
+  }
+
+  /* =====================================================
+     INICIO / EVENTOS GLOBALES
+  ===================================================== */
+  function init(){
+    applyI18n();
+
+    $("btnLang").addEventListener("click", function(){
+      state.lang = state.lang === "es" ? "en" : "es";
+      applyI18n();
+    });
+
+    $("btnStart").addEventListener("click", function(){
+      ensureAudio();
+      state.name = cleanText($("playerName").value) || (state.lang==="es" ? "Jugador" : "Player");
+      showScreen("screen-level1");
+      initLevel1();
+    });
+
+    $("btnFinish").addEventListener("click", finishEpilogue);
+    $("btnRevealShare").addEventListener("click", revealResults);
+    $("btnWa").addEventListener("click", openWhatsApp);
+
+    // Cualquier primer toque también habilita audio (políticas de autoplay)
+    document.addEventListener("pointerdown", ensureAudio, {once:true});
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+
+})();
+</script>
+</body>
+</html>
