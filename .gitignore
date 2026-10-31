@@ -1,0 +1,15 @@
+# Solo se sube la carpeta Clases
+/*
+!/Clases/
+!/README.md
+!/.gitignore
+
+# Archivos de mas de 
+95
+ MB (GitHub no acepta >100 MB)
+/Clases/2026-11-07_QuienEstoyLlegandoASer/Presentación/2026-11-07_QuienEstoyLlegandoASer_Presentacion.pptx
+
+# Temporales de Office
+~$*
+Thumbs.db
+desktop.ini
